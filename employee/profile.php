@@ -109,13 +109,19 @@ $avatar_url = !empty($profile_image) ? '../uploads/profiles/' . $profile_image :
         .card-container { perspective: 1000px; }
         .card-inner { transition: transform 0.6s; transform-style: preserve-3d; }
         .card-flipped { transform: rotateY(180deg); }
-        .card-front, .card-back { backface-visibility: hidden; }
+        
+        /* 🎯 จุดที่ต้องแก้: เพิ่มคลาสซ่อนพื้นหลังเมื่อพลิกให้อยู่ครบถ้วน */
+        .card-front, .card-back { 
+            -webkit-backface-visibility: hidden !important; 
+            backface-visibility: hidden !important; 
+        }
         .card-back { transform: rotateY(180deg); }
     </style>
 </head>
 <body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] min-h-screen flex items-center justify-center p-0 md:p-4 text-slate-800 antialiased select-none">
 
-    <div class="w-full max-w-md bg-white/40 backdrop-blur-xl border border-white/60 min-h-screen md:min-h-[812px] md:rounded-[40px] shadow-2xl flex flex-col justify-between relative overflow-hidden p-5 pb-8">
+    <div class="w-full min-h-screen bg-white/40 backdrop-blur-xl flex flex-col justify-between relative overflow-hidden p-5 pb-8
+            md:max-w-md md:mx-auto md:my-6 md:min-h-[812px] md:rounded-[40px] md:border md:border-white/60 md:shadow-2xl">
         
         <div>
             <!-- Header Bar -->
