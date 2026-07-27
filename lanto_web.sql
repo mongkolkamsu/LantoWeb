@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jul 27, 2026 at 09:42 AM
+-- Generation Time: Jul 27, 2026 at 09:49 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -27,6 +27,7 @@ SET time_zone = "+00:00";
 -- Table structure for table `attendance`
 --
 
+DROP TABLE IF EXISTS `attendance`;
 CREATE TABLE `attendance` (
   `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL COMMENT 'ID ของพนักงาน',
@@ -82,6 +83,7 @@ INSERT INTO `attendance` (`id`, `user_id`, `log_type`, `branch_id`, `scan_time`,
 -- Table structure for table `branches`
 --
 
+DROP TABLE IF EXISTS `branches`;
 CREATE TABLE `branches` (
   `id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL COMMENT 'ชื่อที่ตั้ง/สาขา',
@@ -118,6 +120,7 @@ INSERT INTO `branches` (`id`, `name`, `latitude`, `longitude`, `radius`, `Maps_l
 -- Table structure for table `departments`
 --
 
+DROP TABLE IF EXISTS `departments`;
 CREATE TABLE `departments` (
   `id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL COMMENT 'ชื่อแผนกแบบเต็มและวงเล็บย่อ',
@@ -157,6 +160,7 @@ INSERT INTO `departments` (`id`, `name`, `head_user_id`, `is_active`, `created_a
 -- Table structure for table `employee_types`
 --
 
+DROP TABLE IF EXISTS `employee_types`;
 CREATE TABLE `employee_types` (
   `id` int(11) NOT NULL,
   `name` varchar(150) NOT NULL COMMENT 'ชื่อประเภทพนักงาน (ไทย-อังกฤษ)',
@@ -183,6 +187,7 @@ INSERT INTO `employee_types` (`id`, `name`, `is_active`, `created_at`, `updated_
 -- Table structure for table `leave_requests`
 --
 
+DROP TABLE IF EXISTS `leave_requests`;
 CREATE TABLE `leave_requests` (
   `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -220,6 +225,7 @@ INSERT INTO `leave_requests` (`id`, `user_id`, `leave_type`, `leave_duration`, `
 -- Table structure for table `salaries`
 --
 
+DROP TABLE IF EXISTS `salaries`;
 CREATE TABLE `salaries` (
   `id` int(11) NOT NULL,
   `employee_id` int(11) NOT NULL,
@@ -249,6 +255,7 @@ INSERT INTO `salaries` (`id`, `employee_id`, `month`, `year`, `base_salary`, `ot
 -- Table structure for table `system_logs`
 --
 
+DROP TABLE IF EXISTS `system_logs`;
 CREATE TABLE `system_logs` (
   `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL COMMENT 'ID ผู้ดำเนินการ',
@@ -277,6 +284,7 @@ INSERT INTO `system_logs` (`id`, `user_id`, `action`, `details`, `ip_address`, `
 -- Table structure for table `system_settings`
 --
 
+DROP TABLE IF EXISTS `system_settings`;
 CREATE TABLE `system_settings` (
   `setting_key` varchar(100) NOT NULL,
   `setting_value` text DEFAULT NULL,
@@ -309,6 +317,7 @@ INSERT INTO `system_settings` (`setting_key`, `setting_value`, `updated_at`) VAL
 -- Table structure for table `users`
 --
 
+DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `id` int(11) NOT NULL,
   `employee_code` varchar(50) NOT NULL COMMENT '3. รหัสพนักงาน (ใช้เป็น Username ในการ Login ได้ด้วย)',
@@ -351,6 +360,7 @@ INSERT INTO `users` (`id`, `employee_code`, `password`, `role`, `profile_image`,
 -- Table structure for table `work_shifts`
 --
 
+DROP TABLE IF EXISTS `work_shifts`;
 CREATE TABLE `work_shifts` (
   `id` int(11) NOT NULL,
   `name` varchar(100) NOT NULL COMMENT 'ชื่อกะการทำงาน',
