@@ -1,25 +1,18 @@
 <?php
+session_start();
 require_once 'config/db.php';
 
-// หากผู้ใช้ล็อกอินอยู่แล้ว ให้ดีดไปหน้าตามสิทธิ์ทันที
+// 🎯 หากผู้ใช้ล็อกอินอยู่แล้ว ให้ดีดไปหน้าแดชบอร์ดหลักทันที
 if (isset($_SESSION['user_id'])) {
-    if ($_SESSION['role'] === 'admin') {
-        header("Location: admin/dashboard.php");
-    } else {
-        header("Location: employee/scan.php");
-    }
+    header("Location: index_mobile.php");
     exit();
 }
 
-// ตัวแปรสำหรับเก็บข้อความเตือน กรณีที่ระบบสลับไปใช้โหมดดั้งเดิม (JS ไม่ทำงาน)
+// ตัวแปรสำหรับเก็บข้อความเตือน
 $error_message = '';
 
-// ตรวจสอบว่าเป็นการส่งข้อมูลผ่านรูปแบบ POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    
-    // เช็คว่าเป็นคำร้องขอแบบ AJAX จาก JavaScript หรือไม่
     $is_ajax = isset($_POST['ajax']) && $_POST['ajax'] === '1';
-    
     $employee_code = trim(htmlspecialchars($_POST['employee_code'] ?? ''));
     $password = trim($_POST['password'] ?? '');
 
@@ -46,7 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['role']          = $user['role'];
                 $_SESSION['profile_image'] = $user['profile_image'];
 
-                $redirect_url = ($user['role'] === 'admin') ? 'admin/dashboard.php' : 'employee/scan.php';
+                // 🎯 แก้ไขเสร็จสิ้น: ปรับให้วิ่งไปหาหน้า index_mobile.php ในระดับเดียวกันตรง ๆ
+                $redirect_url = 'index_mobile.php';
                 
                 if ($is_ajax) {
                     header('Content-Type: application/json');
@@ -85,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome Back - <?php echo SITE_NAME; ?></title>
+    <title>Welcome Back - Lanto Web</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -147,42 +141,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <script>
     document.getElementById('loginForm').addEventListener('submit', function(e) {
-        
-        // ตรวจสอบก่อนว่า โหลดไฟล์ระบบ LantoAlert มาสำเร็จจริงไหม ป้องกันระบบแครช
-        if (typeof LantoAlert === 'undefined') {
-            // ถ้าดึงไฟล์ alerts.js ไม่ขึ้น ให้ปล่อยให้ฟอร์มส่งข้อมูลแบบหน้าเว็บดั้งเดิม เพื่อให้ตัวเว็บทำงานต่อได้ ไม่ค้าง
-            return; 
-        }
+        if (typeof LantoAlert === 'undefined') return; 
 
-        e.preventDefault(); // บล็อกไม่ให้หน้าเว็บรีโหลด (ใช้สิทธิ์คุมเฉพาะเมื่อ LantoAlert พร้อมทำหน้าที่)
-
-        // 1. สั่งเปิด Alert โหลดข้อมูลทันทีแบบมีกิมมิกวงล้อหมุน
-        LantoAlert.loading('กำลังตรวจสอบข้อมูล', 'ระบบกำลังยืนยันรหัสพนักงานของคุณกับ Lanto Web...');
+        e.preventDefault();
+        // 1. แสดงหน้าต่างกำลังโหลด
+        LantoAlert.loading('กำลังเข้าสู่ระบบ', 'กำลังพาคุณเข้าสู่แดชบอร์ด Lanto Web...');
 
         const formData = new FormData(this);
-        formData.append('ajax', '1'); // แปะป้ายบอก PHP ว่ารอบนี้ส่งมาทาง JavaScript AJAX นะ
+        formData.append('ajax', '1');
 
-        // ตั้งเวลาหน่วงขั้นต่ำไว้ที่ 1.2 วินาที เพื่อให้แสดงผลอนิเมชันสวยเนียนตา
-        const minimumDelay = new Promise(resolve => setTimeout(resolve, 1200));
-        
-        const fetchServer = fetch('login.php', {
-            method: 'POST',
-            body: formData
-        }).then(response => response.json());
+        const minimumDelay = new Promise(resolve => setTimeout(resolve, 1000));
+        const fetchServer = fetch('login.php', { method: 'POST', body: formData }).then(response => response.json());
 
         Promise.all([fetchServer, minimumDelay])
             .then(([data]) => {
-                LantoAlert.close(); // สั่งปิดตัวดาวน์โหลดออกไปก่อน
-
-                setTimeout(() => {
-                    if (data.status === 'success') {
-                        LantoAlert.success('เข้าสู่ระบบสำเร็จ', data.message, function() {
-                            window.location.href = data.redirect;
-                        });
-                    } else {
-                        LantoAlert.error('เข้าสู่ระบบล้มเหลว', data.message);
+                if (data.status === 'success') {
+                    // 2. ถ้าสำเร็จ ไม่ต้องเรียกปุ่มกดตกลง ให้เปลี่ยนข้อความ Loading เป็นสำเร็จชั่วพริบตา แล้วพุ่งไปหน้าแดชบอร์ดทันที
+                    if (typeof LantoAlert.update === 'function') {
+                        LantoAlert.update('เข้าสู่ระบบสำเร็จ', 'กำลังเปลี่ยนหน้า...');
                     }
-                }, 300);
+                    setTimeout(() => {
+                        window.location.href = data.redirect;
+                    }, 500); // หน่วงเวลาสั้นๆ 0.5 วินาทีให้ผู้ใช้เห็นสถานะ แล้วพาเข้าหน้าเว็บทันที
+                } else {
+                    LantoAlert.close();
+                    setTimeout(() => {
+                        LantoAlert.error('เข้าสู่ระบบล้มเหลว', data.message);
+                    }, 300);
+                }
             })
             .catch(error => {
                 LantoAlert.close();
