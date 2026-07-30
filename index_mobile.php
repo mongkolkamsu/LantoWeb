@@ -235,13 +235,6 @@ try {
     <style>
         body { font-family: 'Noto Sans Thai', sans-serif; -webkit-tap-highlight-color: transparent; }
         ::-webkit-scrollbar { display: none; }
-        html, body {
-        height: 100%;
-        height: 100dvh;
-        overflow: hidden !important;
-        touch-action: none; /* บล็อก Gesture การไถนิ้วบนมือถือ */
-        -webkit-overflow-scrolling: none;
-        }
     </style>
     <script src="assets/js/alerts.js"></script>
     <script>
@@ -255,11 +248,11 @@ try {
     }
     </script>
 </head>
-<body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] h-screen h-[100dvh] overflow-hidden touch-none select-none">
+<body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] min-h-screen flex items-center justify-center text-slate-800 select-none antialiased p-0 md:p-4">
 
     <!-- 📱 Main Mobile Container (ขยายเต็มจอมือถืออัตโนมัติ / บนคอมเป็นกรอบสมาร์ตโฟน) -->
-    <div class="w-full h-full max-h-[100dvh] bg-white/40 backdrop-blur-xl flex flex-col justify-between relative overflow-hidden p-4 pb-24
-                md:max-w-md md:mx-auto md:my-6 md:h-[812px] md:rounded-[40px] md:border md:border-white/60 md:shadow-2xl">
+    <div class="w-full min-h-screen bg-slate-50/90 backdrop-blur-xl flex flex-col justify-between relative overflow-hidden pb-24 border-0 shadow-none
+            md:max-w-md md:min-h-[812px] md:rounded-[40px] md:shadow-2xl md:border md:border-white/60">
         
         <div>
             <!-- 🔝 ส่วนหัวดีไซน์เรียบหรูสไตล์แอปชั้นนำ -->
