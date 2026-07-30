@@ -80,9 +80,9 @@ try {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- 🤖 MediaPipe AI Face Detection Libraries -->
+    <!-- 🤖 MediaPipe Face Mesh AI Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
 
     <style>
         body { font-family: 'Noto Sans Thai', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -119,10 +119,10 @@ try {
             <!-- กรอบรูปกล้องสแกนเนอร์สไตล์วงกลมสมมาตร -->
             <div class="relative w-60 h-60 mx-auto bg-slate-950 rounded-full overflow-hidden border-4 border-white shadow-2xl flex items-center justify-center my-4">
                 
-                <!-- 🟢/🔴 ป้ายแสดงสถานะการตรวจจับใบหน้าสด -->
-                <div id="face-detect-badge" class="absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-slate-900/85 text-slate-200 text-[10px] font-bold px-3 py-1 rounded-full backdrop-blur-md border border-white/20 transition-all flex items-center gap-1.5 shadow-md">
-                    <span id="face-dot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                    <span id="face-text">กำลังสแกนหาใบหน้า...</span>
+                <!-- 🎯 ป้ายคำสั่งท้าทาย Liveness Action (สุ่มคำสั่ง: กระพริบตา / ยิ้ม) -->
+                <div id="action-badge" class="absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-amber-500 text-slate-950 text-[11px] font-extrabold px-3.5 py-1 rounded-full backdrop-blur-md border border-amber-300 transition-all flex items-center gap-1.5 shadow-lg animate-bounce">
+                    <span id="action-icon">🤖</span>
+                    <span id="action-text">กำลังโหลดระบบตรวจจับ...</span>
                 </div>
 
                 <video id="webcam" autoplay playsinline class="w-full h-full object-cover scale-x-[-1] rounded-full"></video>
@@ -191,7 +191,7 @@ try {
         <!-- ส่วนปุ่มควบคุมการบันทึกข้อมูลเวลาทำงาน -->
         <div class="pt-4 space-y-2">
             <button id="btnRetake" class="w-full hidden bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium py-2.5 rounded-2xl text-xs tracking-wide transition-all active:scale-[0.98] cursor-pointer items-center justify-center gap-2 shadow-xs">
-                <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path>
                 </svg>
                 ยกเลิกและกดถ่ายรูปใหม่ (Retake Photo)
@@ -199,10 +199,10 @@ try {
 
             <button id="btnCapture" class="w-full bg-gradient-to-r <?php echo $type_color; ?> text-white font-semibold py-3.5 rounded-2xl shadow-md text-sm tracking-wide transition-all transform active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 opacity-50 cursor-not-allowed" disabled>
                 <svg id="btn-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                <span id="btn-text">วางใบหน้าให้อยู่ในกรอบ...</span>
+                <span id="btn-text">ทำตามคำสั่งด้านบนเพื่อถ่ายรูป...</span>
             </button>
             
-            <p class="text-[10px] text-center text-slate-400 mt-2 font-light">Lanto Web AI Face Engine v4.5.0</p>
+            <p class="text-[10px] text-center text-slate-400 mt-2 font-light">Lanto Web AI Liveness Engine v5.0.0</p>
         </div>
     <?php include '../includes/navbar.php'; ?>
     </div>
@@ -213,7 +213,15 @@ try {
         let userLat = null;
         let userLng = null;
         let isCaptured = false;
-        let isFaceVerified = false; // 🤖 ตัวแปรเช็กสถานะการพบใบหน้าจาก AI
+        
+        // 🎯 ระบบสุ่มคำสั่ง Liveness Challenge (0: กระพริบตา, 1: ยิ้ม)
+        const challenges = [
+            { id: 'blink', icon: '😉', text: 'กรุณากระพริบตาเพื่อยืนยัน' },
+            { id: 'smile', icon: '😊', text: 'กรุณายิ้มเพื่อยืนยัน' }
+        ];
+        const currentChallenge = challenges[Math.floor(Math.random() * challenges.length)];
+        let isLivenessPassed = false;
+        let wasEyeClosed = false; // ตัวแปรเก็บสถานะการปิดตาชั่วคราว
 
         const shiftType = '<?php echo $type; ?>'; 
         const shiftStartStr = '<?php echo $shift_start; ?>'; 
@@ -323,7 +331,11 @@ try {
             }
         }
 
-        // 🤖 ติดตั้งและประมวลผล MediaPipe Face Detection
+        // 🤖 ฟังก์ชันคำนวณระยะห่างระหว่างจุด 2D บนใบหน้า
+        function getDistance(p1, p2) {
+            return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+        }
+
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('photo-preview');
         const btnCapture = document.getElementById('btnCapture');
@@ -332,56 +344,79 @@ try {
         const laserLine = document.getElementById('laser-line');
         const targetUi = document.getElementById('target-ui');
         
-        const faceBadge = document.getElementById('face-detect-badge');
-        const faceDot = document.getElementById('face-dot');
-        const faceText = document.getElementById('face-text');
+        const actionBadge = document.getElementById('action-badge');
+        const actionIcon = document.getElementById('action-icon');
+        const actionText = document.getElementById('action-text');
         const targetBorder = document.getElementById('target-border');
 
         let cameraUtils = null;
 
-        async function initCameraWithFaceDetection() {
+        async function initFaceMeshLiveness() {
+            // แสดงคำสั่งที่สุ่มได้ขึ้นหน้าจอทันที
+            actionIcon.innerText = currentChallenge.icon;
+            actionText.innerText = currentChallenge.text;
+
             try {
-                const faceDetection = new FaceDetection({
-                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`
+                const faceMesh = new FaceMesh({
+                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
                 });
 
-                faceDetection.setOptions({
-                    modelSelection: 0, // Short range (กล้องหน้า/Selfie)
-                    minDetectionConfidence: 0.65
+                faceMesh.setOptions({
+                    maxNumFaces: 1,
+                    refineLandmarks: true,
+                    minDetectionConfidence: 0.65,
+                    minTrackingConfidence: 0.65
                 });
 
-                faceDetection.onResults((results) => {
-                    if (isCaptured) return; // หากกดถ่ายรูปค้างไว้แล้ว ให้หยุดประมวลผลชั่วคราว
+                faceMesh.onResults((results) => {
+                    if (isCaptured || isLivenessPassed) return;
 
-                    if (results.detections && results.detections.length > 0) {
-                        // 🟢 กรณีตรวจพบใบหน้ามนุษย์จริง
-                        isFaceVerified = true;
-                        faceDot.className = "w-2 h-2 rounded-full bg-emerald-400";
-                        faceText.innerText = "พบใบหน้ามนุษย์แล้ว (Verified)";
-                        faceBadge.className = "absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-emerald-950/90 text-emerald-300 text-[10px] font-bold px-3 py-1 rounded-full backdrop-blur-md border border-emerald-500/40 transition-all flex items-center gap-1.5 shadow-md";
-                        targetBorder.className = "w-44 h-44 rounded-full border-2 border-solid border-emerald-400 flex items-center justify-center relative transition-colors duration-300 shadow-[0_0_15px_rgba(52,211,153,0.3)]";
+                    if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+                        const landmarks = results.multiFaceLandmarks[0];
 
-                        btnCapture.disabled = false;
-                        btnCapture.classList.remove('opacity-50', 'cursor-not-allowed');
-                        btnText.innerText = "กดถ่ายรูปเพื่อ" + (shiftType === 'check_out' ? 'ออกงาน' : 'เข้างาน');
-                    } else {
-                        // 🔴 กรณีจับไม่เจอใบหน้า
-                        isFaceVerified = false;
-                        faceDot.className = "w-2 h-2 rounded-full bg-rose-400 animate-pulse";
-                        faceText.innerText = "กรุณาขยับใบหน้าให้อยู่ในกรอบ";
-                        faceBadge.className = "absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-rose-950/90 text-rose-300 text-[10px] font-bold px-3 py-1 rounded-full backdrop-blur-md border border-rose-500/40 transition-all flex items-center gap-1.5 shadow-md";
-                        targetBorder.className = "w-44 h-44 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300";
+                        if (currentChallenge.id === 'blink') {
+                            // 👁️ คำนวณ Eye Aspect Ratio (EAR) สำหรับตรวจการกระพริบตา
+                            const leftEyeTop = landmarks[159];
+                            const leftEyeBottom = landmarks[145];
+                            const leftEyeLeft = landmarks[33];
+                            const leftEyeRight = landmarks[133];
 
-                        btnCapture.disabled = true;
-                        btnCapture.classList.add('opacity-50', 'cursor-not-allowed');
-                        btnText.innerText = "วางใบหน้าให้อยู่ในกรอบ...";
+                            const eyeHeight = getDistance(leftEyeTop, leftEyeBottom);
+                            const eyeWidth = getDistance(leftEyeLeft, leftEyeRight);
+                            const ear = eyeHeight / eyeWidth;
+
+                            // เมื่อหลับตา ค่า EAR จะต่ำกว่า 0.18
+                            if (ear < 0.18) {
+                                wasEyeClosed = true;
+                            } 
+                            // เมื่อเปิดตาขึ้นอีกครั้งหลังจากหลับตา = กระพริบตาสมบูรณ์
+                            else if (wasEyeClosed && ear > 0.23) {
+                                triggerLivenessPassed();
+                            }
+
+                        } else if (currentChallenge.id === 'smile') {
+                            // 😊 คำนวณความกว้างมุมปากเทียบกับความกว้างใบหน้าสำหรับตรวจยิ้ม
+                            const mouthLeft = landmarks[61];
+                            const mouthRight = landmarks[291];
+                            const cheekLeft = landmarks[234];
+                            const cheekRight = landmarks[454];
+
+                            const mouthWidth = getDistance(mouthLeft, mouthRight);
+                            const faceWidth = getDistance(cheekLeft, cheekRight);
+                            const smileRatio = mouthWidth / faceWidth;
+
+                            // เมื่อยิ้ม อัตราส่วนความกว้างปากจะมากกว่า 0.42
+                            if (smileRatio > 0.42) {
+                                triggerLivenessPassed();
+                            }
+                        }
                     }
                 });
 
                 cameraUtils = new Camera(video, {
                     onFrame: async () => {
-                        if (!isCaptured) {
-                            await faceDetection.send({ image: video });
+                        if (!isCaptured && !isLivenessPassed) {
+                            await faceMesh.send({ image: video });
                         }
                     },
                     width: 640,
@@ -391,15 +426,29 @@ try {
                 await cameraUtils.start();
 
             } catch (error) {
-                console.error("Camera/AI Error:", error);
+                console.error("FaceMesh Error:", error);
                 document.getElementById('camera-error').classList.remove('hidden');
             }
         }
 
+        // 🎉 เมื่อทำคำสั่งผ่านสำเร็จ
+        function triggerLivenessPassed() {
+            isLivenessPassed = true;
+            
+            actionIcon.innerText = "🟢";
+            actionText.innerText = "ผ่านการยืนยันตัวตนแล้ว!";
+            actionBadge.className = "absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-emerald-600 text-white text-[11px] font-extrabold px-3.5 py-1 rounded-full backdrop-blur-md border border-emerald-300 transition-all flex items-center gap-1.5 shadow-lg";
+            targetBorder.className = "w-44 h-44 rounded-full border-2 border-solid border-emerald-400 flex items-center justify-center relative transition-colors duration-300 shadow-[0_0_20px_rgba(52,211,153,0.5)]";
+
+            btnCapture.disabled = false;
+            btnCapture.classList.remove('opacity-50', 'cursor-not-allowed');
+            btnText.innerText = "กดถ่ายรูปเพื่อ" + (shiftType === 'check_out' ? 'ออกงาน' : 'เข้างาน');
+        }
+
         function freezeCapturePhoto() {
-            if (!isFaceVerified) {
+            if (!isLivenessPassed) {
                 if (typeof LantoAlert !== 'undefined') {
-                    LantoAlert.warning('ไม่พบใบหน้า', 'ระบบไม่พบใบหน้ามนุษย์ในกล้อง โปรดส่องใบหน้าให้อยู่ในกรอบทรงกลมครับ');
+                    LantoAlert.warning('สแกนไม่สำเร็จ', 'กรุณาทำตามคำสั่งด้านบนกล้องให้สำเร็จก่อนกดถ่ายรูปครับ');
                 }
                 return;
             }
@@ -418,7 +467,7 @@ try {
             video.classList.add('hidden');
             laserLine.classList.add('hidden');
             targetUi.classList.add('hidden');
-            faceBadge.classList.add('hidden');
+            actionBadge.classList.add('hidden');
             
             isCaptured = true;
             btnText.innerText = "ยืนยันและส่งข้อมูลบันทึกเวลา";
@@ -435,10 +484,20 @@ try {
             video.classList.remove('hidden');
             laserLine.classList.remove('hidden');
             targetUi.classList.remove('hidden');
-            faceBadge.classList.remove('hidden');
+            actionBadge.classList.remove('hidden');
             
             isCaptured = false;
-            btnText.innerText = "วางใบหน้าให้อยู่ในกรอบ...";
+            isLivenessPassed = false;
+            wasEyeClosed = false;
+
+            actionIcon.innerText = currentChallenge.icon;
+            actionText.innerText = currentChallenge.text;
+            actionBadge.className = "absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-amber-500 text-slate-950 text-[11px] font-extrabold px-3.5 py-1 rounded-full backdrop-blur-md border border-amber-300 transition-all flex items-center gap-1.5 shadow-lg animate-bounce";
+            targetBorder.className = "w-44 h-44 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300";
+
+            btnCapture.disabled = true;
+            btnCapture.classList.add('opacity-50', 'cursor-not-allowed');
+            btnText.innerText = "ทำตามคำสั่งด้านบนเพื่อถ่ายรูป...";
             btnRetake.classList.remove('flex');
             btnRetake.classList.add('hidden');
 
@@ -518,7 +577,7 @@ try {
         window.addEventListener('DOMContentLoaded', () => {
             startLiveClock();
             trackUserLocation();
-            initCameraWithFaceDetection();
+            initFaceMeshLiveness();
         });
     </script>
 </body>
