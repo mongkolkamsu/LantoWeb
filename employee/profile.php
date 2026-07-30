@@ -106,15 +106,27 @@ $avatar_url = !empty($profile_image) ? '../uploads/profiles/' . $profile_image :
     <style>
         body { font-family: 'Noto Sans Thai', sans-serif; -webkit-tap-highlight-color: transparent; }
         ::-webkit-scrollbar { display: none; }
+        
         .card-container { perspective: 1000px; }
-        .card-inner { transition: transform 0.6s; transform-style: preserve-3d; }
+        .card-inner { 
+            transition: transform 0.6s ease-in-out; 
+            -webkit-transform-style: preserve-3d; 
+            transform-style: preserve-3d; 
+        }
         .card-flipped { transform: rotateY(180deg); }
         
-        /* 🎯 จุดที่ต้องแก้: เพิ่มคลาสซ่อนพื้นหลังเมื่อพลิกให้อยู่ครบถ้วน */
+        /* 🎯 บังคับซ่อนหน้าหลังแบบ 100% สำหรับ iOS Safari */
         .card-front, .card-back { 
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
             -webkit-backface-visibility: hidden !important; 
             backface-visibility: hidden !important; 
+            -webkit-transform-style: preserve-3d;
+            transform-style: preserve-3d;
         }
+        .card-front { transform: rotateY(0deg); }
         .card-back { transform: rotateY(180deg); }
     </style>
     <script src="../assets/js/alerts.js"></script>
@@ -141,11 +153,11 @@ $avatar_url = !empty($profile_image) ? '../uploads/profiles/' . $profile_image :
                 <div id="id-card" class="card-inner w-full h-full relative shadow-2xl rounded-[32px]">
                     
                     <!-- ด้านหน้าบัตร -->
-                    <div class="card-front absolute inset-0 w-full h-full bg-white rounded-[32px] overflow-hidden border border-slate-200/40 flex flex-col justify-end">
-                        <img src="<?php echo $avatar_url; ?>" class="absolute top-[45px] left-1/2 -translate-x-1/2 w-[220px] h-[270px] object-cover z-10" alt="Employee Photo">
-                        <img src="../assets/images/bg.png" class="absolute inset-0 w-full h-full object-cover z-20 pointer-events-none" alt="Card Background">
+                    <div class="card-front bg-white rounded-[32px] overflow-hidden border border-slate-200/40 flex flex-col justify-end">
+                        <img src="<?php echo $avatar_url; ?>" class="absolute top-[45px] left-1/2 -translate-x-1/2 w-[220px] h-[270px] object-cover" alt="Employee Photo">
+                        <img src="../assets/images/bg.png" class="absolute inset-0 w-full h-full object-cover pointer-events-none" alt="Card Background">
                         
-                        <div class="relative z-30 text-center w-full px-5 pb-5 space-y-1">
+                        <div class="relative text-center w-full px-5 pb-5 space-y-1">
                             <h3 class="text-lg font-bold text-slate-950 tracking-wide leading-tight">
                                 <?php echo htmlspecialchars($fullname); ?>
                             </h3>

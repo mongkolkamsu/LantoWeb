@@ -82,7 +82,7 @@ try {
 // 🎯 3. ตั้งค่าโควตาวันลาเริ่มต้น & คำนวณวันลา
 $leave_quota = [
     'sick'     => ['used' => 0, 'max' => 30],
-    'business' => ['used' => 0, 'max' => 6],
+    'business' => ['used' => 0, 'max' => 3],
     'vacation' => ['used' => 0, 'max' => 6]
 ];
 

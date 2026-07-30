@@ -27,21 +27,21 @@ require_once __DIR__ . '/rounded_dropdown.php';
             </div>
             
             <div class="grid grid-cols-3 gap-2 text-center text-xs">
-                <!-- 1. ลาป่วย -->
+                <!-- 1. ลากิจ -->
+                <div class="bg-white border border-slate-100 p-2.5 rounded-xl shadow-2xs space-y-0.5">
+                    <p class="text-[10px] text-slate-500 font-semibold">💼 ลากิจ</p>
+                    <p class="font-black text-slate-800 text-xs">
+                        <span class="text-blue-600 font-extrabold text-sm"><?php echo $leave_quota['business']['used'] ?? 0; ?></span>
+                        <span class="text-slate-400 font-normal text-[10px]">/ <?php echo $leave_quota['business']['max'] ?? 3; ?> วัน</span>
+                    </p>
+                </div>
+
+                <!-- 2. ลาป่วย -->
                 <div class="bg-white border border-slate-100 p-2.5 rounded-xl shadow-2xs space-y-0.5">
                     <p class="text-[10px] text-slate-500 font-semibold">🤒 ลาป่วย</p>
                     <p class="font-black text-slate-800 text-xs">
                         <span class="text-amber-600 font-extrabold text-sm"><?php echo $leave_quota['sick']['used'] ?? 0; ?></span>
                         <span class="text-slate-400 font-normal text-[10px]">/ <?php echo $leave_quota['sick']['max'] ?? 30; ?> วัน</span>
-                    </p>
-                </div>
-
-                <!-- 2. ลากิจ -->
-                <div class="bg-white border border-slate-100 p-2.5 rounded-xl shadow-2xs space-y-0.5">
-                    <p class="text-[10px] text-slate-500 font-semibold">💼 ลากิจ</p>
-                    <p class="font-black text-slate-800 text-xs">
-                        <span class="text-blue-600 font-extrabold text-sm"><?php echo $leave_quota['business']['used'] ?? 0; ?></span>
-                        <span class="text-slate-400 font-normal text-[10px]">/ <?php echo $leave_quota['business']['max'] ?? 6; ?> วัน</span>
                     </p>
                 </div>
 

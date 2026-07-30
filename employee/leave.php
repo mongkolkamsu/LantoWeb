@@ -26,12 +26,12 @@ try {
     // ซ่อนข้อผิดพลาด
 }
 
-// 🎯 ตั้งค่าโควตาการลาพื้นฐานตามเงื่อนไขที่กำหนด
+// 🎯 1. ตั้งค่าโควตาการลาพื้นฐานเต็มจำนวนประจำปี
 $personal_limit = 3;  // ลากิจ 3 วัน
-$sick_limit = 30;    // ลาป่วย 30 วัน
-$vacation_limit = 0; // ตั้งต้นเป็น 0 วันก่อนปลดล็อก
+$sick_limit     = 30; // ลาป่วย 30 วัน
+$vacation_limit = 0;  // ตั้งต้นเป็น 0 วันก่อนปลดล็อก
 
-// 🎯 คำนวณอายุงานเพื่อปลดล็อกสิทธิ์ลาพักร้อน (ต้องครบ 1 ปีขึ้นไป)
+// 🎯 2. คำนวณอายุงานเพื่อปลดล็อกสิทธิ์ลาพักร้อน (ต้องครบ 1 ปีขึ้นไป)
 $is_unlocked_vacation = false;
 if (!empty($start_date) && $start_date != '0000-00-00') {
     $start_dt = new DateTime($start_date);
@@ -44,14 +44,52 @@ if (!empty($start_date) && $start_date != '0000-00-00') {
     }
 }
 
-// 🎯 จัดเตรียมชุดข้อมูลตัวเลือกอาร์เรย์สำหรับส่งให้กล่องดรอปดาวน์
+// 🎯 3. ดึงจำนวนวันลาที่ได้รับอนุมัติแล้ว (approved) ในปีนี้มาหักลบออกจากโควตา
+$personal_used = 0;
+$sick_used     = 0;
+$vacation_used = 0;
+
+try {
+    $stmt_used = $pdo->prepare("
+        SELECT leave_type, SUM(DATEDIFF(end_date, start_date) + 1) AS days_used
+        FROM leave_requests
+        WHERE user_id = :user_id 
+          AND status = 'approved'
+          AND YEAR(created_at) = YEAR(CURRENT_DATE)
+        GROUP BY leave_type
+    ");
+    $stmt_used->execute(['user_id' => $user_id]);
+    $used_records = $stmt_used->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($used_records as $ur) {
+        $type = strtolower($ur['leave_type']);
+        $days = (int)$ur['days_used'];
+
+        if ($type === 'personal' || $type === 'business') {
+            $personal_used += $days;
+        } elseif ($type === 'sick') {
+            $sick_used += $days;
+        } elseif ($type === 'vacation' || $type === 'annual') {
+            $vacation_used += $days;
+        }
+    }
+} catch (PDOException $e) {
+    // ซ่อนข้อผิดพลาด
+}
+
+// คำนวณวันลาคงเหลือจริง
+$personal_remaining = max(0, $personal_limit - $personal_used);
+$sick_remaining     = max(0, $sick_limit - $sick_used);
+$vacation_remaining = max(0, $vacation_limit - $vacation_used);
+
+// 🎯 4. จัดเตรียมชุดข้อมูลตัวเลือกอาร์เรย์สำหรับส่งให้กล่องดรอปดาวน์
 $leave_options = array(
-    array('id' => 'personal', 'name' => 'ลากิจ (คงเหลือ ' . $personal_limit . ' วัน)'),
-    array('id' => 'sick', 'name' => 'ลาป่วย (คงเหลือ ' . $sick_limit . ' วัน)'),
+    array('id' => 'personal', 'name' => 'ลากิจ (คงเหลือ ' . $personal_remaining . ' วัน)'),
+    array('id' => 'sick', 'name' => 'ลาป่วย (คงเหลือ ' . $sick_remaining . ' วัน)'),
     array('id' => 'other', 'name' => 'ลาอื่นๆ (โปรดระบุเหตุผล)')
 );
 if ($is_unlocked_vacation) {
-    $leave_options[] = array('id' => 'vacation', 'name' => 'ลาพักร้อน (คงเหลือ ' . $vacation_limit . ' วัน)');
+    $leave_options[] = array('id' => 'vacation', 'name' => 'ลาพักร้อน (คงเหลือ ' . $vacation_remaining . ' วัน)');
 }
 
 // 🎯 อาร์เรย์สำหรับรูปแบบเวลาการลา
@@ -102,14 +140,14 @@ $duration_options = array(
                     <div class="bg-white/80 border border-slate-200/60 rounded-xl p-2.5 text-center shadow-2xs">
                         <span class="text-lg">💼</span>
                         <h4 class="text-[11px] font-medium text-slate-500 mt-0.5">ลากิจ</h4>
-                        <p class="text-sm font-bold text-slate-900 mt-0.5"><?php echo $personal_limit; ?> วัน</p>
+                        <p class="text-sm font-bold text-slate-900 mt-0.5"><?php echo $personal_remaining; ?> วัน</p>
                     </div>
 
                     <!-- การ์ดสิทธิ์ลาป่วย -->
                     <div class="bg-white/80 border border-slate-200/60 rounded-xl p-2.5 text-center shadow-2xs">
                         <span class="text-lg">🤒</span>
                         <h4 class="text-[11px] font-medium text-slate-500 mt-0.5">ลาป่วย</h4>
-                        <p class="text-sm font-bold text-slate-900 mt-0.5"><?php echo $sick_limit; ?> วัน</p>
+                        <p class="text-sm font-bold text-slate-900 mt-0.5"><?php echo $sick_remaining; ?> วัน</p>
                     </div>
 
                     <!-- การ์ดสิทธิ์ลาพักร้อน -->
@@ -122,7 +160,7 @@ $duration_options = array(
                         <?php endif; ?>
                         
                         <h4 class="text-[11px] font-medium <?php echo $is_unlocked_vacation ? 'text-slate-500' : 'text-slate-400'; ?> mt-0.5">พักร้อน</h4>
-                        <p class="text-sm font-bold <?php echo $is_unlocked_vacation ? 'text-slate-900' : 'text-slate-400'; ?> mt-0.5"><?php echo $vacation_limit; ?> วัน</p>
+                        <p class="text-sm font-bold <?php echo $is_unlocked_vacation ? 'text-slate-900' : 'text-slate-400'; ?> mt-0.5"><?php echo $vacation_remaining; ?> วัน</p>
                     </div>
 
                 </div>
