@@ -223,11 +223,6 @@ try {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1e3a8a">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="LantoWeb">
     <style>
         body { font-family: 'Noto Sans Thai', sans-serif; -webkit-tap-highlight-color: transparent; }
         ::-webkit-scrollbar { display: none; }
@@ -488,14 +483,6 @@ try {
                 observer.observe(yearInput, { attributes: true, attributeFilter: ['value'] });
             }
         });
-            // เรียกใช้งาน Service Worker สำหรับ PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('PWA Ready!'))
-                    .catch(err => console.log('PWA Error', err));
-            });
-        }
     </script>
 </body>
 </html>
