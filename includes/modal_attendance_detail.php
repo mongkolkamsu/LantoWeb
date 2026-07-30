@@ -66,10 +66,6 @@
             </div>
         </div>
 
-        <!-- ปุ่มปิดด้านล่าง -->
-        <button type="button" onclick="closeAttendanceModal()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors cursor-pointer">
-            ปิดหน้าต่าง
-        </button>
     </div>
 </div>
 
@@ -122,7 +118,7 @@
         } else if (statusType === 'ontime') {
             badge.className = "inline-block px-2.5 py-0.5 rounded-lg text-xs font-extrabold bg-emerald-100 text-emerald-700 border border-emerald-200";
         } else if (statusType === 'late') {
-            badge.className = "inline-block px-2.5 py-0.5 rounded-lg text-xs font-extrabold bg-rose-100 text-rose-700 border border-rose-200";
+            badge.className = "inline-block px-2.5 py-0.5 rounded-lg text-xs font-extrabold bg-amber-100 text-amber-800 border border-amber-200";
         } else {
             badge.className = "inline-block px-2.5 py-0.5 rounded-lg text-xs font-extrabold bg-slate-100 text-slate-700 border border-slate-200";
         }
