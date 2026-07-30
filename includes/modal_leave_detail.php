@@ -118,7 +118,7 @@
         </div>
 
         <!-- 🔵 MODAL 2 (กล่องขวา): ผังขั้นตอนการพิจารณา (Workflow Stepper 4 ขั้นตอน) -->
-        <div class="bg-white rounded-3xl lg:w-1/2 w-full p-6 shadow-2xl border border-slate-100 flex flex-col justify-between relative space-y-5 max-h-[85vh] overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4 relative animate-in fade-in zoom-in duration-150 max-h-[92vh] overflow-y-auto overscroll-contain">
             <div>
                 <!-- Header -->
                 <div class="flex justify-between items-start border-b border-slate-100 pb-4 mb-5">
@@ -529,5 +529,40 @@
     function closeLeaveImageLightbox() {
         const lightbox = document.getElementById('leaveImageLightbox');
         if (lightbox) lightbox.classList.add('hidden');
+    }
+
+    function openLeaveStatusModal(leavesList = []) {
+        const modal = document.getElementById('leaveStatusModal');
+        if (!modal) return;
+
+        // 🎯 [เพิ่มบรรทัดนี้] ล็อกไม่ให้ฉากหลังเลื่อนได้
+        document.body.classList.add('overflow-hidden');
+
+        globalLeavesList = Array.isArray(leavesList) ? leavesList : [];
+
+        const noDataBox = document.getElementById('m_status_no_data');
+        const contentBox = document.getElementById('m_status_content');
+
+        if (!globalLeavesList || globalLeavesList.length === 0) {
+            if (noDataBox) noDataBox.classList.remove('hidden');
+            if (contentBox) contentBox.classList.add('hidden');
+            modal.classList.remove('hidden');
+            return;
+        }
+
+        if (noDataBox) noDataBox.classList.add('hidden');
+        if (contentBox) contentBox.classList.remove('hidden');
+
+        // แสดงรายการยื่นล่าสุดก่อนเสมอ (Index 0)
+        renderLeaveDetail(globalLeavesList[0]);
+        modal.classList.remove('hidden');
+    }
+    
+    function closeLeaveStatusModal() {
+        const modal = document.getElementById('leaveStatusModal');
+        if (modal) modal.classList.add('hidden');
+        
+        // 🎯 [เพิ่มบรรทัดนี้] ปลดล็อกให้ฉากหลังกลับมาเลื่อนได้ปกติ
+        document.body.classList.remove('overflow-hidden');
     }
 </script>
