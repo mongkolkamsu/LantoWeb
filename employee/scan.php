@@ -116,10 +116,10 @@ try {
                 </div>
             </div>
 
-            <!-- กรอบรูปกล้องสแกนเนอร์สไตล์วงกลมสมมาตร -->
-            <div class="relative w-60 h-60 mx-auto bg-slate-950 rounded-full overflow-hidden border-4 border-white shadow-2xl flex items-center justify-center my-4">
+            <!-- 🎯 กรอบรูปกล้องสแกนเนอร์ (ปรับขยายขนาดเป็น w-72 h-72) -->
+            <div class="relative w-72 h-72 mx-auto bg-slate-950 rounded-full overflow-hidden border-4 border-white shadow-2xl flex items-center justify-center my-3">
                 
-                <!-- 🎯 ป้ายคำสั่งท้าทาย Liveness Action (สุ่มคำสั่ง: กระพริบตา / ยิ้ม) -->
+                <!-- ป้ายคำสั่ง Liveness -->
                 <div id="action-badge" class="absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-amber-500 text-slate-950 text-[11px] font-extrabold px-3.5 py-1 rounded-full backdrop-blur-md border border-amber-300 transition-all flex items-center gap-1.5 shadow-lg animate-bounce">
                     <span id="action-icon">🤖</span>
                     <span id="action-text">กำลังโหลดระบบตรวจจับ...</span>
@@ -129,12 +129,13 @@ try {
                 <canvas id="photo-preview" class="w-full h-full object-cover scale-x-[-1] hidden absolute inset-0 z-10 rounded-full"></canvas>
                 <div id="laser-line" class="scanner-line absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-blue-500 to-transparent shadow-[0_0_12px_#3b82f6] z-20 mx-6"></div>
                 
+                <!-- 🎯 เส้นประด้านในขยายเป็น w-56 h-56 -->
                 <div id="target-ui" class="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
-                    <div id="target-border" class="w-44 h-44 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300">
-                        <div class="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-blue-400 rounded-tl-sm"></div>
-                        <div class="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-blue-400 rounded-tr-sm"></div>
-                        <div class="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-blue-400 rounded-bl-sm"></div>
-                        <div class="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-blue-400 rounded-br-sm"></div>
+                    <div id="target-border" class="w-56 h-56 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300">
+                        <div class="absolute top-0 left-0 w-3.5 h-3.5 border-t-2 border-l-2 border-blue-400 rounded-tl-sm"></div>
+                        <div class="absolute top-0 right-0 w-3.5 h-3.5 border-t-2 border-r-2 border-blue-400 rounded-tr-sm"></div>
+                        <div class="absolute bottom-0 left-0 w-3.5 h-3.5 border-b-2 border-l-2 border-blue-400 rounded-bl-sm"></div>
+                        <div class="absolute bottom-0 right-0 w-3.5 h-3.5 border-b-2 border-r-2 border-blue-400 rounded-br-sm"></div>
                     </div>
                 </div>
 
@@ -438,7 +439,7 @@ try {
             actionIcon.innerText = "🟢";
             actionText.innerText = "ผ่านการยืนยันตัวตนแล้ว!";
             actionBadge.className = "absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-emerald-600 text-white text-[11px] font-extrabold px-3.5 py-1 rounded-full backdrop-blur-md border border-emerald-300 transition-all flex items-center gap-1.5 shadow-lg";
-            targetBorder.className = "w-44 h-44 rounded-full border-2 border-solid border-emerald-400 flex items-center justify-center relative transition-colors duration-300 shadow-[0_0_20px_rgba(52,211,153,0.5)]";
+            targetBorder.className = "w-56 h-56 rounded-full border-2 border-solid border-emerald-400 flex items-center justify-center relative transition-colors duration-300 shadow-[0_0_20px_rgba(52,211,153,0.5)]";
 
             btnCapture.disabled = false;
             btnCapture.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -493,7 +494,7 @@ try {
             actionIcon.innerText = currentChallenge.icon;
             actionText.innerText = currentChallenge.text;
             actionBadge.className = "absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-amber-500 text-slate-950 text-[11px] font-extrabold px-3.5 py-1 rounded-full backdrop-blur-md border border-amber-300 transition-all flex items-center gap-1.5 shadow-lg animate-bounce";
-            targetBorder.className = "w-44 h-44 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300";
+            targetBorder.className = "w-56 h-56 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300";
 
             btnCapture.disabled = true;
             btnCapture.classList.add('opacity-50', 'cursor-not-allowed');
