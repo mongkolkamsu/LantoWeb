@@ -79,6 +79,11 @@ try {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- 🤖 MediaPipe AI Face Detection Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js" crossorigin="anonymous"></script>
+
     <style>
         body { font-family: 'Noto Sans Thai', sans-serif; -webkit-tap-highlight-color: transparent; }
         @keyframes scan { 0% { top: 15%; } 50% { top: 85%; } 100% { top: 15%; } }
@@ -86,7 +91,7 @@ try {
         ::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] min-h-screen flex items-center justify-center p-0 md:p-4 text-slate-800 antialiased">
+<body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] min-h-screen flex items-center justify-center p-0 md:p-4 text-slate-800 antialiased select-none">
 
     <div class="w-full min-h-screen bg-white/40 backdrop-blur-xl flex flex-col justify-between relative overflow-y-auto p-5 pb-28
             md:max-w-md md:mx-auto md:my-6 md:min-h-[812px] md:rounded-[40px] md:border md:border-white/60 md:shadow-2xl">
@@ -113,12 +118,19 @@ try {
 
             <!-- กรอบรูปกล้องสแกนเนอร์สไตล์วงกลมสมมาตร -->
             <div class="relative w-60 h-60 mx-auto bg-slate-950 rounded-full overflow-hidden border-4 border-white shadow-2xl flex items-center justify-center my-4">
+                
+                <!-- 🟢/🔴 ป้ายแสดงสถานะการตรวจจับใบหน้าสด -->
+                <div id="face-detect-badge" class="absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-slate-900/85 text-slate-200 text-[10px] font-bold px-3 py-1 rounded-full backdrop-blur-md border border-white/20 transition-all flex items-center gap-1.5 shadow-md">
+                    <span id="face-dot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                    <span id="face-text">กำลังสแกนหาใบหน้า...</span>
+                </div>
+
                 <video id="webcam" autoplay playsinline class="w-full h-full object-cover scale-x-[-1] rounded-full"></video>
                 <canvas id="photo-preview" class="w-full h-full object-cover scale-x-[-1] hidden absolute inset-0 z-10 rounded-full"></canvas>
                 <div id="laser-line" class="scanner-line absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-blue-500 to-transparent shadow-[0_0_12px_#3b82f6] z-20 mx-6"></div>
                 
                 <div id="target-ui" class="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
-                    <div class="w-44 h-44 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center relative">
+                    <div id="target-border" class="w-44 h-44 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300">
                         <div class="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-blue-400 rounded-tl-sm"></div>
                         <div class="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-blue-400 rounded-tr-sm"></div>
                         <div class="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-blue-400 rounded-bl-sm"></div>
@@ -144,7 +156,7 @@ try {
                 <span class="text-[10px] bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded-lg font-mono font-medium">รหัสพนักงาน: <?php echo htmlspecialchars($employee_code); ?></span>
             </div>
 
-            <!-- 🎯 แก้โจทย์ข้อ 3: ใส่ไอดี "branch-section" และเพิ่มคลาส "hidden" เพื่อซ่อนกล่องเลือกสาขาไว้ก่อนตั้งแต่เริ่มหน้านี้ -->
+            <!-- กล่องเลือกสถานที่/สาขา -->
             <div id="branch-section" class="hidden bg-white/80 border border-slate-200/60 p-4 rounded-2xl shadow-xs space-y-3 mt-3 transition-all duration-300">
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5 pl-0.5">📍 เลือกสถานที่ / สาขาปฏิบัติงาน</label>
@@ -185,12 +197,12 @@ try {
                 ยกเลิกและกดถ่ายรูปใหม่ (Retake Photo)
             </button>
 
-            <button id="btnCapture" class="w-full bg-gradient-to-r <?php echo $type_color; ?> text-white font-semibold py-3.5 rounded-2xl shadow-md text-sm tracking-wide transition-all transform active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2">
+            <button id="btnCapture" class="w-full bg-gradient-to-r <?php echo $type_color; ?> text-white font-semibold py-3.5 rounded-2xl shadow-md text-sm tracking-wide transition-all transform active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 opacity-50 cursor-not-allowed" disabled>
                 <svg id="btn-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                <span id="btn-text">กดถ่ายรูปเพื่อ<?php echo ($type === 'check_out') ? 'ออกงาน' : 'เข้างาน'; ?></span>
+                <span id="btn-text">วางใบหน้าให้อยู่ในกรอบ...</span>
             </button>
             
-            <p class="text-[10px] text-center text-slate-400 mt-2 font-light">Lanto Web Security Engine v4.0.0</p>
+            <p class="text-[10px] text-center text-slate-400 mt-2 font-light">Lanto Web AI Face Engine v4.5.0</p>
         </div>
     <?php include '../includes/navbar.php'; ?>
     </div>
@@ -201,6 +213,7 @@ try {
         let userLat = null;
         let userLng = null;
         let isCaptured = false;
+        let isFaceVerified = false; // 🤖 ตัวแปรเช็กสถานะการพบใบหน้าจาก AI
 
         const shiftType = '<?php echo $type; ?>'; 
         const shiftStartStr = '<?php echo $shift_start; ?>'; 
@@ -310,16 +323,7 @@ try {
             }
         }
 
-        async function initCamera() {
-            const video = document.getElementById('webcam');
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 640 }, height: { ideal: 640 } }, audio: false });
-                video.srcObject = stream;
-            } catch (error) {
-                document.getElementById('camera-error').classList.remove('hidden');
-            }
-        }
-
+        // 🤖 ติดตั้งและประมวลผล MediaPipe Face Detection
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('photo-preview');
         const btnCapture = document.getElementById('btnCapture');
@@ -327,27 +331,95 @@ try {
         const btnText = document.getElementById('btn-text');
         const laserLine = document.getElementById('laser-line');
         const targetUi = document.getElementById('target-ui');
+        
+        const faceBadge = document.getElementById('face-detect-badge');
+        const faceDot = document.getElementById('face-dot');
+        const faceText = document.getElementById('face-text');
+        const targetBorder = document.getElementById('target-border');
 
-        // 🎯 แก้โจทย์ข้อ 1: ปรับแต่งฟังก์ชันตัดรูปแบบกึ่งกลาง (Center Crop) เพื่อแก้ปัญหาหน้าอ้วนบวมขยายข้าง
+        let cameraUtils = null;
+
+        async function initCameraWithFaceDetection() {
+            try {
+                const faceDetection = new FaceDetection({
+                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`
+                });
+
+                faceDetection.setOptions({
+                    modelSelection: 0, // Short range (กล้องหน้า/Selfie)
+                    minDetectionConfidence: 0.65
+                });
+
+                faceDetection.onResults((results) => {
+                    if (isCaptured) return; // หากกดถ่ายรูปค้างไว้แล้ว ให้หยุดประมวลผลชั่วคราว
+
+                    if (results.detections && results.detections.length > 0) {
+                        // 🟢 กรณีตรวจพบใบหน้ามนุษย์จริง
+                        isFaceVerified = true;
+                        faceDot.className = "w-2 h-2 rounded-full bg-emerald-400";
+                        faceText.innerText = "พบใบหน้ามนุษย์แล้ว (Verified)";
+                        faceBadge.className = "absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-emerald-950/90 text-emerald-300 text-[10px] font-bold px-3 py-1 rounded-full backdrop-blur-md border border-emerald-500/40 transition-all flex items-center gap-1.5 shadow-md";
+                        targetBorder.className = "w-44 h-44 rounded-full border-2 border-solid border-emerald-400 flex items-center justify-center relative transition-colors duration-300 shadow-[0_0_15px_rgba(52,211,153,0.3)]";
+
+                        btnCapture.disabled = false;
+                        btnCapture.classList.remove('opacity-50', 'cursor-not-allowed');
+                        btnText.innerText = "กดถ่ายรูปเพื่อ" + (shiftType === 'check_out' ? 'ออกงาน' : 'เข้างาน');
+                    } else {
+                        // 🔴 กรณีจับไม่เจอใบหน้า
+                        isFaceVerified = false;
+                        faceDot.className = "w-2 h-2 rounded-full bg-rose-400 animate-pulse";
+                        faceText.innerText = "กรุณาขยับใบหน้าให้อยู่ในกรอบ";
+                        faceBadge.className = "absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-rose-950/90 text-rose-300 text-[10px] font-bold px-3 py-1 rounded-full backdrop-blur-md border border-rose-500/40 transition-all flex items-center gap-1.5 shadow-md";
+                        targetBorder.className = "w-44 h-44 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300";
+
+                        btnCapture.disabled = true;
+                        btnCapture.classList.add('opacity-50', 'cursor-not-allowed');
+                        btnText.innerText = "วางใบหน้าให้อยู่ในกรอบ...";
+                    }
+                });
+
+                cameraUtils = new Camera(video, {
+                    onFrame: async () => {
+                        if (!isCaptured) {
+                            await faceDetection.send({ image: video });
+                        }
+                    },
+                    width: 640,
+                    height: 640
+                });
+
+                await cameraUtils.start();
+
+            } catch (error) {
+                console.error("Camera/AI Error:", error);
+                document.getElementById('camera-error').classList.remove('hidden');
+            }
+        }
+
         function freezeCapturePhoto() {
+            if (!isFaceVerified) {
+                if (typeof LantoAlert !== 'undefined') {
+                    LantoAlert.warning('ไม่พบใบหน้า', 'ระบบไม่พบใบหน้ามนุษย์ในกล้อง โปรดส่องใบหน้าให้อยู่ในกรอบทรงกลมครับ');
+                }
+                return;
+            }
+
             const ctx = canvas.getContext('2d');
-            
-            // ตรวจหาขนาดด้านที่สั้นที่สุดของไฟล์สตรีมกล้องจริง เพื่อนำมาสร้างโครงแบบสี่เหลี่ยมจัตุรัส 1:1
             const size = Math.min(video.videoWidth, video.videoHeight);
             canvas.width = size;
             canvas.height = size;
             
-            // คำนวณพิกัดจุดเริ่มต้นกึ่งกลางเฟรม (Center Point cropping)
             const sx = (video.videoWidth - size) / 2;
             const sy = (video.videoHeight - size) / 2;
             
-            // ดึงภาพเฉพาะส่วนแกนกลางสมมาตรมาวาดลง Canvas เพื่อให้หน้าเรียวเรียบเนียนไม่บิดเบี้ยว
             ctx.drawImage(video, sx, sy, size, size, 0, 0, size, size);
             
             canvas.classList.remove('hidden');
             video.classList.add('hidden');
             laserLine.classList.add('hidden');
             targetUi.classList.add('hidden');
+            faceBadge.classList.add('hidden');
+            
             isCaptured = true;
             btnText.innerText = "ยืนยันและส่งข้อมูลบันทึกเวลา";
             btnRetake.classList.remove('hidden');
@@ -363,12 +435,13 @@ try {
             video.classList.remove('hidden');
             laserLine.classList.remove('hidden');
             targetUi.classList.remove('hidden');
+            faceBadge.classList.remove('hidden');
+            
             isCaptured = false;
-            btnText.innerText = "กดถ่ายรูปเพื่อ" + (shiftType === 'check_out' ? 'ออกงาน' : 'เข้างาน');
+            btnText.innerText = "วางใบหน้าให้อยู่ในกรอบ...";
             btnRetake.classList.remove('flex');
             btnRetake.classList.add('hidden');
 
-            // 🎯 แก้โจทย์ข้อ 3: เมื่อกดยกเลิกกลับมาถ่ายใหม่ ให้ทำการซ่อนกล่องเลือกสถานที่กลับไปตามเดิม
             document.getElementById('branch-section').classList.add('hidden');
         }
 
@@ -376,11 +449,9 @@ try {
             if (!isCaptured) {
                 freezeCapturePhoto();
             } else {
-                // 🎯 1. ดึงค่า branch_id มารอด้านบนสุดก่อน เพื่อไม่ให้เกิดปัญหาเรื่อง Scope ตัวแปร
                 const branchSelectEl = document.getElementById('branch_select');
                 const branchId = branchSelectEl ? branchSelectEl.value : '';
 
-                // เช็คความปลอดภัยก่อนนำส่งข้อมูล
                 if (shiftType === 'check_in') {
                     if (!branchId) {
                         if (typeof LantoAlert !== 'undefined') {
@@ -447,7 +518,7 @@ try {
         window.addEventListener('DOMContentLoaded', () => {
             startLiveClock();
             trackUserLocation();
-            initCamera();
+            initCameraWithFaceDetection();
         });
     </script>
 </body>
