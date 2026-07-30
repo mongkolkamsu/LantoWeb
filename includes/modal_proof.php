@@ -17,8 +17,8 @@
             </button>
         </div>
 
-        <!-- 🖼️ กรอบรูปภาพทรงสี่เหลี่ยมขอบมน -->
-        <div class="w-full h-56 sm:h-64 rounded-2xl bg-slate-100 border-2 border-slate-200/60 shadow-inner overflow-hidden relative flex items-center justify-center">
+        <!-- 🖼️ กรอบรูปภาพทรงสี่เหลี่ยมขอบมน (ปรับขยายความสูงยาวลงมาเป็น h-80 sm:h-96) -->
+        <div class="w-full h-80 sm:h-96 rounded-2xl bg-slate-100 border-2 border-slate-200/60 shadow-inner overflow-hidden relative flex items-center justify-center">
             <!-- รูปภาพจริง -->
             <img id="modal-photo" src="" alt="Proof Photo" class="w-full h-full object-cover hidden">
             
