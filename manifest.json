@@ -9,12 +9,12 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "assets/images/LOGO-Lanto.png",
+      "src": "assets/images/Logo.png",
       "sizes": "192x192",
       "type": "image/jpeg"
     },
     {
-      "src": "assets/images/LOGO-Lanto.png",
+      "src": "assets/images/Logo.png",
       "sizes": "512x512",
       "type": "image/jpeg"
     }
