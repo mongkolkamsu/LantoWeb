@@ -280,8 +280,11 @@ foreach ($logs as $log) {
                                 <!-- บอดี้การ์ด: แบ่งครึ่งซ้าย (เข้า) - ขวา (ออก) -->
                                 <div class="grid grid-cols-2 gap-2">
                                     
-                                    <!-- 📥 ฝั่งซ้าย: ข้อมูลเข้างาน (IN) -->
-                                    <div class="bg-slate-100/90 p-2 rounded-xl border border-slate-200/80 flex flex-col justify-between space-y-1.5 shadow-2xs">
+                                    <!-- 📥 ฝั่งซ้าย: ข้อมูลเข้างาน (IN) - กดที่กล่องเพื่อเปิดหลักฐานได้ทันที -->
+                                    <div class="bg-slate-100/90 p-2 rounded-xl border border-slate-200/80 flex flex-col justify-between space-y-1.5 shadow-2xs <?php echo $in ? 'cursor-pointer active:scale-95 hover:border-blue-300 transition-all' : ''; ?>"
+                                        <?php if ($in): ?>
+                                            onclick="openProofModal('check_in', '<?php echo $in['photo_log']; ?>', '<?php echo htmlspecialchars($in['clean_branch'], ENT_QUOTES); ?>', '<?php echo $in['status_title']; ?>', '<?php echo $in['status_color']; ?>', '<?php echo $day['date_display']; ?>', '<?php echo $in['time_display']; ?>')"
+                                        <?php endif; ?>>
                                         <div class="flex items-center justify-between">
                                             <span class="text-[10px] font-bold bg-blue-600 text-white px-2 py-0.5 rounded-md">เข้า (IN)</span>
                                             <?php if ($in): ?>
@@ -296,19 +299,17 @@ foreach ($logs as $log) {
                                                 <span class="inline-block text-[9px] px-2 py-0.5 rounded-md font-semibold border <?php echo $in['status_color']; ?>">
                                                     <?php echo $in['status_title']; ?>
                                                 </span>
-                                                <button type="button" 
-                                                        onclick="openProofModal('check_in', '<?php echo $in['photo_log']; ?>', '<?php echo htmlspecialchars($in['clean_branch'], ENT_QUOTES); ?>', '<?php echo $in['status_title']; ?>', '<?php echo $in['status_color']; ?>', '<?php echo $day['date_display']; ?>', '<?php echo $in['time_display']; ?>')"
-                                                        class="text-[10px] text-blue-600 bg-white hover:bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-lg transition-all cursor-pointer font-medium shadow-2xs">
-                                                    หลักฐาน
-                                                </button>
                                             </div>
                                         <?php else: ?>
                                             <span class="text-[10px] text-slate-400 italic">ยังไม่มีข้อมูลลงชื่อเข้า</span>
                                         <?php endif; ?>
                                     </div>
 
-                                    <!-- 📤 ฝั่งขวา: ข้อมูลออกงาน (OUT) -->
-                                    <div class="bg-slate-100/90 p-2 rounded-xl border border-slate-200/80 flex flex-col justify-between space-y-1.5 shadow-2xs">
+                                    <!-- 📤 ฝั่งขวา: ข้อมูลออกงาน (OUT) - กดที่กล่องเพื่อเปิดหลักฐานได้ทันที -->
+                                    <div class="bg-slate-100/90 p-2 rounded-xl border border-slate-200/80 flex flex-col justify-between space-y-1.5 shadow-2xs <?php echo $out ? 'cursor-pointer active:scale-95 hover:border-blue-300 transition-all' : ''; ?>"
+                                        <?php if ($out): ?>
+                                            onclick="openProofModal('check_out', '<?php echo $out['photo_log']; ?>', '<?php echo htmlspecialchars($out['clean_branch'], ENT_QUOTES); ?>', '<?php echo $out['status_title']; ?>', '<?php echo $out['status_color']; ?>', '<?php echo $day['date_display']; ?>', '<?php echo $out['time_display']; ?>')"
+                                        <?php endif; ?>>
                                         <div class="flex items-center justify-between">
                                             <span class="text-[10px] font-bold bg-slate-700 text-white px-2 py-0.5 rounded-md">ออก (OUT)</span>
                                             <?php if ($out): ?>
@@ -323,11 +324,6 @@ foreach ($logs as $log) {
                                                 <span class="inline-block text-[9px] px-2 py-0.5 rounded-md font-semibold border <?php echo $out['status_color']; ?>">
                                                     <?php echo $out['status_title']; ?>
                                                 </span>
-                                                <button type="button" 
-                                                        onclick="openProofModal('check_out', '<?php echo $out['photo_log']; ?>', '<?php echo htmlspecialchars($out['clean_branch'], ENT_QUOTES); ?>', '<?php echo $out['status_title']; ?>', '<?php echo $out['status_color']; ?>', '<?php echo $day['date_display']; ?>', '<?php echo $out['time_display']; ?>')"
-                                                        class="text-[10px] text-blue-600 bg-white hover:bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-lg transition-all cursor-pointer font-medium shadow-2xs">
-                                                    หลักฐาน
-                                                </button>
                                             </div>
                                         <?php else: ?>
                                             <span class="text-[11px] text-slate-500">ยังไม่ลงชื่อออกงาน</span>
