@@ -68,6 +68,43 @@ try {
 } catch (PDOException $e) {
     $branches = [];
 }
+// 🔍 ดึงเฉพาะรายชื่อสาขาที่แอดมินกำหนดสิทธิ์ให้พนักงานคนนี้เห็น
+$branches = [];
+try {
+    // 1. ดึง branch_id หลักจากตาราง users
+    $stmt_u_branch = $pdo->prepare("SELECT branch_id FROM users WHERE id = :user_id LIMIT 1");
+    $stmt_u_branch->execute(['user_id' => $user_id]);
+    $assigned_branch_id = $stmt_u_branch->fetchColumn();
+
+    // 2. ดึงข้อมูลสาขาที่ตรงกับสิทธิ์พนักงาน (รองรับทั้ง branch_id ใน users และตารางสิทธิ์ user_branches)
+    $stmt_branches = $pdo->prepare("
+        SELECT DISTINCT b.id, b.name, b.latitude, b.longitude, b.radius 
+        FROM branches b
+        LEFT JOIN user_branches ub ON b.id = ub.branch_id
+        WHERE b.is_active = 1 
+          AND (b.id = :branch_id OR ub.user_id = :user_id)
+    ");
+    $stmt_branches->execute([
+        'branch_id' => $assigned_branch_id,
+        'user_id'   => $user_id
+    ]);
+    $branches = $stmt_branches->fetchAll(PDO::FETCH_ASSOC);
+
+    // Fallback: หากยังไม่ได้สิทธิ์เฉพาะ ให้แสดงสาขาทั้งหมดตามปกติ
+    if (empty($branches)) {
+        $stmt_all = $pdo->query("SELECT id, name, latitude, longitude, radius FROM branches WHERE is_active = 1");
+        $branches = $stmt_all->fetchAll(PDO::FETCH_ASSOC);
+    }
+} catch (PDOException $e) {
+    // หากตาราง user_branches ไม่มีในระบบ จะคิวรีเฉพาะ branch_id หลักใน users
+    try {
+        $stmt_fallback = $pdo->prepare("SELECT id, name, latitude, longitude, radius FROM branches WHERE is_active = 1 AND id = :branch_id");
+        $stmt_fallback->execute(['branch_id' => $assigned_branch_id]);
+        $branches = $stmt_fallback->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $ex) {
+        $branches = [];
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -157,8 +194,8 @@ try {
                 <span class="text-[10px] bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded-lg font-mono font-medium">รหัสพนักงาน: <?php echo htmlspecialchars($employee_code); ?></span>
             </div>
 
-            <!-- กล่องเลือกสถานที่/สาขา -->
-            <div id="branch-section" class="hidden bg-white/80 border border-slate-200/60 p-4 rounded-2xl shadow-xs space-y-3 mt-3 transition-all duration-300">
+            <!-- 📍 กล่องเลือกสถานที่/สาขาปฏิบัติงาน (เปิดโชว์ทันทีเมื่อสแกนเข้างาน) -->
+            <div id="branch-section" class="<?php echo ($type === 'check_in') ? '' : 'hidden'; ?> bg-white/80 border border-slate-200/60 p-4 rounded-2xl shadow-xs space-y-3 my-3 transition-all duration-300">
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5 pl-0.5">📍 เลือกสถานที่ / สาขาปฏิบัติงาน</label>
                     <?php 
@@ -171,14 +208,19 @@ try {
                             'data_attributes' => "data-lat='{$b['latitude']}' data-lng='{$b['longitude']}' data-radius='{$b['radius']}'"
                         ];
                     }
-                    renderRoundedDropdown('branch_select', 'branch_id', 'โปรดคลิกเลือกสาขาที่ทำงาน', $branch_opts);
+                    
+                    // หากมีเพียงสาขาเดียวที่ถูกกำหนดสิทธิ์ ให้เลือกเป็นค่าเริ่มต้นทันที
+                    $default_branch = (count($branches) === 1) ? $branches[0]['id'] : '';
+                    $default_label  = (count($branches) === 1) ? $branches[0]['name'] : 'โปรดคลิกเลือกสาขาที่ทำงาน';
+
+                    renderRoundedDropdown('branch_select', 'branch_id', $default_label, $branch_opts, $default_branch);
                     ?>
                 </div>
                 
                 <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex flex-col gap-1 text-[11px]">
                     <div class="flex justify-between">
                         <span class="text-slate-400 font-light">ระยะห่างของคุณจากสาขา:</span>
-                        <span id="distance-text" class="font-bold text-slate-700">กำลังตรวจสอบพิกัด...</span>
+                        <span id="distance-text" class="font-bold text-slate-700">กำลังคำนวณพิกัด GPS...</span>
                     </div>
                     <div class="flex justify-between items-center mt-1 pt-1 border-t border-slate-200/40">
                         <span class="text-slate-400 font-light">ตรวจสอบสถานะพื้นที่:</span>
@@ -437,7 +479,7 @@ try {
             isLivenessPassed = true;
             
             actionIcon.innerText = "🟢";
-            actionText.innerText = "ผ่านการยืนยันตัวตนแล้ว!";
+            actionText.innerText = "ผ่านการยืนยันตัวตนแล้ว";
             actionBadge.className = "absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-emerald-600 text-white text-[11px] font-extrabold px-3.5 py-1 rounded-full backdrop-blur-md border border-emerald-300 transition-all flex items-center gap-1.5 shadow-lg";
             targetBorder.className = "w-56 h-56 rounded-full border-2 border-solid border-emerald-400 flex items-center justify-center relative transition-colors duration-300 shadow-[0_0_20px_rgba(52,211,153,0.5)]";
 
@@ -475,9 +517,6 @@ try {
             btnRetake.classList.remove('hidden');
             btnRetake.classList.add('flex');
 
-            if (shiftType === 'check_in') {
-                document.getElementById('branch-section').classList.remove('hidden');
-            }
         }
 
         function unfreezeAndReset() {
@@ -502,7 +541,6 @@ try {
             btnRetake.classList.remove('flex');
             btnRetake.classList.add('hidden');
 
-            document.getElementById('branch-section').classList.add('hidden');
         }
 
         btnCapture.addEventListener('click', () => {
@@ -579,6 +617,14 @@ try {
             startLiveClock();
             trackUserLocation();
             initFaceMeshLiveness();
+        });
+        // 🎯 คำนวณระยะทางทันทีเมื่อเลือกสาขาใน Dropdown
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('#list-branch_select .dropdown-item')) {
+                setTimeout(() => {
+                    checkBranchDistance();
+                }, 150);
+            }
         });
     </script>
 </body>
