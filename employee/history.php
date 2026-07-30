@@ -241,7 +241,7 @@ foreach ($logs as $log) {
             </div>
 
             <!-- กล่องรายการสรุปผลการลงเวลางานประจำเดือนแบบการ์ดรายวัน -->
-            <div class="space-y-3 overflow-y-auto max-h-[350px] pr-0.5">
+            <div class="space-y-3">
                 <div class="flex justify-between items-center px-1 mb-1">
                     <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
                         <span>บันทึกรายวัน</span> 
