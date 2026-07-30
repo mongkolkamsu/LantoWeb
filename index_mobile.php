@@ -223,11 +223,30 @@ try {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- 📱 ตั้งค่า PWA (รองรับทั้ง Android และ iOS iPhone) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e3a8a">
+
+    <!-- 🍎 สำหรับ iPhone / Safari (แก้ชื่อแอปและรูปไอคอน) -->
+    <link rel="apple-touch-icon" href="assets/images/LOGO-IST.jpg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Lanto Web">
     <style>
         body { font-family: 'Noto Sans Thai', sans-serif; -webkit-tap-highlight-color: transparent; }
         ::-webkit-scrollbar { display: none; }
     </style>
     <script src="assets/js/alerts.js"></script>
+    <script>
+    // ลงทะเบียน Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('PWA Ready!'))
+                .catch(err => console.log('PWA Error', err));
+        });
+    }
+    </script>
 </head>
 <body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] min-h-screen flex items-center justify-center text-slate-800 select-none antialiased p-0 md:p-4">
 

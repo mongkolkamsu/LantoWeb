@@ -84,6 +84,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- 📱 ตั้งค่า PWA (รองรับทั้ง Android และ iOS iPhone) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e3a8a">
+
+    <!-- 🍎 สำหรับ iPhone / Safari (แก้ชื่อแอปและรูปไอคอน) -->
+    <link rel="apple-touch-icon" href="assets/images/LOGO-IST.jpg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Lanto Web">
     <style>
         body { font-family: 'Prompt', sans-serif; }
     </style>

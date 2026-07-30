@@ -46,12 +46,12 @@ if (!empty($start_date) && $start_date != '0000-00-00') {
 
 // 🎯 จัดเตรียมชุดข้อมูลตัวเลือกอาร์เรย์สำหรับส่งให้กล่องดรอปดาวน์
 $leave_options = array(
-    array('id' => 'personal', 'name' => 'ลากิจ (โควตาคงเหลือ ' . $personal_limit . ' วัน)'),
-    array('id' => 'sick', 'name' => 'ลาป่วย (โควตาคงเหลือ ' . $sick_limit . ' วัน)'),
-    array('id' => 'other', 'name' => 'ลาอื่นๆ (โปรดระบุเหตุผลในช่องด้านล่าง)')
+    array('id' => 'personal', 'name' => 'ลากิจ (คงเหลือ ' . $personal_limit . ' วัน)'),
+    array('id' => 'sick', 'name' => 'ลาป่วย (คงเหลือ ' . $sick_limit . ' วัน)'),
+    array('id' => 'other', 'name' => 'ลาอื่นๆ (โปรดระบุเหตุผล)')
 );
 if ($is_unlocked_vacation) {
-    $leave_options[] = array('id' => 'vacation', 'name' => 'ลาพักร้อน (โควตาคงเหลือ ' . $vacation_limit . ' วัน)');
+    $leave_options[] = array('id' => 'vacation', 'name' => 'ลาพักร้อน (คงเหลือ ' . $vacation_limit . ' วัน)');
 }
 
 // 🎯 อาร์เรย์สำหรับรูปแบบเวลาการลา
@@ -76,66 +76,62 @@ $duration_options = array(
         ::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] min-h-screen flex items-center justify-center p-0 md:p-4 text-slate-800 antialiased">
+<body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] min-h-screen flex items-center justify-center p-0 md:p-4 text-slate-800 antialiased select-none">
 
     <!-- 📱 Main Mobile App Shell Layout -->
-    <div class="w-full max-w-md bg-white/60 backdrop-blur-xl border border-white/80 min-h-screen md:min-h-[812px] md:rounded-[40px] shadow-2xl flex flex-col justify-between relative overflow-hidden pb-24">
+    <div class="w-full min-h-screen bg-white/40 backdrop-blur-xl flex flex-col justify-between relative overflow-y-auto p-5 pb-24
+            md:max-w-md md:mx-auto md:my-6 md:min-h-[812px] md:rounded-[40px] md:border md:border-white/60 md:shadow-2xl">
         
         <!-- ส่วนเนื้อหาด้านใน -->
-        <div class="p-5">
+        <div>
             <!-- Header Bar -->
-            <div class="flex items-center justify-between pb-4 border-b border-slate-200/60">
-                <a href="../index.php?view=mobile" class="w-10 h-10 bg-white border border-slate-200 text-slate-600 rounded-full flex items-center justify-center shadow-xs active:scale-90 transition-transform">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            <div class="flex items-center justify-between pb-3.5 border-b border-slate-200/60">
+                <a href="../index.php?view=mobile" class="w-9 h-9 bg-white border border-slate-200 text-slate-600 rounded-full flex items-center justify-center shadow-xs active:scale-90 transition-transform">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                 </a>
-                <h2 class="text-[15px] font-bold tracking-wide text-slate-700">ยื่นคำขอแจ้งวันลา</h2>
-                <div class="w-10"></div>
+                <h2 class="text-sm font-bold tracking-wide text-slate-700">ยื่นคำขอแจ้งวันลา</h2>
+                <div class="w-9"></div>
             </div>
 
-            <!-- 📊 โซนกล่องโควตาสรุปสิทธิ์วันลาประจำปี -->
-            <div class="mt-5">
-                <h3 class="text-[12px] font-bold text-slate-600 uppercase tracking-wider mb-2.5">สิทธิ์โควตาการลาคงเหลือประจำปี</h3>
-                <div class="grid grid-cols-3 gap-3">
+            <!-- 📊 โซนกล่องโควตาสรุปสิทธิ์วันลา -->
+            <div class="mt-3.5">
+                <h3 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">สิทธิ์โควตาการลาคงเหลือ</h3>
+                <div class="grid grid-cols-3 gap-2.5">
                     
                     <!-- การ์ดสิทธิ์ลากิจ -->
-                    <div class="bg-white border border-slate-200/60 rounded-2xl p-3 text-center shadow-xs">
-                        <span class="text-xl">💼</span>
-                        <h4 class="text-[12px] font-medium text-slate-600 mt-1">ลากิจ</h4>
-                        <p class="text-base font-bold text-slate-900 mt-0.5"><?php echo $personal_limit; ?> วัน</p>
-                        <span class="text-[11px] text-slate-500 block mt-0.5">ได้รับสิทธิ์เต็ม</span>
+                    <div class="bg-white/80 border border-slate-200/60 rounded-xl p-2.5 text-center shadow-2xs">
+                        <span class="text-lg">💼</span>
+                        <h4 class="text-[11px] font-medium text-slate-500 mt-0.5">ลากิจ</h4>
+                        <p class="text-sm font-bold text-slate-900 mt-0.5"><?php echo $personal_limit; ?> วัน</p>
                     </div>
 
                     <!-- การ์ดสิทธิ์ลาป่วย -->
-                    <div class="bg-white border border-slate-200/60 rounded-2xl p-3 text-center shadow-xs">
-                        <span class="text-xl">🤒</span>
-                        <h4 class="text-[12px] font-medium text-slate-600 mt-1">ลาป่วย</h4>
-                        <p class="text-base font-bold text-slate-900 mt-0.5"><?php echo $sick_limit; ?> วัน</p>
-                        <span class="text-[11px] text-slate-500 block mt-0.5">ตามกฎหมายกำหนด</span>
+                    <div class="bg-white/80 border border-slate-200/60 rounded-xl p-2.5 text-center shadow-2xs">
+                        <span class="text-lg">🤒</span>
+                        <h4 class="text-[11px] font-medium text-slate-500 mt-0.5">ลาป่วย</h4>
+                        <p class="text-sm font-bold text-slate-900 mt-0.5"><?php echo $sick_limit; ?> วัน</p>
                     </div>
 
                     <!-- การ์ดสิทธิ์ลาพักร้อน -->
-                    <div class="rounded-2xl p-3 text-center shadow-xs border relative overflow-hidden transition-all <?php echo $is_unlocked_vacation ? 'bg-white border-slate-200/60' : 'bg-slate-100/80 border-dashed border-slate-200'; ?>">
+                    <div class="rounded-xl p-2.5 text-center shadow-2xs border relative overflow-hidden transition-all <?php echo $is_unlocked_vacation ? 'bg-white/80 border-slate-200/60' : 'bg-slate-100/80 border-dashed border-slate-200'; ?>">
                         <?php if (!$is_unlocked_vacation): ?>
-                            <div class="absolute top-1 right-1 text-[10px]" title="ต้องมีอายุงานครบ 1 ปี">🔒</div>
-                            <span class="text-xl opacity-40">🌴</span>
+                            <div class="absolute top-1 right-1 text-[9px]" title="ต้องมีอายุงานครบ 1 ปี">🔒</div>
+                            <span class="text-lg opacity-40">🌴</span>
                         <?php else: ?>
-                            <span class="text-xl">🌴</span>
+                            <span class="text-lg">🌴</span>
                         <?php endif; ?>
                         
-                        <h4 class="text-[12px] font-medium <?php echo $is_unlocked_vacation ? 'text-slate-600' : 'text-slate-400'; ?> mt-1">ลาพักร้อน</h4>
-                        <p class="text-base font-bold <?php echo $is_unlocked_vacation ? 'text-slate-900' : 'text-slate-400'; ?> mt-0.5"><?php echo $vacation_limit; ?> วัน</p>
-                        <span class="text-[11px] <?php echo $is_unlocked_vacation ? 'text-slate-500' : 'text-red-500 font-medium'; ?> block mt-0.5">
-                            <?php echo $is_unlocked_vacation ? 'ปลดล็อกสิทธิ์แล้ว' : 'อายุงานไม่ถึง 1 ปี'; ?>
-                        </span>
+                        <h4 class="text-[11px] font-medium <?php echo $is_unlocked_vacation ? 'text-slate-500' : 'text-slate-400'; ?> mt-0.5">พักร้อน</h4>
+                        <p class="text-sm font-bold <?php echo $is_unlocked_vacation ? 'text-slate-900' : 'text-slate-400'; ?> mt-0.5"><?php echo $vacation_limit; ?> วัน</p>
                     </div>
 
                 </div>
             </div>
 
-            <!-- 📝 ฟอร์มข้อมูลส่งใบลา -->
-            <form action="leave_process.php" method="POST" enctype="multipart/form-data" class="mt-6 bg-white border border-slate-200/60 rounded-3xl p-5 shadow-xs space-y-4">
+            <!-- 📝 ฟอร์มข้อมูลส่งใบลา (ปรับความสูงและระยะห่างให้อยู่ทรงพอดีเป๊ะ) -->
+            <form action="leave_process.php" method="POST" enctype="multipart/form-data" class="mt-3.5 bg-white border border-slate-200/60 rounded-2xl p-4 shadow-xs space-y-3.5">
                 
-                <!-- 🎯 จุดดึงข้อมูลที่ 1: ดึงคอมโพเนนต์ Custom Dropdown มาแทนที่ HTML Select เดิม -->
+                <!-- เลือกประเภทการลา -->
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1.5">เลือกประเภทการลา</label>
                     <?php 
@@ -143,49 +139,64 @@ $duration_options = array(
                     renderRoundedDropdown('leave_select', 'leave_type', '-- โปรดเลือกประเภทการลา --', $leave_options);
                     ?>
                 </div>
-                <!-- 🎯 เพิ่มระบบเลือกรูปแบบเวลาการลา (เต็มวัน/ครึ่งวัน/รายชั่วโมง) -->
-                <div class="grid grid-cols-2 gap-3">
+
+                <!-- รูปแบบเวลาการลา + จำนวนชั่วโมง -->
+                <div class="grid grid-cols-2 gap-2.5">
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">รูปแบบเวลาการลา</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">รูปแบบเวลา</label>
                         <?php renderRoundedDropdown('duration_select', 'leave_duration', 'เลือกรูปแบบเวลา', $duration_options, 'full'); ?>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">จำนวนชั่วโมง (ถ้าลารายชั่วโมง)</label>
-                        <input type="number" name="leave_hours" min="1" max="8" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs text-slate-800 font-medium focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs" placeholder="ระบุ 1-8 ชม.">
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">จำนวน ชม. (ถ้ามี)</label>
+                        <input type="number" name="leave_hours" min="1" max="8" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 font-medium focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-2xs" placeholder="1-8 ชม.">
                     </div>
                 </div>
 
+                <!-- แนบไฟล์รูปภาพเอกสาร -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5">📸 แนบรูปภาพหลักฐานใบรับรอง / เอกสาร (จำเป็นต้องใส่)</label>
-                    <input type="file" id="leave_attachment" name="leave_attachment" accept="image/*" required onchange="previewLeaveImage(event)" class="w-full bg-slate-50 border border-slate-200 border-dashed rounded-2xl px-4 py-2.5 text-xs text-slate-500 font-medium file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer shadow-xs">
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">📸 แนบหลักฐาน/เอกสาร</label>
+                    <input type="file" id="leave_attachment" name="leave_attachment" accept="image/*" required onchange="previewLeaveImage(event)" class="w-full bg-slate-50 border border-slate-200 border-dashed rounded-xl px-3 py-2 text-xs text-slate-500 font-medium file:mr-2 file:py-0.5 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer shadow-2xs">
                     
-                    <!-- กล่องแสดงรูปตัวอย่างพรีวิว (เริ่มต้นจะถูกซ่อนไว้) -->
-                    <div id="leave-preview-container" class="hidden mt-3 p-2 bg-slate-50 border border-slate-200/60 border-dashed rounded-2xl text-center transition-all">
-                        <p class="text-[10px] text-slate-400 mb-2 font-medium">✨ ตัวอย่างรูปภาพหลักฐานที่เลือก</p>
-                        <div class="relative inline-block max-w-full">
-                            <img id="leave-image-preview" src="#" alt="Preview" class="max-h-48 mx-auto rounded-xl border border-slate-200 shadow-sm object-contain">
+                    <!-- กล่องพรีวิวรูปตัวอย่าง -->
+                    <div id="leave-preview-container" class="hidden mt-2 p-2 bg-slate-50 border border-slate-200/60 border-dashed rounded-xl text-center transition-all">
+                        <img id="leave-image-preview" src="#" alt="Preview" class="max-h-32 mx-auto rounded-lg border border-slate-200 shadow-2xs object-contain">
+                    </div>
+                </div>
+
+                <!-- เลือกช่วงวันที่ -->
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">วันที่เริ่มลา</label>
+                        <div class="relative">
+                            <input type="text" name="start_leave" required autocomplete="off" class="calendar-trigger w-full bg-slate-50 border border-slate-200 rounded-xl pl-3 pr-9 py-2.5 text-xs text-slate-800 font-medium focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-2xs cursor-pointer" >
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">สิ้นสุดวันที่</label>
+                        <div class="relative">
+                            <input type="text" name="end_leave" required autocomplete="off" class="calendar-trigger w-full bg-slate-50 border border-slate-200 rounded-xl pl-3 pr-9 py-2.5 text-xs text-slate-800 font-medium focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-2xs cursor-pointer" >
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 🎯 จุดดึงข้อมูลที่ 2: เปลี่ยนช่องกรอกวันที่ให้รองรับคลาสเปิดใช้งานปฏิทินอัจฉริยะ -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">วันที่เริ่มลา</label>
-                        <input type="text" name="start_leave" required autocomplete="off" class="calendar-trigger w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-800 font-medium focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs" placeholder="วว/ดด/ปปปป">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">สิ้นสุดวันที่</label>
-                        <input type="text" name="end_leave" required autocomplete="off" class="calendar-trigger w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-800 font-medium focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs" placeholder="วว/ดด/ปปปป">
-                    </div>
-                </div>
-
+                <!-- ช่องกรอกเหตุผล -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5">เหตุผลความจำเป็นในการลา</label>
-                    <textarea name="reason" rows="3" required placeholder="ระบุรายละเอียด เช่น ไปทำธุระครอบครัวที่ต่างจังหวัด หรือ มีนัดพบแพทย์..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs resize-none leading-relaxed"></textarea>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">เหตุผลการลา</label>
+                    <textarea name="reason" rows="3" required placeholder="ระบุรายละเอียดเหตุผลการลา..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-2xs resize-none leading-relaxed"></textarea>
                 </div>
 
-                <button type="submit" class="w-full bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-800 hover:to-blue-700 text-white font-bold py-3.5 rounded-2xl text-xs tracking-wide transition-all active:scale-[0.98] shadow-md shadow-blue-500/10 cursor-pointer">
+                <!-- ปุ่มส่งใบอนุมัติ -->
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-xs tracking-wide transition-all active:scale-[0.98] shadow-md shadow-blue-500/20 cursor-pointer">
                     ส่งใบอนุมัติแจ้งลา
                 </button>
             </form>
@@ -195,28 +206,23 @@ $duration_options = array(
         <?php include '../includes/navbar.php'; ?>
     </div>
 
-    <!-- 🎯 จุดดึงข้อมูลที่ 3: ดึงโครงสร้างป็อปอัป CSS/JS ปฏิทินขึ้นมาทำงานสแตนด์บายรอรับคำสั่งกดครอบจักรวาล -->
+    <!-- ส่วนคอมโพเนนต์ปฏิทิน -->
     <?php include_once '../includes/calendar_component.php'; ?>
-<!-- สคริปต์ JavaScript สำหรับอ่านไฟล์และเสกรูปตัวอย่างขึ้นจอทันที -->
+
 <script>
 function previewLeaveImage(event) {
     const input = event.target;
     const container = document.getElementById('leave-preview-container');
     const preview = document.getElementById('leave-image-preview');
     
-    // ตรวจสอบว่าพนักงานเลือกไฟล์จริงไหม
     if (input.files && input.files[0]) {
         const reader = new FileReader();
-        
-        // เมื่อโหลดไฟล์เสร็จ ให้ยัดเข้าแท็ก img แล้วสั่งเปิดกล่องแสดงผล
         reader.onload = function(e) {
             preview.src = e.target.result;
             container.classList.remove('hidden');
         }
-        
         reader.readAsDataURL(input.files[0]);
     } else {
-        // ถ้ากดยกเลิกหรือไม่เลือกไฟล์ ให้เคลียร์ค่าแล้วซ่อนกล่องตามเดิม
         preview.src = '#';
         container.classList.add('hidden');
     }

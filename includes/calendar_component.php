@@ -470,7 +470,7 @@
     function bindCalendarEvents() {
         document.querySelectorAll(".calendar-trigger").forEach(input => {
             input.removeAttribute("readonly");
-            input.placeholder = "วว/ดด/ปปปป, ช่วงวัน หรือ เดือน";
+            input.placeholder = "วว/ดด/ปปปป";
 
             input.removeEventListener("click", openCalendar); 
             input.addEventListener("click", openCalendar);
