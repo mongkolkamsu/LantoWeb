@@ -1,0 +1,22 @@
+{
+  "name": "Lanto Web Workforce",
+  "short_name": "LantoWeb",
+  "description": "ระบบลงเวลางานพนักงาน Lanto Web",
+  "start_url": "index.php?view=mobile",
+  "display": "standalone",
+  "background_color": "#1e3a8a",
+  "theme_color": "#1e3a8a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "assets/images/building.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/images/building.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
