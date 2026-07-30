@@ -2,7 +2,7 @@
 <div id="attendanceAdminDetailModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-2xl border border-slate-100 space-y-5 relative animate-in fade-in zoom-in duration-150 max-h-[92vh] overflow-y-auto">
         
-        <!-- Header & ปุ่มปิด Modal -->
+        <!-- Header & ปุ่มปิด Modal มุมขวาบน -->
         <div class="flex justify-between items-center border-b border-slate-100 pb-3">
             <div>
                 <h3 class="text-base font-extrabold text-slate-800 flex items-center gap-2">
@@ -31,7 +31,7 @@
             </div>
         </div>
 
-        <!-- 🖼️ 2 กล่องการ์ดหลักฐานการสแกน (พื้นหลังขาวสะอาด แยกด้วยกรอบและเงื่อนไขชัดเจน) -->
+        <!-- 🖼️ 2 กล่องการ์ดหลักฐานการสแกน -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             <!-- 🔵 กล่องซ้าย: สแกนเข้างาน (CHECK-IN) -->
@@ -44,8 +44,8 @@
                         </span>
                     </div>
 
-                    <!-- กรอบรูปถ่ายสแกนหน้า เข้างาน -->
-                    <div class="relative w-full h-48 bg-slate-50 rounded-xl overflow-hidden border border-slate-200 shadow-inner flex items-center justify-center">
+                    <!-- 🎯 กรอบรูปถ่ายขยายเป็น h-80 -->
+                    <div class="relative w-full h-80 bg-slate-50 rounded-xl overflow-hidden border border-slate-200 shadow-inner flex items-center justify-center">
                         <img id="att_admin_in_img" src="" alt="" 
                              class="w-full h-full object-cover hidden cursor-pointer hover:scale-105 transition-transform duration-300"
                              onclick="openAttendanceAdminImageLightbox(this.src)" 
@@ -85,8 +85,8 @@
                         </span>
                     </div>
 
-                    <!-- กรอบรูปถ่ายสแกนหน้า ออกงาน -->
-                    <div class="relative w-full h-48 bg-slate-50 rounded-xl overflow-hidden border border-slate-200 shadow-inner flex items-center justify-center">
+                    <!-- 🎯 กรอบรูปถ่ายขยายเป็น h-80 -->
+                    <div class="relative w-full h-80 bg-slate-50 rounded-xl overflow-hidden border border-slate-200 shadow-inner flex items-center justify-center">
                         <img id="att_admin_out_img" src="" alt="" 
                              class="w-full h-full object-cover hidden cursor-pointer hover:scale-105 transition-transform duration-300"
                              onclick="openAttendanceAdminImageLightbox(this.src)" 
@@ -118,12 +118,6 @@
 
         </div>
 
-        <!-- ปุ่มปิดหน้าต่าง -->
-        <div class="pt-2">
-            <button type="button" onclick="closeAttendanceAdminDetailModal()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors cursor-pointer active:scale-98">
-                ปิดหน้าต่าง
-            </button>
-        </div>
     </div>
 </div>
 
