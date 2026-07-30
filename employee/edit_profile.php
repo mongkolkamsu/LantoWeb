@@ -108,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // อัปโหลดรูปบัตรประชาชน
-        if (isset($_FILES['id_card_image']) && $_FILES['id_card_image']['error'] === UPLOAD_ERR_OK) {
+        if ($can_edit_restricted && isset($_FILES['id_card_image']) && $_FILES['id_card_image']['error'] === UPLOAD_ERR_OK) {
             $ext = pathinfo($_FILES['id_card_image']['name'], PATHINFO_EXTENSION);
             $id_card_name = "idcard_" . $user_data['employee_code'] . "_" . time() . "." . $ext;
             if (!is_dir('../uploads/id-cards')) mkdir('../uploads/id-cards', 0777, true);
@@ -295,9 +295,23 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                     </div>
 
                     <div class="bg-white/70 border border-slate-200/60 p-4 rounded-2xl flex flex-col items-center">
-                        <label class="block text-xs font-medium text-slate-600 mb-3 w-full text-left">2. รูปถ่ายบัตรประชาชน</label>
-                        <input type="file" id="id_card_image" name="id_card_image" accept="image/*" onchange="previewImage(this, 'id_card_view', 'id_card_wrap')"
-                            class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                        <div class="flex justify-between items-center w-full mb-3">
+                            <label class="block text-xs font-medium text-slate-600">2. รูปถ่ายบัตรประชาชน</label>
+                            <?php if (!$can_edit_restricted): ?>
+                                <span class="text-[10px] font-normal text-amber-600 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-lg flex items-center gap-1">🔒 ติดต่อ HR เพื่อเปลี่ยน</span>
+                            <?php endif; ?>
+                        </div>
+
+                        <?php if ($can_edit_restricted): ?>
+                            <!-- อนุญาตให้ Admin/HR/IT เลือกไฟล์เปลี่ยนรูปได้ -->
+                            <input type="file" id="id_card_image" name="id_card_image" accept="image/*" onchange="previewImage(this, 'id_card_view', 'id_card_wrap')"
+                                class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                        <?php else: ?>
+                            <!-- พนักงานทั่วไป: ซ่อนปุ่มเลือกไฟล์และขึ้นกล่องล็อก -->
+                            <div class="w-full p-2.5 bg-slate-100/80 border border-slate-200/80 rounded-2xl text-center text-xs text-slate-400 font-medium select-none">
+                                🚫 ไม่อนุญาตให้แก้ไขรูปบัตรประชาชน
+                            </div>
+                        <?php endif; ?>
                         
                         <div id="id_card_wrap" class="<?php echo empty($id_card_url) ? 'hidden' : ''; ?> relative mt-4 w-48 h-32 rounded-2xl border border-slate-200 overflow-hidden shadow-xs bg-white cursor-pointer group" title="คลิกเพื่อดูรูปขนาดใหญ่">
                             <img id="id_card_view" src="<?php echo htmlspecialchars($id_card_url); ?>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" onclick="openImagePreviewModal(this.src)">
