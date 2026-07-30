@@ -117,10 +117,11 @@ $avatar_url = !empty($profile_image) ? '../uploads/profiles/' . $profile_image :
         }
         .card-back { transform: rotateY(180deg); }
     </style>
+    <script src="../assets/js/alerts.js"></script>
 </head>
 <body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] min-h-screen flex items-center justify-center p-0 md:p-4 text-slate-800 antialiased select-none">
 
-    <div class="w-full min-h-screen bg-white/40 backdrop-blur-xl flex flex-col justify-between relative overflow-hidden p-5 pb-8
+    <div class="w-full min-h-screen bg-white/40 backdrop-blur-xl flex flex-col justify-between relative overflow-y-auto p-5 pb-28
             md:max-w-md md:mx-auto md:my-6 md:min-h-[812px] md:rounded-[40px] md:border md:border-white/60 md:shadow-2xl">
         
         <div>
@@ -225,21 +226,50 @@ $avatar_url = !empty($profile_image) ? '../uploads/profiles/' . $profile_image :
                 </div>
             </div>
 
-            <!-- ปุ่มแก้ไขข้อมูลส่วนตัว -->
-            <div class="w-50 max-w-[320px] mx-auto mt-2 mb-1">
+            <!-- ✏️ ปุ่มแก้ไขข้อมูลส่วนตัว -->
+            <div class="w-full max-w-[320px] mx-auto mt-3">
                 <a href="edit_profile.php" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold transition-all shadow-md shadow-blue-500/20 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
                     <span>✏️</span> แก้ไขข้อมูลส่วนตัว
+                </a>
+            </div>
+
+            <!-- 🚪 ปุ่มออกจากระบบ -->
+            <div class="w-full max-w-[320px] mx-auto mt-2.5 mb-2">
+                <a href="../logout.php" 
+                onclick="confirmLogout(event)" 
+                class="w-full py-3 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/80 rounded-2xl text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-3xs">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span>ออกจากระบบ (Logout)</span>
                 </a>
             </div>
         </div>
         
         <?php include '../includes/navbar.php'; ?>                                        
-        <p class="text-[10px] text-center text-slate-400 mt-4 font-light">Lanto Identity Pass Engine v4.0.0</p>
+        
     </div>
     <script>
         function flipCard() {
             const card = document.getElementById('id-card');
             card.classList.toggle('card-flipped');
+        }
+
+        // 🎯 ใช้ LantoAlert ระบบหลักของเว็บ
+        function confirmLogout(event) {
+            event.preventDefault(); // ยับยั้งไม่ให้เปลี่ยนหน้าทันที
+
+            LantoAlert.confirm(
+                'ยืนยันการออกจากระบบ?',                            
+                'คุณต้องการออกจากระบบ Lanto Workforce ใช่หรือไม่', 
+                function() {                                       
+                    window.location.href = '../logout.php';
+                },
+                null,                                             
+                'danger'                                          
+            );
         }
     </script>
 </body>

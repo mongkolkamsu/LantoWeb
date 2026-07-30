@@ -87,7 +87,6 @@ $leave_quota = [
 ];
 
 try {
-    // ดึง start_date ของพนักงานที่ล็อกอินอยู่
     $stmt_q = $pdo->prepare("SELECT sick_quota, business_quota, vacation_quota, start_date FROM users WHERE id = :user_id");
     $stmt_q->execute(['user_id' => $user_id]);
     $q_row = $stmt_q->fetch(PDO::FETCH_ASSOC);
@@ -95,8 +94,6 @@ try {
     if ($q_row) {
         if (isset($q_row['sick_quota']))     $leave_quota['sick']['max']     = (int)$q_row['sick_quota'];
         if (isset($q_row['business_quota'])) $leave_quota['business']['max'] = (int)$q_row['business_quota'];
-        
-        // 💡 เรียกฟังก์ชันคำนวณโควตาพักร้อนจาก start_date อัตโนมัติที่นี่
         $leave_quota['vacation']['max'] = calculateVacationQuota($q_row['start_date'] ?? '');
     }
 } catch (PDOException $e) {}
@@ -199,6 +196,22 @@ if ($status_text === "เข้างานแล้ว") {
     $status_dot_color = 'bg-blue-400';
     $status_note      = 'ขอบคุณความทุ่มเทในวันนี้ พักผ่อนให้เต็มที่ เดินทางกลับปลอดภัยครับ 🌙';
 }
+
+// 🎯 เช็กจำนวนการแจ้งเตือนที่ยังไม่ได้อ่าน
+$unread_notifications_count = 0;
+
+try {
+    // สมมุติตารางชื่อ notifications (ถ้าไม่มีตาราง ระบบจะ catch แล้วตั้งค่าเป็น 0 ให้อัตโนมัติ)
+    $stmt_notif = $pdo->prepare("
+        SELECT COUNT(*) FROM notifications 
+        WHERE user_id = :user_id AND is_read = 0
+    ");
+    $stmt_notif->execute(['user_id' => $user_id]);
+    $unread_notifications_count = (int)$stmt_notif->fetchColumn();
+} catch (PDOException $e) {
+    // หากยังไม่มีตาราง notifications ให้ตั้งค่าเป็น 0 ไว้ก่อน
+    $unread_notifications_count = 0;
+}
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -214,11 +227,13 @@ if ($status_text === "เข้างานแล้ว") {
         body { font-family: 'Noto Sans Thai', sans-serif; -webkit-tap-highlight-color: transparent; }
         ::-webkit-scrollbar { display: none; }
     </style>
+    <script src="assets/js/alerts.js"></script>
 </head>
-<body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] min-h-screen flex items-center justify-center text-slate-800 select-none antialiased">
+<body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] min-h-screen flex items-center justify-center text-slate-800 select-none antialiased p-0 md:p-4">
 
-    <!-- 📱 Main Mobile Container -->
-    <div class="w-full max-w-md bg-slate-50/90 backdrop-blur-xl min-h-screen md:min-h-[812px] md:rounded-[40px] shadow-2xl flex flex-col justify-between relative overflow-y-auto pb-24 border border-white/60">
+    <!-- 📱 Main Mobile Container (ขยายเต็มจอมือถืออัตโนมัติ / บนคอมเป็นกรอบสมาร์ตโฟน) -->
+    <div class="w-full min-h-screen bg-slate-50/90 backdrop-blur-xl flex flex-col justify-between relative overflow-y-auto pb-24 border-0 shadow-none
+                md:max-w-md md:min-h-[812px] md:rounded-[40px] md:shadow-2xl md:border md:border-white/60">
         
         <div>
             <!-- 🔝 ส่วนหัวดีไซน์เรียบหรูสไตล์แอปชั้นนำ -->
@@ -232,12 +247,24 @@ if ($status_text === "เข้างานแล้ว") {
                         </div>
                     </div>
                     
-                    <!-- ปุ่ม Logout -->
-                    <a href="logout.php" class="w-10 h-10 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full flex items-center justify-center shadow-sm hover:bg-white/25 active:scale-90 transition-all cursor-pointer shrink-0">
-                        <svg class="w-4 h-4 opacity-95" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+                    <!-- 🔔 ปุ่มแจ้งเตือน (Notification Bell) แทนปุ่ม Logout -->
+                    <button type="button" 
+                            onclick="LantoAlert.warning('การแจ้งเตือน', '<?php echo $unread_notifications_count > 0 ? "คุณมี ".$unread_notifications_count." รายการแจ้งเตือนใหม่" : "ขณะนี้ยังไม่มีรายการแจ้งเตือนใหม่ครับ"; ?>')" 
+                            class="relative w-10 h-10 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full flex items-center justify-center shadow-sm hover:bg-white/25 active:scale-90 transition-all cursor-pointer shrink-0">
+                        
+                        <svg class="w-5 h-5 text-white opacity-95" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"></path>
                         </svg>
-                    </a>
+
+                        <!-- 🔴 จุดไฟแจ้งเตือนสีแดง (แสดงเฉพาะเมื่อ $unread_notifications_count > 0) -->
+                        <?php if ($unread_notifications_count > 0): ?>
+                        <span class="absolute top-2.5 right-2.5 flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-rose-500 border border-white"></span>
+                        </span>
+                        <?php endif; ?>
+
+                    </button>
                 </div>
 
                 <!-- แสดงสถานะ -->
@@ -309,7 +336,7 @@ if ($status_text === "เข้างานแล้ว") {
                             <span class="text-slate-600 text-[10px] font-medium tracking-tight">สถานะการลา</span>
                         </button>
 
-                        <!-- 4. สลิปเงินเดือน (🎯 เชื่อมเปิด Modal แสดงรายการสลิป PDF) -->
+                        <!-- 4. สลิปเงินเดือน -->
                         <button type="button" onclick="openPayslipModal()" class="flex flex-col items-center group active:scale-95 transition-transform cursor-pointer">
                             <div class="w-11 h-11 bg-slate-50 border border-slate-200/60 rounded-2xl flex items-center justify-center shadow-2xs mb-1.5 p-2">
                                 <img src="assets/images/payslip.png" alt="Payslip" class="w-full h-full object-contain">
@@ -368,7 +395,7 @@ if ($status_text === "เข้างานแล้ว") {
         <?php include 'includes/navbar.php'; ?>
     </div>
 
-    <!-- 📌 MODAL: แสดงรายการสลิปเงินเดือน (ใช้ Rounded Dropdown + แสดงปี พ.ศ. แบบสมบูรณ์) -->
+    <!-- 📌 MODAL: แสดงรายการสลิปเงินเดือน -->
     <div id="payslipModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 space-y-4 overflow-visible my-auto">
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
@@ -376,7 +403,7 @@ if ($status_text === "เข้างานแล้ว") {
                 <button type="button" onclick="closePayslipModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold flex items-center justify-center transition-colors cursor-pointer">✕</button>
             </div>
 
-            <!-- 🎯 ดรอปดาวน์เลือกปี พ.ศ. (เชื่อมกับ renderRoundedDropdown สมบูรณ์) -->
+            <!-- ดรอปดาวน์เลือกปี พ.ศ. -->
             <div class="space-y-1 relative z-30">
                 <label class="text-[11px] font-bold text-slate-500 px-1">เลือกปี พ.ศ.</label>
                 <?php
@@ -384,13 +411,12 @@ if ($status_text === "เข้างานแล้ว") {
                     $mobile_years_opts = [];
                     for ($y = $current_y; $y >= $current_y - 3; $y--) {
                         $mobile_years_opts[] = [
-                            'id'   => (string)($y + 543), // ส่งค่าเป็น พ.ศ. (เช่น 2569) ให้ตรงกับ data-year ในสลิป
-                            'name' => (string)($y + 543)  // แสดงผลเป็น พ.ศ. (เช่น 2569)
+                            'id'   => (string)($y + 543),
+                            'name' => (string)($y + 543)
                         ];
                     }
                     $default_year_thai = (string)($current_y + 543);
                     
-                    // เรียกใช้ฟังก์ชันดรอปดาวน์ขอบมน (ใช้ id เป็น mobile_slip_year)
                     renderRoundedDropdown('mobile_slip_year', 'slip_year', $default_year_thai, $mobile_years_opts, $default_year_thai);
                 ?>
             </div>
@@ -428,7 +454,6 @@ if ($status_text === "เข้างานแล้ว") {
     <script>
         function openPayslipModal() {
             document.getElementById('payslipModal').classList.remove('hidden');
-            // กรองข้อมูลปี พ.ศ. ปัจจุบันเป็นค่าเริ่มต้นตอนเปิด modal
             const currentYearVal = document.getElementById('mobile_slip_year').value;
             filterSlipsByYear(currentYearVal);
         }
@@ -437,7 +462,6 @@ if ($status_text === "เข้างานแล้ว") {
             document.getElementById('payslipModal').classList.add('hidden');
         }
 
-        // 🎯 ฟังก์ชันกรองสลิปตามปี พ.ศ. ที่เลือก
         function filterSlipsByYear(selectedYear) {
             const items = document.querySelectorAll('.slip-item');
             items.forEach(item => {
@@ -450,7 +474,6 @@ if ($status_text === "เข้างานแล้ว") {
             });
         }
 
-        // 🎯 ดักฟังการเปลี่ยนแปลงค่าของ Hidden Input ใน Dropdown เพื่อสั่งกรองสลิปอัตโนมัติ
         document.addEventListener('DOMContentLoaded', function() {
             const yearInput = document.getElementById('mobile_slip_year');
             if (yearInput) {
