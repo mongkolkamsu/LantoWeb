@@ -251,7 +251,7 @@ foreach ($logs as $log) {
                 </div>
                 
                 <!-- 🎯 ล็อกความสูง max-h-[340px] เพื่อให้พอดีสำหรับการแสดงผลประมาณ 3 การ์ด -->
-                <div id="logs-container" class="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
+                <div id="logs-container" class="space-y-2.5 max-h-[390px] overflow-y-auto pr-1">
                     <?php if (empty($grouped_days)): ?>
                         <div class="bg-white/60 text-center py-10 rounded-2xl text-slate-400 border border-slate-200/50 text-xs font-light">
                             🚫 ไม่พบข้อมูลบันทึกเวลางานในเดือนนี้
