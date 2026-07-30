@@ -235,6 +235,13 @@ try {
     <style>
         body { font-family: 'Noto Sans Thai', sans-serif; -webkit-tap-highlight-color: transparent; }
         ::-webkit-scrollbar { display: none; }
+        html, body {
+        height: 100%;
+        height: 100dvh;
+        overflow: hidden !important;
+        touch-action: none; /* บล็อก Gesture การไถนิ้วบนมือถือ */
+        -webkit-overflow-scrolling: none;
+        }
     </style>
     <script src="assets/js/alerts.js"></script>
     <script>
