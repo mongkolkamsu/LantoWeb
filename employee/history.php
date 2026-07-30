@@ -202,55 +202,56 @@ foreach ($logs as $log) {
                 </div>
             </form>
 
-            <!-- แผงกล่องสถิติสรุปแบบ 3 คอลัมน์ (ปรับสีเข้าสายเป็นโทนเหลือง Amber) -->
-            <div class="grid grid-cols-3 gap-2 mb-5">
+            <!-- 📊 แผงกล่องสถิติสรุปแบบ 3 คอลัมน์ (ย่อขนาดให้เตี้ยและกระชับขึ้น) -->
+            <div class="grid grid-cols-3 gap-2 mb-3.5">
                 
-                <!-- 1. เข้าก่อนเวลา (ไอคอนดวงอาทิตย์ SVG) -->
-                <div onclick="filterLogs('early_in', this)" class="stat-card bg-blue-50/70 border border-blue-100 p-2.5 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all">
-                    <div class="w-8 h-8 bg-blue-500 text-white rounded-xl flex items-center justify-center shadow-md shadow-blue-500/20 mb-1.5 shrink-0">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <!-- 1. เข้าก่อนเวลา -->
+                <div onclick="filterLogs('early_in', this)" class="stat-card bg-blue-50/70 border border-blue-100 p-1.5 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all">
+                    <div class="w-6 h-6 bg-blue-500 text-white rounded-lg flex items-center justify-center shadow-xs mb-1 shrink-0">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 7.5a4.5 4.5 0 100 9 4.5 4.5 0 000-9z"></path>
                         </svg>
                     </div>
-                    <p class="text-slate-600 text-[10px] font-bold leading-tight">เข้าก่อนเวลา</p>
-                    <p class="text-blue-700 text-sm font-black mt-0.5"><?php echo $count_early_in; ?> ครั้ง</p>
+                    <p class="text-slate-600 text-[9px] font-bold leading-tight">เข้าก่อนเวลา</p>
+                    <p class="text-blue-700 text-xs font-black mt-0.5"><?php echo $count_early_in; ?> ครั้ง</p>
                 </div>
 
-                <!-- 2. เข้าตรงเวลา (ไอคอนติ๊กถูกวงกลม SVG) -->
-                <div onclick="filterLogs('on_time', this)" class="stat-card bg-emerald-50/70 border border-emerald-100 p-2.5 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all">
-                    <div class="w-8 h-8 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-md shadow-emerald-500/20 mb-1.5 shrink-0">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <!-- 2. เข้าตรงเวลา -->
+                <div onclick="filterLogs('on_time', this)" class="stat-card bg-emerald-50/70 border border-emerald-100 p-1.5 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all">
+                    <div class="w-6 h-6 bg-emerald-500 text-white rounded-lg flex items-center justify-center shadow-xs mb-1 shrink-0">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                     </div>
-                    <p class="text-slate-600 text-[10px] font-bold leading-tight">เข้าตรงเวลา</p>
-                    <p class="text-emerald-700 text-sm font-black mt-0.5"><?php echo $count_on_time; ?> ครั้ง</p>
+                    <p class="text-slate-600 text-[9px] font-bold leading-tight">เข้าตรงเวลา</p>
+                    <p class="text-emerald-700 text-xs font-black mt-0.5"><?php echo $count_on_time; ?> ครั้ง</p>
                 </div>
 
-                <!-- 3. เข้าสาย (ไอคอนเครื่องหมายเตือน SVG) -->
-                <div onclick="filterLogs('late', this)" class="stat-card bg-amber-50/70 border border-amber-100 p-2.5 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all">
-                    <div class="w-8 h-8 bg-amber-500 text-white rounded-xl flex items-center justify-center shadow-md shadow-amber-500/20 mb-1.5 shrink-0">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <!-- 3. เข้าสาย -->
+                <div onclick="filterLogs('late', this)" class="stat-card bg-amber-50/70 border border-amber-100 p-1.5 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all">
+                    <div class="w-6 h-6 bg-amber-500 text-white rounded-lg flex items-center justify-center shadow-xs mb-1 shrink-0">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                         </svg>
                     </div>
-                    <p class="text-slate-600 text-[10px] font-bold leading-tight">เข้าสาย</p>
-                    <p class="text-amber-700 text-sm font-black mt-0.5"><?php echo $count_late; ?> ครั้ง</p>
+                    <p class="text-slate-600 text-[9px] font-bold leading-tight">เข้าสาย</p>
+                    <p class="text-amber-700 text-xs font-black mt-0.5"><?php echo $count_late; ?> ครั้ง</p>
                 </div>
 
             </div>
 
             <!-- กล่องรายการสรุปผลการลงเวลางานประจำเดือนแบบการ์ดรายวัน -->
-            <div class="space-y-3">
+            <div class="space-y-2">
                 <div class="flex justify-between items-center px-1 mb-1">
                     <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
                         <span>บันทึกรายวัน</span> 
-                        
+                        <span id="list-title-status" class="text-[10px] text-blue-600 font-normal"></span>
                     </h3>
                     <button id="btn-clear-filter" onclick="resetLogFilter()" class="hidden text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md font-medium border border-blue-100 cursor-pointer">แสดงทั้งหมด</button>
                 </div>
                 
-                <div id="logs-container" class="space-y-3">
+                <!-- 🎯 ล็อกความสูง max-h-[340px] เพื่อให้พอดีสำหรับการแสดงผลประมาณ 3 การ์ด -->
+                <div id="logs-container" class="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
                     <?php if (empty($grouped_days)): ?>
                         <div class="bg-white/60 text-center py-10 rounded-2xl text-slate-400 border border-slate-200/50 text-xs font-light">
                             🚫 ไม่พบข้อมูลบันทึกเวลางานในเดือนนี้
@@ -266,21 +267,21 @@ foreach ($logs as $log) {
                             if ($in && $in['filter_category'] === 'early_in') $combined_category = 'early_in';
                         ?>
                             <!-- 🗂️ การ์ดสรุปผล 1 วัน -->
-                            <div class="log-item bg-white rounded-2xl p-3.5 border border-slate-100 shadow-xs space-y-2.5 transition-all duration-200" data-category="<?php echo $combined_category; ?>">
+                            <div class="log-item bg-white rounded-2xl p-3 border border-slate-100 shadow-xs space-y-2 transition-all duration-200" data-category="<?php echo $combined_category; ?>">
                                 
                                 <!-- หัวการ์ด: แสดงวันที่ -->
-                                <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                                <div class="flex justify-between items-center border-b border-slate-100 pb-1.5">
                                     <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                                         📅 <?php echo $day['date_display']; ?>
                                     </span>
-                                    <span class="text-[10px] text-slate-600 font-bold">บันทึกเวลาปฏิบัติงานประจำวัน</span>
+                                    <span class="text-[10px] text-slate-500 font-bold">บันทึกเวลาปฏิบัติงานประจำวัน</span>
                                 </div>
 
                                 <!-- บอดี้การ์ด: แบ่งครึ่งซ้าย (เข้า) - ขวา (ออก) -->
                                 <div class="grid grid-cols-2 gap-2">
                                     
                                     <!-- 📥 ฝั่งซ้าย: ข้อมูลเข้างาน (IN) -->
-                                    <div class="bg-slate-100/90 p-2.5 rounded-xl border border-slate-200/80 flex flex-col justify-between space-y-2 shadow-2xs">
+                                    <div class="bg-slate-100/90 p-2 rounded-xl border border-slate-200/80 flex flex-col justify-between space-y-1.5 shadow-2xs">
                                         <div class="flex items-center justify-between">
                                             <span class="text-[10px] font-bold bg-blue-600 text-white px-2 py-0.5 rounded-md">เข้า (IN)</span>
                                             <?php if ($in): ?>
@@ -291,13 +292,13 @@ foreach ($logs as $log) {
                                         </div>
 
                                         <?php if ($in): ?>
-                                            <div class="flex items-center justify-between pt-1">
+                                            <div class="flex items-center justify-between pt-0.5">
                                                 <span class="inline-block text-[9px] px-2 py-0.5 rounded-md font-semibold border <?php echo $in['status_color']; ?>">
                                                     <?php echo $in['status_title']; ?>
                                                 </span>
                                                 <button type="button" 
                                                         onclick="openProofModal('check_in', '<?php echo $in['photo_log']; ?>', '<?php echo htmlspecialchars($in['clean_branch'], ENT_QUOTES); ?>', '<?php echo $in['status_title']; ?>', '<?php echo $in['status_color']; ?>', '<?php echo $day['date_display']; ?>', '<?php echo $in['time_display']; ?>')"
-                                                        class="text-[10px] text-blue-600 bg-white hover:bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-lg transition-all cursor-pointer font-medium shadow-2xs">
+                                                        class="text-[10px] text-blue-600 bg-white hover:bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-lg transition-all cursor-pointer font-medium shadow-2xs">
                                                     หลักฐาน
                                                 </button>
                                             </div>
@@ -307,7 +308,7 @@ foreach ($logs as $log) {
                                     </div>
 
                                     <!-- 📤 ฝั่งขวา: ข้อมูลออกงาน (OUT) -->
-                                    <div class="bg-slate-100/90 p-2.5 rounded-xl border border-slate-200/80 flex flex-col justify-between space-y-2 shadow-2xs">
+                                    <div class="bg-slate-100/90 p-2 rounded-xl border border-slate-200/80 flex flex-col justify-between space-y-1.5 shadow-2xs">
                                         <div class="flex items-center justify-between">
                                             <span class="text-[10px] font-bold bg-slate-700 text-white px-2 py-0.5 rounded-md">ออก (OUT)</span>
                                             <?php if ($out): ?>
@@ -318,18 +319,18 @@ foreach ($logs as $log) {
                                         </div>
 
                                         <?php if ($out): ?>
-                                            <div class="flex items-center justify-between pt-1">
+                                            <div class="flex items-center justify-between pt-0.5">
                                                 <span class="inline-block text-[9px] px-2 py-0.5 rounded-md font-semibold border <?php echo $out['status_color']; ?>">
                                                     <?php echo $out['status_title']; ?>
                                                 </span>
                                                 <button type="button" 
                                                         onclick="openProofModal('check_out', '<?php echo $out['photo_log']; ?>', '<?php echo htmlspecialchars($out['clean_branch'], ENT_QUOTES); ?>', '<?php echo $out['status_title']; ?>', '<?php echo $out['status_color']; ?>', '<?php echo $day['date_display']; ?>', '<?php echo $out['time_display']; ?>')"
-                                                        class="text-[10px] text-blue-600 bg-white hover:bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-lg transition-all cursor-pointer font-medium shadow-2xs">
+                                                        class="text-[10px] text-blue-600 bg-white hover:bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-lg transition-all cursor-pointer font-medium shadow-2xs">
                                                     หลักฐาน
                                                 </button>
                                             </div>
                                         <?php else: ?>
-                                            <span class="text-[11px] text-slate-500 ">ยังไม่ลงชื่อออกงาน</span>
+                                            <span class="text-[11px] text-slate-500">ยังไม่ลงชื่อออกงาน</span>
                                         <?php endif; ?>
                                     </div>
 
