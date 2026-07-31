@@ -142,16 +142,16 @@ try {
                 </div>
             </div>
 
-            <!-- 🎯 1. ป้ายคำสั่ง Liveness (ย้ายออกมาอยู่นอกกล้อง ไม่โดนตัดขอบวงกลมทับแล้ว 100%) -->
-            <div class="flex justify-center my-1.5">
-                <div id="action-badge" class="bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-md animate-bounce">
+            <!-- 🎯 1. ป้ายคำสั่ง Liveness (ล็อกกล่อง h-9 my-2 แยกโซนชัดเจน ไม่โดนกล้องทับแน่นอน) -->
+            <div class="flex justify-center items-center h-9 my-2">
+                <div id="action-badge" class="bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-sm">
                     <span id="action-icon">🤖</span>
                     <span id="action-text">กำลังโหลดระบบตรวจจับ...</span>
                 </div>
             </div>
 
             <!-- 🎯 กรอบรูปกล้องสแกนเนอร์ -->
-            <div class="relative w-72 h-72 mx-auto bg-slate-950 rounded-full overflow-hidden border-4 border-white shadow-2xl flex items-center justify-center my-1">
+            <div class="relative w-72 h-72 mx-auto bg-slate-950 rounded-full overflow-hidden border-4 border-white shadow-2xl flex items-center justify-center mt-1 mb-2">
 
                 <video id="webcam" autoplay playsinline class="w-full h-full object-cover scale-x-[-1] rounded-full"></video>
                 <canvas id="photo-preview" class="w-full h-full object-cover scale-x-[-1] hidden absolute inset-0 z-10 rounded-full"></canvas>
@@ -449,7 +449,6 @@ try {
                         const leftCheek = landmarks[234]; // จุดแก้มซ้าย
                         const rightCheek = landmarks[454];// จุดแก้มขวา
 
-                        // ตรวจสอบพิกัดให้อยู่ในกรอบส่วนกลางกล้อง ไม่หลุดขอบ (Normalized 0.0 - 1.0)
                         const isFaceCentered = 
                             topHead.y > 0.05 && topHead.y < 0.40 &&
                             chin.y > 0.58 && chin.y < 0.95 &&
@@ -459,9 +458,9 @@ try {
                         if (!isFaceCentered) {
                             actionIcon.innerText = "👤";
                             actionText.innerText = "กรุณาจัดใบหน้าให้อยู่ตรงกลางกรอบ";
-                            actionBadge.className = "bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-md animate-bounce";
+                            actionBadge.className = "bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-sm";
                             targetBorder.className = "w-56 h-56 rounded-full border-2 border-dashed border-amber-400 flex items-center justify-center relative transition-colors duration-300";
-                            return; // ⛔ บล็อกไว้ไม่ให้ทำ Liveness หรือกดถ่ายถ้าหน้าไม่เต็มกรอบ
+                            return; 
                         }
 
                         // 1. ตรวจสอบคุณภาพแสงและความชัดของกล้อง
@@ -470,21 +469,21 @@ try {
                         if (quality.brightness < 45) {
                             actionIcon.innerText = "💡";
                             actionText.innerText = "แสงน้อยเกินไป กรุณาอยู่ในที่สว่าง";
-                            actionBadge.className = "bg-rose-500 text-white text-xs font-extrabold px-4 py-1.5 rounded-full border border-rose-300 transition-all flex items-center gap-1.5 shadow-md animate-pulse";
+                            actionBadge.className = "bg-rose-500 text-white text-xs font-extrabold px-4 py-1.5 rounded-full border border-rose-300 transition-all flex items-center gap-1.5 shadow-sm";
                             return;
                         }
 
                         if (quality.sharpness < 50) {
                             actionIcon.innerText = "🔍";
                             actionText.innerText = "กล้องไม่ชัด/ภาพเบลอ โปรดอยู่นิ่งๆ";
-                            actionBadge.className = "bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-md animate-bounce";
+                            actionBadge.className = "bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-sm";
                             return;
                         }
 
                         // คืนค่าป้ายเป็นคำสั่งสุ่มเมื่อใบหน้าและคุณภาพภาพผ่าน
                         actionIcon.innerText = currentChallenge.icon;
                         actionText.innerText = currentChallenge.text;
-                        actionBadge.className = "bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-md animate-bounce";
+                        actionBadge.className = "bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-sm";
                         targetBorder.className = "w-56 h-56 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300";
 
                         // 2. ตรวจสอบตามคำสั่งสุ่ม Liveness
@@ -547,7 +546,7 @@ try {
             
             actionIcon.innerText = "📸";
             actionText.innerText = "ผ่านการยืนยันแล้ว กำลังถ่ายรูปอัตโนมัติ...";
-            actionBadge.className = "bg-emerald-600 text-white text-xs font-extrabold px-4 py-1.5 rounded-full border border-emerald-300 transition-all flex items-center gap-1.5 shadow-lg";
+            actionBadge.className = "bg-emerald-600 text-white text-xs font-extrabold px-4 py-1.5 rounded-full border border-emerald-300 transition-all flex items-center gap-1.5 shadow-md";
             targetBorder.className = "w-56 h-56 rounded-full border-2 border-solid border-emerald-400 flex items-center justify-center relative transition-colors duration-300 shadow-[0_0_20px_rgba(52,211,153,0.5)]";
 
             btnCapture.disabled = false;
@@ -595,7 +594,7 @@ try {
 
             actionIcon.innerText = currentChallenge.icon;
             actionText.innerText = currentChallenge.text;
-            actionBadge.className = "bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-md animate-bounce";
+            actionBadge.className = "bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-sm";
             targetBorder.className = "w-56 h-56 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300";
 
             btnCapture.disabled = true;
