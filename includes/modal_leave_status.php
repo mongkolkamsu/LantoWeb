@@ -192,12 +192,7 @@ require_once __DIR__ . '/rounded_dropdown.php';
 
         </div>
 
-        <!-- ปุ่มปิด Pop-up -->
-        <div class="pt-1">
-            <button type="button" onclick="closeLeaveStatusModal()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors cursor-pointer active:scale-98">
-                ปิดหน้าต่าง
-            </button>
-        </div>
+
     </div>
 </div>
 

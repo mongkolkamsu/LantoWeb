@@ -61,22 +61,13 @@ try {
     // ซ่อนข้อผิดพลาด
 }
 
-// ดึงรายชื่อสาขา
-try {
-    $stmt_branches = $pdo->query("SELECT id, name, latitude, longitude, radius FROM branches WHERE is_active = 1");
-    $branches = $stmt_branches->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    $branches = [];
-}
 // 🔍 ดึงเฉพาะรายชื่อสาขาที่แอดมินกำหนดสิทธิ์ให้พนักงานคนนี้เห็น
 $branches = [];
 try {
-    // 1. ดึง branch_id หลักจากตาราง users
     $stmt_u_branch = $pdo->prepare("SELECT branch_id FROM users WHERE id = :user_id LIMIT 1");
     $stmt_u_branch->execute(['user_id' => $user_id]);
     $assigned_branch_id = $stmt_u_branch->fetchColumn();
 
-    // 2. ดึงข้อมูลสาขาที่ตรงกับสิทธิ์พนักงาน (รองรับทั้ง branch_id ใน users และตารางสิทธิ์ user_branches)
     $stmt_branches = $pdo->prepare("
         SELECT DISTINCT b.id, b.name, b.latitude, b.longitude, b.radius 
         FROM branches b
@@ -90,13 +81,11 @@ try {
     ]);
     $branches = $stmt_branches->fetchAll(PDO::FETCH_ASSOC);
 
-    // Fallback: หากยังไม่ได้สิทธิ์เฉพาะ ให้แสดงสาขาทั้งหมดตามปกติ
     if (empty($branches)) {
         $stmt_all = $pdo->query("SELECT id, name, latitude, longitude, radius FROM branches WHERE is_active = 1");
         $branches = $stmt_all->fetchAll(PDO::FETCH_ASSOC);
     }
 } catch (PDOException $e) {
-    // หากตาราง user_branches ไม่มีในระบบ จะคิวรีเฉพาะ branch_id หลักใน users
     try {
         $stmt_fallback = $pdo->prepare("SELECT id, name, latitude, longitude, radius FROM branches WHERE is_active = 1 AND id = :branch_id");
         $stmt_fallback->execute(['branch_id' => $assigned_branch_id]);
@@ -144,20 +133,20 @@ try {
             </div>
 
             <!-- วันเวลาดิจิทัลพร้อมแถบสัญลักษณ์บอกความตรงเวลา -->
-            <div class="text-center my-4 space-y-1.5">
+            <div class="text-center my-3 space-y-1">
                 <div id="live-time" class="text-4xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-900 tabular-nums">00:00:00</div>
                 <div id="live-date" class="text-xs font-medium text-blue-600/80">กำลังดึงข้อมูลระบบ...</div>
                 
-                <div id="shift-status-container" class="pt-1 animate-pulse">
+                <div id="shift-status-container" class="pt-0.5 animate-pulse">
                     <span class="px-3 py-1 rounded-full text-[11px] bg-slate-100 text-slate-400 font-medium">กำลังคำนวณสถานะเวลา...</span>
                 </div>
             </div>
 
-            <!-- 🎯 กรอบรูปกล้องสแกนเนอร์ (ปรับขยายขนาดเป็น w-72 h-72) -->
-            <div class="relative w-72 h-72 mx-auto bg-slate-950 rounded-full overflow-hidden border-4 border-white shadow-2xl flex items-center justify-center my-3">
+            <!-- 🎯 กรอบรูปกล้องสแกนเนอร์ -->
+            <div class="relative w-72 h-72 mx-auto bg-slate-950 rounded-full overflow-hidden border-4 border-white shadow-2xl flex items-center justify-center my-2">
                 
-                <!-- ป้ายคำสั่ง Liveness -->
-                <div id="action-badge" class="absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-amber-500 text-slate-950 text-[11px] font-extrabold px-3.5 py-1 rounded-full backdrop-blur-md border border-amber-300 transition-all flex items-center gap-1.5 shadow-lg animate-bounce">
+                <!-- ป้ายคำสั่ง Liveness & แจ้งเตือนคุณภาพแสง/ความชัด -->
+                <div id="action-badge" class="absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-amber-500 text-slate-950 text-[11px] font-extrabold px-3.5 py-1 rounded-full backdrop-blur-md border border-amber-300 transition-all flex items-center gap-1.5 shadow-lg animate-bounce max-w-[90%] truncate">
                     <span id="action-icon">🤖</span>
                     <span id="action-text">กำลังโหลดระบบตรวจจับ...</span>
                 </div>
@@ -166,7 +155,7 @@ try {
                 <canvas id="photo-preview" class="w-full h-full object-cover scale-x-[-1] hidden absolute inset-0 z-10 rounded-full"></canvas>
                 <div id="laser-line" class="scanner-line absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-blue-500 to-transparent shadow-[0_0_12px_#3b82f6] z-20 mx-6"></div>
                 
-                <!-- 🎯 เส้นประด้านในขยายเป็น w-56 h-56 -->
+                <!-- เส้นประUI นำสายตา -->
                 <div id="target-ui" class="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
                     <div id="target-border" class="w-56 h-56 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300">
                         <div class="absolute top-0 left-0 w-3.5 h-3.5 border-t-2 border-l-2 border-blue-400 rounded-tl-sm"></div>
@@ -182,22 +171,10 @@ try {
                 </div>
             </div>
 
-            <!-- การ์ดแสดงประวัติย่อของพนักงาน -->
-            <div class="bg-white/80 border border-slate-200/60 p-3.5 rounded-2xl flex items-center justify-between my-2 shadow-xs">
-                <div class="flex items-center gap-3">
-                    <img src="<?php echo $avatar_url; ?>" alt="User Avatar" class="w-9 h-9 rounded-xl object-cover border border-slate-200">
-                    <div>
-                        <p class="text-sm font-semibold text-slate-700 leading-tight"><?php echo htmlspecialchars($fullname); ?></p>
-                        <p class="text-[10px] text-slate-400 mt-0.5">กะของคุณ: <?php echo htmlspecialchars($shift_display_name); ?></p>
-                    </div>
-                </div>
-                <span class="text-[10px] bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded-lg font-mono font-medium">รหัสพนักงาน: <?php echo htmlspecialchars($employee_code); ?></span>
-            </div>
-
-            <!-- 📍 กล่องเลือกสถานที่/สาขาปฏิบัติงาน (เปิดโชว์ทันทีเมื่อสแกนเข้างาน) -->
-            <div id="branch-section" class="<?php echo ($type === 'check_in') ? '' : 'hidden'; ?> bg-white/80 border border-slate-200/60 p-4 rounded-2xl shadow-xs space-y-3 my-3 transition-all duration-300">
+            <!-- 📍 กล่องเลือกสถานที่/สาขาปฏิบัติงาน -->
+            <div id="branch-section" class="<?php echo ($type === 'check_in') ? '' : 'hidden'; ?> bg-white/80 border border-slate-200/60 p-3 rounded-2xl shadow-xs space-y-2 my-2 transition-all duration-300">
                 <div>
-                    <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5 pl-0.5">📍 เลือกสถานที่ / สาขาปฏิบัติงาน</label>
+                    <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1 pl-0.5">📍 เลือกสถานที่ / สาขาปฏิบัติงาน</label>
                     <?php 
                     include_once '../includes/rounded_dropdown.php';
                     $branch_opts = [];
@@ -209,7 +186,6 @@ try {
                         ];
                     }
                     
-                    // หากมีเพียงสาขาเดียวที่ถูกกำหนดสิทธิ์ ให้เลือกเป็นค่าเริ่มต้นทันที
                     $default_branch = (count($branches) === 1) ? $branches[0]['id'] : '';
                     $default_label  = (count($branches) === 1) ? $branches[0]['name'] : 'โปรดคลิกเลือกสาขาที่ทำงาน';
 
@@ -217,12 +193,12 @@ try {
                     ?>
                 </div>
                 
-                <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex flex-col gap-1 text-[11px]">
+                <div class="bg-slate-50 p-2 rounded-xl border border-slate-100 flex flex-col gap-0.5 text-[10px]">
                     <div class="flex justify-between">
                         <span class="text-slate-400 font-light">ระยะห่างของคุณจากสาขา:</span>
                         <span id="distance-text" class="font-bold text-slate-700">กำลังคำนวณพิกัด GPS...</span>
                     </div>
-                    <div class="flex justify-between items-center mt-1 pt-1 border-t border-slate-200/40">
+                    <div class="flex justify-between items-center pt-0.5 border-t border-slate-200/40">
                         <span class="text-slate-400 font-light">ตรวจสอบสถานะพื้นที่:</span>
                         <span id="gps-status-badge" class="px-2 py-0.5 rounded-md font-semibold bg-slate-200 text-slate-500">Waiting...</span>
                     </div>
@@ -232,20 +208,18 @@ try {
         </div>
 
         <!-- ส่วนปุ่มควบคุมการบันทึกข้อมูลเวลาทำงาน -->
-        <div class="pt-4 space-y-2">
+        <div class="pt-2 space-y-2">
             <button id="btnRetake" class="w-full hidden bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium py-2.5 rounded-2xl text-xs tracking-wide transition-all active:scale-[0.98] cursor-pointer items-center justify-center gap-2 shadow-xs">
                 <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path>
                 </svg>
-                ยกเลิกและกดถ่ายรูปใหม่ (Retake Photo)
+                ยกเลิกและสแกนใหม่อีกครั้ง (Retake Photo)
             </button>
 
-            <button id="btnCapture" class="w-full bg-gradient-to-r <?php echo $type_color; ?> text-white font-semibold py-3.5 rounded-2xl shadow-md text-sm tracking-wide transition-all transform active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 opacity-50 cursor-not-allowed" disabled>
+            <button id="btnCapture" class="w-full bg-gradient-to-r <?php echo $type_color; ?> text-white font-semibold py-3 rounded-2xl shadow-md text-xs tracking-wide transition-all transform active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 opacity-50 cursor-not-allowed" disabled>
                 <svg id="btn-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                <span id="btn-text">ทำตามคำสั่งด้านบนเพื่อถ่ายรูป...</span>
+                <span id="btn-text">มองกล้องและทำตามคำสั่งเพื่อสแกนอัตโนมัติ...</span>
             </button>
-            
-            <p class="text-[10px] text-center text-slate-400 mt-2 font-light">Lanto Web AI Liveness Engine v5.0.0</p>
         </div>
     <?php include '../includes/navbar.php'; ?>
     </div>
@@ -264,11 +238,15 @@ try {
         ];
         const currentChallenge = challenges[Math.floor(Math.random() * challenges.length)];
         let isLivenessPassed = false;
-        let wasEyeClosed = false; // ตัวแปรเก็บสถานะการปิดตาชั่วคราว
+        let wasEyeClosed = false;
 
         const shiftType = '<?php echo $type; ?>'; 
         const shiftStartStr = '<?php echo $shift_start; ?>'; 
         const shiftEndStr = '<?php echo $shift_end; ?>'; 
+
+        // 💡 อุปกรณ์ช่วยคำนวณแสงและความชัดของภาพ
+        let qualityCanvas = null;
+        let qualityCtx = null;
 
         function startLiveClock() {
             const timeElement = document.getElementById('live-time');
@@ -291,21 +269,21 @@ try {
 
                     if (curTotalSeconds <= startTotalSeconds) {
                         if (startTotalSeconds - curTotalSeconds <= 900) {
-                            statusContainer.innerHTML = '<span class="px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">⏱️ ตรงเวลา (On Time)</span>';
+                            statusContainer.innerHTML = '<span class="px-3 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">⏱️ ตรงเวลา (On Time)</span>';
                         } else {
-                            statusContainer.innerHTML = '<span class="px-3 py-1 rounded-full text-[11px] font-bold bg-blue-100 text-blue-700 border border-blue-200">☀️ เข้างานก่อนเวลา (Early)</span>';
+                            statusContainer.innerHTML = '<span class="px-3 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">☀️ เข้างานก่อนเวลา (Early)</span>';
                         }
                     } else {
-                        statusContainer.innerHTML = '<span class="px-3 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700 border border-rose-200">⚠️ เข้างานสาย (Late)</span>';
+                        statusContainer.innerHTML = '<span class="px-3 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200">⚠️ เข้างานสาย (Late)</span>';
                     }
                 } else {
                     const endParts = shiftEndStr.split(':');
                     const endTotalSeconds = (parseInt(endParts[0]) * 3600) + (parseInt(endParts[1]) * 60) + parseInt(endParts[2]);
 
                     if (curTotalSeconds < endTotalSeconds) {
-                        statusContainer.innerHTML = '<span class="px-3 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-700 border border-amber-200">⚠️ ออกก่อนเวลา (Early Out)</span>';
+                        statusContainer.innerHTML = '<span class="px-3 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200">⚠️ ออกก่อนเวลา (Early Out)</span>';
                     } else {
-                        statusContainer.innerHTML = '<span class="px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">✅ เลิกงานตามเวลา (On Time)</span>';
+                        statusContainer.innerHTML = '<span class="px-3 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">✅ เลิกงานตามเวลา (On Time)</span>';
                     }
                 }
             }
@@ -379,6 +357,57 @@ try {
             return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
         }
 
+        // 💡 ฟังก์ชันวิเคราะห์ระดับแสงสว่างและความชัด/เบลอของกล้อง
+        function checkImageQuality(videoElem) {
+            const w = 100;
+            const h = 100;
+
+            if (!qualityCanvas) {
+                qualityCanvas = document.createElement('canvas');
+                qualityCanvas.width = w;
+                qualityCanvas.height = h;
+                qualityCtx = qualityCanvas.getContext('2d', { willReadFrequently: true });
+            }
+
+            qualityCtx.drawImage(videoElem, 0, 0, w, h);
+            const imgData = qualityCtx.getImageData(0, 0, w, h);
+            const data = imgData.data;
+
+            let totalLum = 0;
+            const gray = new Float32Array(w * h);
+
+            for (let i = 0; i < data.length; i += 4) {
+                const lum = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+                gray[i / 4] = lum;
+                totalLum += lum;
+            }
+
+            const avgBrightness = totalLum / (w * h);
+
+            // คำนวณความชัด (Laplacian Variance)
+            let sumLap = 0;
+            let sumLapSq = 0;
+            let count = 0;
+
+            for (let y = 1; y < h - 1; y++) {
+                for (let x = 1; x < w - 1; x++) {
+                    const idx = y * w + x;
+                    const lap = gray[idx - w] + gray[idx - 1] - 4 * gray[idx] + gray[idx + 1] + gray[idx + w];
+                    sumLap += lap;
+                    sumLapSq += lap * lap;
+                    count++;
+                }
+            }
+
+            const meanLap = sumLap / count;
+            const lapVariance = (sumLapSq / count) - (meanLap * meanLap);
+
+            return {
+                brightness: avgBrightness,
+                sharpness: lapVariance
+            };
+        }
+
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('photo-preview');
         const btnCapture = document.getElementById('btnCapture');
@@ -395,7 +424,6 @@ try {
         let cameraUtils = null;
 
         async function initFaceMeshLiveness() {
-            // แสดงคำสั่งที่สุ่มได้ขึ้นหน้าจอทันที
             actionIcon.innerText = currentChallenge.icon;
             actionText.innerText = currentChallenge.text;
 
@@ -415,10 +443,33 @@ try {
                     if (isCaptured || isLivenessPassed) return;
 
                     if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+                        
+                        // 1. ตรวจสอบคุณภาพแสงและความชัดของกล้องก่อน
+                        const quality = checkImageQuality(video);
+
+                        if (quality.brightness < 45) {
+                            actionIcon.innerText = "💡";
+                            actionText.innerText = "แสงน้อยเกินไป กรุณาอยู่ในที่สว่าง";
+                            actionBadge.className = "absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-rose-500 text-white text-[11px] font-extrabold px-3.5 py-1 rounded-full backdrop-blur-md border border-rose-300 transition-all flex items-center gap-1.5 shadow-lg animate-pulse max-w-[90%] truncate";
+                            return;
+                        }
+
+                        if (quality.sharpness < 50) {
+                            actionIcon.innerText = "🔍";
+                            actionText.innerText = "กล้องไม่ชัด/ภาพเบลอ โปรดอยู่นิ่งๆ";
+                            actionBadge.className = "absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-amber-500 text-slate-950 text-[11px] font-extrabold px-3.5 py-1 rounded-full backdrop-blur-md border border-amber-300 transition-all flex items-center gap-1.5 shadow-lg animate-bounce max-w-[90%] truncate";
+                            return;
+                        }
+
+                        // คืนค่าป้ายเป็นคำสั่งสุ่มเมื่อคุณภาพภาพผ่าน
+                        actionIcon.innerText = currentChallenge.icon;
+                        actionText.innerText = currentChallenge.text;
+                        actionBadge.className = "absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-amber-500 text-slate-950 text-[11px] font-extrabold px-3.5 py-1 rounded-full backdrop-blur-md border border-amber-300 transition-all flex items-center gap-1.5 shadow-lg animate-bounce max-w-[90%] truncate";
+
                         const landmarks = results.multiFaceLandmarks[0];
 
+                        // 2. ตรวจสอบตามคำสั่งสุ่ม Liveness
                         if (currentChallenge.id === 'blink') {
-                            // 👁️ คำนวณ Eye Aspect Ratio (EAR) สำหรับตรวจการกระพริบตา
                             const leftEyeTop = landmarks[159];
                             const leftEyeBottom = landmarks[145];
                             const leftEyeLeft = landmarks[33];
@@ -428,17 +479,14 @@ try {
                             const eyeWidth = getDistance(leftEyeLeft, leftEyeRight);
                             const ear = eyeHeight / eyeWidth;
 
-                            // เมื่อหลับตา ค่า EAR จะต่ำกว่า 0.18
                             if (ear < 0.18) {
                                 wasEyeClosed = true;
                             } 
-                            // เมื่อเปิดตาขึ้นอีกครั้งหลังจากหลับตา = กระพริบตาสมบูรณ์
                             else if (wasEyeClosed && ear > 0.23) {
                                 triggerLivenessPassed();
                             }
 
                         } else if (currentChallenge.id === 'smile') {
-                            // 😊 คำนวณความกว้างมุมปากเทียบกับความกว้างใบหน้าสำหรับตรวจยิ้ม
                             const mouthLeft = landmarks[61];
                             const mouthRight = landmarks[291];
                             const cheekLeft = landmarks[234];
@@ -448,7 +496,6 @@ try {
                             const faceWidth = getDistance(cheekLeft, cheekRight);
                             const smileRatio = mouthWidth / faceWidth;
 
-                            // เมื่อยิ้ม อัตราส่วนความกว้างปากจะมากกว่า 0.42
                             if (smileRatio > 0.42) {
                                 triggerLivenessPassed();
                             }
@@ -474,28 +521,27 @@ try {
             }
         }
 
-        // 🎉 เมื่อทำคำสั่งผ่านสำเร็จ
+        // 🎉 เมื่อทำคำสั่งผ่านสำเร็จ -> กดถ่ายให้อัตโนมัติ!
         function triggerLivenessPassed() {
+            if (isLivenessPassed) return;
             isLivenessPassed = true;
             
-            actionIcon.innerText = "🟢";
-            actionText.innerText = "ผ่านการยืนยันตัวตนแล้ว";
-            actionBadge.className = "absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-emerald-600 text-white text-[11px] font-extrabold px-3.5 py-1 rounded-full backdrop-blur-md border border-emerald-300 transition-all flex items-center gap-1.5 shadow-lg";
+            actionIcon.innerText = "📸";
+            actionText.innerText = "ผ่านการยืนยันแล้ว กำลังถ่ายรูปอัตโนมัติ...";
+            actionBadge.className = "absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-emerald-600 text-white text-[11px] font-extrabold px-3.5 py-1 rounded-full backdrop-blur-md border border-emerald-300 transition-all flex items-center gap-1.5 shadow-lg max-w-[90%] truncate";
             targetBorder.className = "w-56 h-56 rounded-full border-2 border-solid border-emerald-400 flex items-center justify-center relative transition-colors duration-300 shadow-[0_0_20px_rgba(52,211,153,0.5)]";
 
             btnCapture.disabled = false;
             btnCapture.classList.remove('opacity-50', 'cursor-not-allowed');
-            btnText.innerText = "กดถ่ายรูปเพื่อ" + (shiftType === 'check_out' ? 'ออกงาน' : 'เข้างาน');
+            btnText.innerText = "ระบบจับภาพสำเร็จแล้ว!";
+
+            // 🎯 หน่วงเวลา 0.4 วินาทีให้เห็นเอฟเฟกต์สีเขียว แล้วสั่งกดถ่ายให้อัตโนมัติทันที
+            setTimeout(() => {
+                freezeCapturePhoto();
+            }, 400);
         }
 
         function freezeCapturePhoto() {
-            if (!isLivenessPassed) {
-                if (typeof LantoAlert !== 'undefined') {
-                    LantoAlert.warning('สแกนไม่สำเร็จ', 'กรุณาทำตามคำสั่งด้านบนกล้องให้สำเร็จก่อนกดถ่ายรูปครับ');
-                }
-                return;
-            }
-
             const ctx = canvas.getContext('2d');
             const size = Math.min(video.videoWidth, video.videoHeight);
             canvas.width = size;
@@ -516,7 +562,6 @@ try {
             btnText.innerText = "ยืนยันและส่งข้อมูลบันทึกเวลา";
             btnRetake.classList.remove('hidden');
             btnRetake.classList.add('flex');
-
         }
 
         function unfreezeAndReset() {
@@ -532,15 +577,14 @@ try {
 
             actionIcon.innerText = currentChallenge.icon;
             actionText.innerText = currentChallenge.text;
-            actionBadge.className = "absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-amber-500 text-slate-950 text-[11px] font-extrabold px-3.5 py-1 rounded-full backdrop-blur-md border border-amber-300 transition-all flex items-center gap-1.5 shadow-lg animate-bounce";
+            actionBadge.className = "absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-amber-500 text-slate-950 text-[11px] font-extrabold px-3.5 py-1 rounded-full backdrop-blur-md border border-amber-300 transition-all flex items-center gap-1.5 shadow-lg animate-bounce max-w-[90%] truncate";
             targetBorder.className = "w-56 h-56 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300";
 
             btnCapture.disabled = true;
             btnCapture.classList.add('opacity-50', 'cursor-not-allowed');
-            btnText.innerText = "ทำตามคำสั่งด้านบนเพื่อถ่ายรูป...";
+            btnText.innerText = "มองกล้องและทำตามคำสั่งเพื่อสแกนอัตโนมัติ...";
             btnRetake.classList.remove('flex');
             btnRetake.classList.add('hidden');
-
         }
 
         btnCapture.addEventListener('click', () => {
@@ -618,7 +662,7 @@ try {
             trackUserLocation();
             initFaceMeshLiveness();
         });
-        // 🎯 คำนวณระยะทางทันทีเมื่อเลือกสาขาใน Dropdown
+
         document.addEventListener('click', function(e) {
             if (e.target.closest('#list-branch_select .dropdown-item')) {
                 setTimeout(() => {

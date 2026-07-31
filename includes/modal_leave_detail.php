@@ -110,10 +110,6 @@
                         </button>
                     </form>
                 </div>
-
-                <button type="button" onclick="closeLeaveDetailModal()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors cursor-pointer">
-                    ปิดหน้าต่าง
-                </button>
             </div>
         </div>
 
@@ -209,11 +205,7 @@
             </div>
 
             <!-- ปุ่มปิด Pop-up ฝั่งขวา -->
-            <div class="pt-3 border-t border-slate-100 mt-4">
-                <button type="button" onclick="closeLeaveDetailModal()" class="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-2xl transition-colors cursor-pointer">
-                    ปิดหน้าต่าง
-                </button>
-            </div>
+
         </div>
     </div>
 </div>
