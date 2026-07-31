@@ -179,9 +179,9 @@ try {
             <?php else: ?>
                 
             <!-- 🎯 1. ป้ายคำสั่ง Liveness -->
-            <div class="flex justify-center items-center h-9 my-2">
-                <div id="action-badge" class="bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-sm">
-                    <span id="action-icon">🤖</span>
+            <div class="flex justify-center items-center h-7 my-1">
+                <div id="action-badge" class="bg-amber-500 text-slate-950 text-[10px] font-bold px-3 py-0.5 rounded-full border border-amber-300 transition-all flex items-center gap-1 shadow-xs">
+                    <span id="action-icon" class="text-xs">🤖</span>
                     <span id="action-text">กำลังโหลดระบบตรวจจับ...</span>
                 </div>
             </div>
