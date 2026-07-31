@@ -187,7 +187,7 @@ try {
             </div>
 
             <!-- 🎯 กรอบรูปกล้องสแกนเนอร์ -->
-            <div class="relative w-72 h-72 mx-auto bg-slate-950 rounded-full overflow-hidden border-4 border-white shadow-2xl flex items-center justify-center mt-1 mb-2">
+            <div class="relative w-56 h-56 mx-auto bg-slate-950 rounded-full overflow-hidden border-4 border-white shadow-2xl flex items-center justify-center mt-1 mb-2">
 
                 <video id="webcam" autoplay playsinline class="w-full h-full object-cover scale-x-[-1] rounded-full"></video>
                 <canvas id="photo-preview" class="w-full h-full object-cover scale-x-[-1] hidden absolute inset-0 z-10 rounded-full"></canvas>
@@ -195,7 +195,7 @@ try {
                 
                 <!-- เส้นประUI นำสายตา -->
                 <div id="target-ui" class="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
-                    <div id="target-border" class="w-56 h-56 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300">
+                    <div id="target-border" class="w-44 h-44 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300">
                         <div class="absolute top-0 left-0 w-3.5 h-3.5 border-t-2 border-l-2 border-blue-400 rounded-tl-sm"></div>
                         <div class="absolute top-0 right-0 w-3.5 h-3.5 border-t-2 border-r-2 border-blue-400 rounded-tr-sm"></div>
                         <div class="absolute bottom-0 left-0 w-3.5 h-3.5 border-b-2 border-l-2 border-blue-400 rounded-bl-sm"></div>
@@ -498,7 +498,7 @@ try {
                             actionIcon.innerText = "👤";
                             actionText.innerText = "กรุณาจัดใบหน้าให้อยู่ตรงกลางกรอบ";
                             actionBadge.className = "bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-sm";
-                            targetBorder.className = "w-56 h-56 rounded-full border-2 border-dashed border-amber-400 flex items-center justify-center relative transition-colors duration-300";
+                            targetBorder.className = "w-44 h-44 rounded-full border-2 border-dashed border-amber-400 flex items-center justify-center relative transition-colors duration-300";
                             return; 
                         }
 
@@ -523,7 +523,7 @@ try {
                         actionIcon.innerText = currentChallenge.icon;
                         actionText.innerText = currentChallenge.text;
                         actionBadge.className = "bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-sm";
-                        targetBorder.className = "w-56 h-56 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300";
+                        targetBorder.className = "w-44 h-44 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300";
 
                         // 2. ตรวจสอบตามคำสั่งสุ่ม Liveness
                         if (currentChallenge.id === 'blink') {
@@ -586,7 +586,7 @@ try {
             actionIcon.innerText = "📸";
             actionText.innerText = "ผ่านการยืนยันแล้ว กำลังถ่ายรูปอัตโนมัติ...";
             actionBadge.className = "bg-emerald-600 text-white text-xs font-extrabold px-4 py-1.5 rounded-full border border-emerald-300 transition-all flex items-center gap-1.5 shadow-md";
-            targetBorder.className = "w-56 h-56 rounded-full border-2 border-solid border-emerald-400 flex items-center justify-center relative transition-colors duration-300 shadow-[0_0_20px_rgba(52,211,153,0.5)]";
+            targetBorder.className = "w-44 h-44 rounded-full border-2 border-solid border-emerald-400 flex items-center justify-center relative transition-colors duration-300 shadow-[0_0_20px_rgba(52,211,153,0.5)]";
 
             btnCapture.disabled = false;
             btnCapture.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -635,7 +635,7 @@ try {
             actionIcon.innerText = currentChallenge.icon;
             actionText.innerText = currentChallenge.text;
             actionBadge.className = "bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-sm";
-            targetBorder.className = "w-56 h-56 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300";
+            targetBorder.className = "w-44 h-44 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300";
 
             btnCapture.disabled = true;
             btnCapture.classList.add('opacity-50', 'cursor-not-allowed');
