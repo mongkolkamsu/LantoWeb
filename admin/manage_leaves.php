@@ -201,7 +201,7 @@ $leave_type_map = [
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-[#f4f6fa] text-slate-800 antialiased flex h-screen overflow-hidden">
+<body class="bg-[#f4f6fa] text-slate-800 antialiased flex flex-col md:flex-row min-h-screen md:h-screen md:overflow-hidden">
 
     <?php
     // 🎯 ดึงชื่อไฟล์ปัจจุบันมาเช็ก Active Menu อัตโนมัติ
@@ -212,7 +212,7 @@ $leave_type_map = [
     <?php include '../includes/sidebar.php'; ?>
 
     <!-- 💻 2. MAIN WORKSPACE -->
-    <main class="flex-1 p-6 lg:p-8 h-screen overflow-y-auto space-y-6">
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 w-full min-h-screen md:h-screen overflow-y-auto space-y-4 sm:space-y-6 pb-20 md:pb-8">
         
         <!-- Header Topbar -->
         <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">

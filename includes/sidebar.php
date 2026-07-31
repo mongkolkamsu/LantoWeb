@@ -2,9 +2,18 @@
 // 🎯 ระบบดึงชื่อหน้าปัจจุบันมาเช็ก Active Menu อัตโนมัติ
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
-
+<!-- 📱 แถบ Header ปุ่มเมนูเฉพาะบนมือถือ -->
+<div class="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center sticky top-0 z-40 shadow-md">
+    <div class="flex items-center gap-2">
+        <span class="text-base">⚙️</span>
+        <span class="font-extrabold text-sm tracking-wide">Lanto Admin System</span>
+    </div>
+    <button type="button" onclick="document.getElementById('adminSidebar').classList.toggle('hidden')" class="px-3 py-1.5 bg-slate-800 rounded-xl text-xs font-bold text-slate-300 hover:text-white cursor-pointer active:scale-95">
+        🍔 เมนู
+    </button>
+</div>
 <!-- 👤 SIDEBAR NAVIGATION (Modern Clean with Standard Lucide Vector Icons) -->
-<aside class="w-64 bg-white text-slate-600 flex flex-col justify-between hidden lg:flex shrink-0 border-r border-slate-200/80 shadow-xs h-screen sticky top-0">
+<aside id="adminSidebar" class="hidden md:flex flex-col w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-slate-200/80 p-4 space-y-4 shrink-0 transition-all">
     <div>
         <!-- LOGO HEADER -->
         <div class="p-5 flex items-center gap-3 border-b border-slate-100">
