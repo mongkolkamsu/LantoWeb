@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // บันทึก Session ข้อมูลพนักงาน
                 $_SESSION['user_id']       = $user['id'];
                 $_SESSION['employee_code'] = $user['employee_code'];
-                $_SESSION['fullname']      = $user['fullname'];
+                $_SESSION['fullname']      = $user['first_name'] . ' ' . $user['last_name'];
                 $_SESSION['role']          = $user['role'];
                 $_SESSION['profile_image'] = $user['profile_image'];
 

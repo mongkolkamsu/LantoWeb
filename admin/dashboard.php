@@ -68,7 +68,7 @@ try {
                 l.id,
                 DATE_FORMAT(l.created_at, '%d/%m/%Y') as sub_date,
                 u.employee_code,
-                u.fullname,
+                CONCAT(u.first_name, ' ', u.last_name) AS fullname,
                 d.name AS dept_name,
                 l.leave_type as type,
                 l.start_date,
@@ -131,7 +131,7 @@ try {
     $today_late_count = $stmt_today_late->fetchColumn();
 
     $stmt_in = $pdo->prepare("
-        SELECT a.log_type, a.scan_time, a.photo_log, u.fullname, u.employee_code, b.name as branch_name, w.start_time 
+        SELECT a.log_type, a.scan_time, a.photo_log, CONCAT(u.first_name, ' ', u.last_name) AS fullname, u.employee_code, b.name as branch_name, w.start_time 
         FROM attendance a 
         INNER JOIN users u ON a.user_id = u.id 
         LEFT JOIN branches b ON a.branch_id = b.id 
@@ -143,7 +143,7 @@ try {
     $recent_in = $stmt_in->fetchAll(PDO::FETCH_ASSOC);
 
     $stmt_out = $pdo->prepare("
-        SELECT a.log_type, a.scan_time, a.photo_log, u.fullname, u.employee_code, b.name as branch_name, w.start_time 
+        SELECT a.log_type, a.scan_time, a.photo_log, CONCAT(u.first_name, ' ', u.last_name) AS fullname, u.employee_code, b.name as branch_name, w.start_time 
         FROM attendance a 
         INNER JOIN users u ON a.user_id = u.id 
         LEFT JOIN branches b ON a.branch_id = b.id 

@@ -142,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 $employees_list = [];
 try {
     $sql = "
-        SELECT u.id, u.employee_code, u.fullname, u.email, u.profile_image, 
+        SELECT u.id, u.employee_code, CONCAT(u.first_name, ' ', u.last_name) AS fullname, u.email, u.profile_image, 
                d.name AS dept_name, b.name AS branch_name,
                s.id AS salary_id, s.net_pay, s.pdf_file, s.is_published, s.created_at AS slip_uploaded_at
         FROM users u
@@ -157,7 +157,7 @@ try {
     ];
 
     if ($search_emp !== '') {
-        $sql .= " AND (u.fullname LIKE :s1 OR u.employee_code LIKE :s2)";
+        $sql .= " AND (CONCAT(u.first_name, ' ', u.last_name) AS fullname LIKE :s1 OR u.employee_code LIKE :s2)";
         $params['s1'] = "%{$search_emp}%";
         $params['s2'] = "%{$search_emp}%";
     }

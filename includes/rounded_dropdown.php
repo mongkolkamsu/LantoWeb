@@ -1,8 +1,8 @@
 <?php
 /**
- * 🎨 ฟังก์ชันกลางสำหรับเสกกล่อง Dropdown ขอบมนพรีเมียมสากล (เวอร์ชันแก้บัคส่งค่าว่าง)
+ * 🎨 ฟังก์ชันกลางสำหรับเสกกล่อง Dropdown ขอบมนพรีเมียม (เวอร์ชันมีช่องพิมพ์ค้นหา)
  */
-function renderRoundedDropdown($id, $input_name, $placeholder, $options_array, $value = '') {
+function renderRoundedDropdown($id, $input_name, $placeholder, $options_array, $value = '', $enable_search = true) {
     ?>
     <div class="relative w-full text-left text-xs font-medium mb-1" id="custom-dropdown-<?php echo $id; ?>">
         <input type="hidden" id="<?php echo $id; ?>" name="<?php echo $input_name; ?>" value="<?php echo htmlspecialchars($value); ?>">
@@ -14,22 +14,32 @@ function renderRoundedDropdown($id, $input_name, $placeholder, $options_array, $
         </button>
 
         <div id="list-<?php echo $id; ?>" 
-            class="hidden absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-xl max-h-48 overflow-y-auto z-50 p-1.5 transition-all">
+            class="hidden absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-xl max-h-56 overflow-y-auto z-50 p-2 transition-all">
             
-            <?php if (empty($options_array)): ?>
-                <div class="px-4 py-2.5 text-slate-400">ไม่มีข้อมูลในระบบ</div>
-            <?php else: ?>
-                <?php foreach ($options_array as $opt): 
-                    $data_attrs = $opt['data_attributes'] ?? '';
-                ?>
-                    <div onclick="selectDropdownOption('<?php echo $id; ?>', '<?php echo $opt['id']; ?>', '<?php echo htmlspecialchars($opt['name']); ?>')"
-                         data-value="<?php echo $opt['id']; ?>"
-                         class="dropdown-item px-3 py-2.5 rounded-xl text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors cursor-pointer flex items-center justify-between"
-                         <?php echo $data_attrs; ?>>
-                        <span><?php echo $opt['name']; ?></span>
-                    </div>
-                <?php endforeach; ?>
+            <!-- 🔎 ช่องพิมพ์ค้นหารายชื่อ/ตัวเลือก -->
+            <?php if ($enable_search): ?>
+                <div class="p-1 sticky top-0 bg-white/95 z-10 border-b border-slate-100 mb-1" onclick="event.stopPropagation()">
+                    <input type="text" placeholder="🔍 พิมพ์เพื่อค้นหาชื่อ/รหัส..." oninput="filterDropdownOptions('<?php echo $id; ?>', this.value)"
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500 font-bold">
+                </div>
             <?php endif; ?>
+
+            <div id="items-container-<?php echo $id; ?>">
+                <?php if (empty($options_array)): ?>
+                    <div class="px-4 py-2.5 text-slate-400 text-center">ไม่มีข้อมูลในระบบ</div>
+                <?php else: ?>
+                    <?php foreach ($options_array as $opt): 
+                        $data_attrs = $opt['data_attributes'] ?? '';
+                    ?>
+                        <div onclick="selectDropdownOption('<?php echo $id; ?>', '<?php echo $opt['id']; ?>', '<?php echo htmlspecialchars($opt['name']); ?>')"
+                             data-value="<?php echo $opt['id']; ?>"
+                             class="dropdown-item px-3 py-2.5 rounded-xl text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors cursor-pointer flex items-center justify-between"
+                             <?php echo $data_attrs; ?>>
+                            <span><?php echo $opt['name']; ?></span>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
     <?php
@@ -55,18 +65,28 @@ if (typeof dropdownScriptsLoaded === 'undefined') {
         arrow.classList.toggle('rotate-180');
     }
 
-    function selectDropdownOption(id, value, label) {
+        function selectDropdownOption(id, value, label) {
         const hiddenInput = document.getElementById(id);
-        hiddenInput.value = value;
+        if (hiddenInput) hiddenInput.value = value;
         
         const labelSpan = document.getElementById('label-' + id);
-        labelSpan.textContent = label;
-        labelSpan.className = "text-slate-800 font-medium";
+        if (labelSpan) {
+            labelSpan.textContent = label;
+            labelSpan.className = "truncate text-slate-800 font-bold";
+        }
         
-        document.getElementById('list-' + id).classList.add('hidden');
-        document.getElementById('arrow-' + id).classList.remove('rotate-180');
+        const list = document.getElementById('list-' + id);
+        if (list) list.classList.add('hidden');
+        
+        const arrow = document.getElementById('arrow-' + id);
+        if (arrow) arrow.classList.remove('rotate-180');
 
-        // 🎯 เพิ่มสั่งงาน Trigger สำหรับ Dropdown สถานะการลา
+        // 🎯 เพิ่ม Trigger เชื่อมการสลับสิทธิ์พนักงานในตาราง
+        if (id.startsWith('perm_role_') && typeof changeUserRoleDirectly === 'function') {
+            const userId = id.replace('perm_role_', '');
+            changeUserRoleDirectly(userId, value, label);
+        }
+
         if (id === 'leave_status_select' && typeof switchLeaveItem === 'function') {
             switchLeaveItem(value);
         }
@@ -74,6 +94,20 @@ if (typeof dropdownScriptsLoaded === 'undefined') {
         if (id === 'branch_select' && typeof checkBranchDistance === 'function') {
             checkBranchDistance();
         }
+    }
+
+    // 🎯 ฟังก์ชันกรองตัวเลือกทันทีเมื่อพิมพ์
+    function filterDropdownOptions(id, query) {
+        const q = query.toLowerCase().trim();
+        const items = document.querySelectorAll('#items-container-' + id + ' .dropdown-item');
+        items.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            if (text.includes(q)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
     }
 
     document.addEventListener('click', function(e) {

@@ -29,7 +29,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             if ($edit_mode === 'single') {
                 $id         = $ids[0];
                 $emp_code   = trim($_POST['single_code'] ?? '');
-                $fullname   = trim($_POST['single_fullname'] ?? '');
+                $first_name = trim($_POST['single_first_name'] ?? '');
+                $last_name  = trim($_POST['single_last_name'] ?? ''); 
                 $email      = trim($_POST['single_email'] ?? '');
                 $phone      = trim($_POST['single_phone'] ?? '');
                 $emp_role   = $_POST['role'] ?? 'employee';
@@ -45,7 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
                 $params = [
                     'code'      => $emp_code, 
-                    'name'      => $fullname, 
+                    'fname'     => $first_name, 
+                    'lname'     => $last_name, 
                     'email'     => $email, 
                     'phone'     => $phone,
                     'role'      => $emp_role,
@@ -95,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
                 $stmt_update = $pdo->prepare("
                     UPDATE users SET 
-                        employee_code = :code, fullname = :name, email = :email, phone = :phone, role = :role,
+                        employee_code = :code, first_name = :fname, last_name = :lname, email = :email, phone = :phone, role = :role,
                         birth_date = :birth, start_date = :start, department = :dept,
                         branch_id = :branch, employee_type = :emp_type, work_shift = :shift,
                         is_active = :is_active $img_sql $pass_sql
@@ -249,6 +251,7 @@ try {
     // SQL หลักในการดึงข้อมูล
     $sql = "
         SELECT u.*, 
+                CONCAT(u.first_name, ' ', u.last_name) AS fullname,
                d.name AS dept_name, 
                w.name AS shift_name, 
                b.name AS branch_name,
@@ -275,7 +278,7 @@ try {
     }
 
     if ($search !== '') {
-        $sql .= " AND (u.fullname LIKE :search1 OR u.employee_code LIKE :search2 OR u.email LIKE :search3)";
+        $sql .= " AND (CONCAT(u.first_name, ' ', u.last_name) LIKE :search1 OR u.employee_code LIKE :search2 OR u.email LIKE :search3)";
         $params['search1'] = "%{$search}%";
         $params['search2'] = "%{$search}%";
         $params['search3'] = "%{$search}%";
@@ -553,6 +556,8 @@ $sort_url = 'manage_employees.php?' . http_build_query($sort_link_params);
                                         class="emp-checkbox w-4 h-4 text-blue-600 rounded-md border-slate-300 focus:ring-blue-500 cursor-pointer" 
                                         value="<?php echo $emp['id']; ?>"
                                         data-code="<?php echo htmlspecialchars($emp['employee_code'] ?? ''); ?>"
+                                        data-firstname="<?php echo htmlspecialchars($emp['first_name'] ?? ''); ?>"  
+                                        data-lastname="<?php echo htmlspecialchars($emp['last_name'] ?? ''); ?>"
                                         data-fullname="<?php echo htmlspecialchars($emp['fullname'] ?? ''); ?>"
                                         data-email="<?php echo htmlspecialchars($emp['email'] ?? ''); ?>"
                                         data-phone="<?php echo htmlspecialchars($emp['phone'] ?? ''); ?>"
@@ -650,6 +655,8 @@ $sort_url = 'manage_employees.php?' . http_build_query($sort_link_params);
             const empData = {
                 id: checkbox.value,
                 code: checkbox.getAttribute('data-code') || '',
+                firstname: checkbox.getAttribute('data-firstname') || '',
+                lastname: checkbox.getAttribute('data-lastname') || '',
                 fullname: checkbox.getAttribute('data-fullname') || '',
                 email: checkbox.getAttribute('data-email') || '',
                 phone: checkbox.getAttribute('data-phone') || '',

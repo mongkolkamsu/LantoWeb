@@ -25,7 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $employee_code = trim(htmlspecialchars($_POST['employee_code'] ?? ''));
     $password      = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
-    $fullname      = trim(htmlspecialchars($_POST['fullname'] ?? ''));
+    $first_name = trim(htmlspecialchars($_POST['first_name'] ?? ''));
+    $last_name  = trim(htmlspecialchars($_POST['last_name'] ?? ''));
     $birth_date    = $_POST['birth_date'] ?? '';
     $email         = trim(htmlspecialchars($_POST['email'] ?? ''));
     $phone         = trim(htmlspecialchars($_POST['phone'] ?? ''));
@@ -46,8 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $start_date     = $_POST['start_date'] ?? '';
     $work_shift     = $_POST['work_shift'] ?? '';
 
-    if (empty($employee_code) || empty($password) || empty($fullname) || empty($email) || empty($branch_id)) {
-        echo json_encode(['status' => 'error', 'message' => 'กรุณากรอกข้อมูลสำคัญรวมถึงเลือกสาขาให้ครบถ้วน']);
+    if (empty($employee_code) || empty($password) || empty($first_name) || empty($last_name) || empty($email) || empty($branch_id)) {
+        echo json_encode(['status' => 'error', 'message' => 'กรุณากรอกชื่อจริง นามสกุล และข้อมูลสำคัญให้ครบถ้วน']);
         exit();
     }
 
@@ -96,11 +97,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $hashed_password = password_hash($password, PASSWORD_BCRYPT);
 
         $sql = "INSERT INTO users (
-                    employee_code, password, profile_image, id_card_image, fullname, 
+                    employee_code, password, profile_image, id_card_image, first_name, last_name, 
                     birth_date, email, phone, address_detail, subdistrict, district, 
                     province, zipcode, branch_id, employee_type, department, start_date, work_shift
                 ) VALUES (
-                    :employee_code, :password, :profile_image, :id_card_image, :fullname, 
+                    :employee_code, :password, :profile_image, :id_card_image, :first_name, :last_name, 
                     :birth_date, :email, :phone, :address_detail, :subdistrict, :district, 
                     :province, :zipcode, :branch_id, :employee_type, :department, :start_date, :work_shift
                 )";
@@ -111,7 +112,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'password'       => $hashed_password,
             'profile_image'  => $profile_name,
             'id_card_image'  => $id_card_name,
-            'fullname'       => $fullname,
+            'first_name'     => $first_name,  
+            'last_name'      => $last_name,
             'birth_date'     => $birth_date,
             'email'          => $email,
             'phone'          => $phone, 
@@ -213,10 +215,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div>
                 <h3 class="text-sm font-semibold text-blue-700 mb-4 flex items-center gap-2">👤 ส่วนที่ 3: ข้อมูลส่วนตัวและที่อยู่</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
-                    <div class="md:col-span-2">
-                        <label class="block text-xs font-medium text-slate-600 mb-2">6. ชื่อ-นามสกุล</label>
-                        <input type="text" name="fullname" placeholder="ชื่อ นามสกุลจริง" required
-                            class="w-full px-4 py-2.5 bg-white/60 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-2">6.1 ชื่อจริง</label>
+                            <input type="text" name="first_name" placeholder="ชื่อจริง" required
+                                class="w-full px-4 py-2.5 bg-white/60 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-2">6.2 นามสกุล</label>
+                            <input type="text" name="last_name" placeholder="นามสกุล" required
+                                class="w-full px-4 py-2.5 bg-white/60 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-2">7. วัน/เดือน/ปี เกิด</label>

@@ -125,7 +125,7 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div class="space-y-1">
                             <label class="font-bold text-slate-700">รหัสพนักงาน <span class="text-rose-500">*</span></label>
-                            <input type="text" id="single_code" name="single_code" required class="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 font-semibold text-slate-800 focus:outline-none focus:border-blue-500 shadow-sm">
+                            <input type="text" id="single_code" name="single_code" class="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 font-semibold text-slate-800 focus:outline-none focus:border-blue-500 shadow-sm">
                         </div>
                         <div class="space-y-1">
                             <label class="font-bold text-slate-700">สิทธิ์ผู้ใช้งาน <span class="text-rose-500">*</span></label>
@@ -140,9 +140,15 @@
                         </div>
                     </div>
 
-                    <div class="space-y-1">
-                        <label class="font-bold text-slate-700">ชื่อ - นามสกุล <span class="text-rose-500">*</span></label>
-                        <input type="text" id="single_fullname" name="single_fullname" required class="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 font-semibold text-slate-800 focus:outline-none focus:border-blue-500 shadow-sm">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="font-bold text-slate-700">ชื่อจริง <span class="text-rose-500">*</span></label>
+                            <input type="text" id="single_first_name" name="single_first_name"  class="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 font-semibold text-slate-800 focus:outline-none focus:border-blue-500 shadow-sm">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="font-bold text-slate-700">นามสกุล <span class="text-rose-500">*</span></label>
+                            <input type="text" id="single_last_name" name="single_last_name"  class="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 font-semibold text-slate-800 focus:outline-none focus:border-blue-500 shadow-sm">
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
@@ -153,10 +159,6 @@
                         <div class="space-y-1">
                             <label class="font-bold text-slate-700">เบอร์โทรศัพท์</label>
                             <input type="tel" id="single_phone" name="single_phone" placeholder="เช่น 0812345678" maxlength="10" class="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 font-semibold text-slate-800 focus:outline-none focus:border-blue-500 shadow-sm">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="font-bold text-slate-700">เปลี่ยนรหัสผ่าน <span class="text-slate-400 font-normal">(เว้นว่างถ้าไม่เปลี่ยน)</span></label>
-                            <input type="password" name="password" placeholder="••••••••" autocomplete="new-password" class="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 font-semibold text-slate-800 focus:outline-none focus:border-blue-500 shadow-sm">
                         </div>
                     </div>
 
@@ -221,15 +223,21 @@
                 </div>
             </div>
 
-            <div class="space-y-1 max-w-[255px]">
-                <label class="font-bold text-slate-700">สถานะใช้งานบัญชี</label>
-                <?php 
-                    $status_options = [
-                        ['id' => 'active', 'name' => '🟢 เปิดใช้งาน (Active)'],
-                        ['id' => 'inactive', 'name' => '🔴 ปิดใช้งาน (Inactive)']
-                    ];
-                    renderRoundedDropdown('edit_status_select', 'status', '-- เลือกสถานะ --', $status_options, 'active');
-                ?>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1">
+                    <label class="font-bold text-slate-700">เปลี่ยนรหัสผ่าน <span class="text-slate-400 font-normal">(เว้นว่างถ้าไม่เปลี่ยน)</span></label>
+                    <input type="password" name="password" placeholder="••••••••" autocomplete="new-password" class="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 font-semibold text-slate-800 focus:outline-none focus:border-blue-500 shadow-sm">
+                </div>
+                <div class="space-y-1">
+                    <label class="font-bold text-slate-700">สถานะใช้งานบัญชี</label>
+                    <?php 
+                        $status_options = [
+                            ['id' => 'active', 'name' => '🟢 เปิดใช้งาน (Active)'],
+                            ['id' => 'inactive', 'name' => '🔴 ปิดใช้งาน (Inactive)']
+                        ];
+                        renderRoundedDropdown('edit_status_select', 'status', '-- เลือกสถานะ --', $status_options, 'active');
+                    ?>
+                </div>
             </div>
 
             <!-- ปุ่มบันทึก -->
@@ -412,7 +420,8 @@
 
         document.getElementById('edit_target_ids').value = emp.id;
         document.getElementById('single_code').value = emp.code;
-        document.getElementById('single_fullname').value = emp.fullname;
+        document.getElementById('single_first_name').value = emp.firstname || '';
+        document.getElementById('single_last_name').value = emp.lastname || '';
         document.getElementById('single_email').value = emp.email;
         // 🎯 เพิ่มบรรทัดนี้เพื่อดึงเบอร์โทรมาหยอดใส่ช่อง
         if (document.getElementById('single_phone')) {

@@ -45,7 +45,7 @@ try {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user) {
-        $fullname = $user['fullname'];
+        $fullname = ($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '');
         $employee_code = $user['employee_code'];
         $profile_image = $user['profile_image'];
         $email = !empty($user['email']) ? $user['email'] : '-';

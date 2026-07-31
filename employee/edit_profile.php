@@ -43,7 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // 🎯 1. ส่วนข้อมูลประจำตัวและข้อมูลการทำงาน (แก้ได้เฉพาะ Admin / HR / IT)
     if ($can_edit_restricted) {
-        $fullname     = trim(htmlspecialchars($_POST['fullname'] ?? $user_data['fullname']));
+        $first_name = trim(htmlspecialchars($_POST['first_name'] ?? $user_data['first_name']));
+        $last_name  = trim(htmlspecialchars($_POST['last_name'] ?? $user_data['last_name']));
         $birth_date   = $_POST['birth_date'] ?? $user_data['birth_date'];
         $start_date   = $_POST['start_date'] ?? $user_data['start_date'];
         $email        = trim(htmlspecialchars($_POST['email'] ?? $user_data['email']));
@@ -116,7 +117,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $update_sql = "UPDATE users SET 
-                        fullname = :fullname, 
+                        first_name = :first_name, 
+                        last_name = :last_name,
                         birth_date = :birth_date, 
                         start_date = :start_date,
                         email = :email, 
@@ -135,7 +137,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         WHERE id = :id";
         
         $params = [
-            'fullname'       => $fullname,
+            'first_name'     => $first_name, 
+            'last_name'      => $last_name,  
             'birth_date'     => $birth_date,
             'start_date'     => $start_date,
             'email'          => $email,
@@ -353,10 +356,14 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                    <!-- ข้อ 6: ชื่อ-นามสกุล -->
                     <div>
-                        <label class="block text-xs font-medium text-slate-600 mb-2">6. ชื่อ-นามสกุล</label>
-                        <input type="text" name="fullname" value="<?php echo htmlspecialchars($user['fullname'] ?? ''); ?>" required <?php echo $can_edit_restricted ? '' : 'readonly'; ?>
+                        <label class="block text-xs font-medium text-slate-600 mb-2">6.1 ชื่อจริง</label>
+                        <input type="text" name="first_name" value="<?php echo htmlspecialchars($user['first_name'] ?? ''); ?>" required <?php echo $can_edit_restricted ? '' : 'readonly'; ?>
+                            class="w-full px-4 py-2.5 rounded-2xl text-sm focus:outline-none font-medium shadow-2xs <?php echo $can_edit_restricted ? 'bg-white border border-slate-200 focus:ring-2 focus:ring-blue-500' : 'bg-slate-100/80 border border-slate-200 text-slate-500 cursor-not-allowed'; ?>">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-2">6.2 นามสกุล</label>
+                        <input type="text" name="last_name" value="<?php echo htmlspecialchars($user['last_name'] ?? ''); ?>" required <?php echo $can_edit_restricted ? '' : 'readonly'; ?>
                             class="w-full px-4 py-2.5 rounded-2xl text-sm focus:outline-none font-medium shadow-2xs <?php echo $can_edit_restricted ? 'bg-white border border-slate-200 focus:ring-2 focus:ring-blue-500' : 'bg-slate-100/80 border border-slate-200 text-slate-500 cursor-not-allowed'; ?>">
                     </div>
                     <!-- ข้อ 7: วันเกิด -->

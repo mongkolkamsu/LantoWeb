@@ -58,8 +58,11 @@
         return Array.from(checkedBoxes).map(cb => ({
             id: cb.value,
             code: cb.dataset.code || '',
+            firstname: cb.dataset.firstname || '', // 👈 เพิ่มบรรทัดนี้
+            lastname: cb.dataset.lastname || '',   // 👈 เพิ่มบรรทัดนี้
             fullname: cb.dataset.fullname || '',
             email: cb.dataset.email || '',
+            phone: cb.dataset.phone || '',         // 👈 เพิ่มบรรทัดนี้
             role: cb.dataset.role || 'employee',
             birth: cb.dataset.birth || '',
             startdate: cb.dataset.startdate || '',

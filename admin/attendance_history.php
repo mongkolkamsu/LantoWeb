@@ -101,7 +101,7 @@ try {
         SELECT 
             u.id AS user_id,
             u.employee_code,
-            u.fullname,
+            CONCAT(u.first_name, ' ', u.last_name) AS fullname,
             u.profile_image,
             d.name AS dept_name,
             b.name AS branch_name,
@@ -133,7 +133,8 @@ try {
     ];
 
     if (!empty($search_query)) {
-        $sql_att .= " AND (u.fullname LIKE :search OR u.employee_code LIKE :search)";
+        // 🎯 เอาคำว่า "AS fullname" ออกจาก WHERE
+        $sql_att .= " AND (CONCAT(u.first_name, ' ', u.last_name) LIKE :search OR u.employee_code LIKE :search)";
         $params['search'] = "%{$search_query}%";
     }
 

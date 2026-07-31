@@ -107,7 +107,8 @@ try {
     }
 
     if (!empty($search_query)) {
-        $where_sql .= " AND (u.fullname LIKE :search OR u.employee_code LIKE :search)";
+        // 🎯 เอาคำว่า "AS fullname" ออกจาก WHERE
+        $where_sql .= " AND (CONCAT(u.first_name, ' ', u.last_name) LIKE :search OR u.employee_code LIKE :search)";
         $params['search'] = "%{$search_query}%";
     }
 
@@ -127,7 +128,7 @@ try {
         $params['leave_type'] = $leave_type_filter;
     }
 
-    // 2. นับจำนวนรายการทั้งหมดตามตัวกรอง เพื่อคำนวณจำนวนหน้า
+    // 2. นับจำนวนรายการทั้งหมดตามตัวกรอง
     $count_sql = "SELECT COUNT(*) 
                   FROM leave_requests l
                   JOIN users u ON l.user_id = u.id
@@ -137,9 +138,9 @@ try {
     $total_records = $stmt_count->fetchColumn() ?: 0;
     $total_pages = max(1, ceil($total_records / $limit));
 
-    // 3. ดึงข้อมูลการลาเฉพาะหน้าปัจจุบัน (LIMIT 7 OFFSET ...)
+    // 3. ดึงข้อมูลการลาเฉพาะหน้าปัจจุบัน
     $sql = "SELECT l.*, 
-                   u.fullname, 
+                   CONCAT(u.first_name, ' ', u.last_name) AS fullname,
                    u.employee_code, 
                    u.profile_image, 
                    d.name AS dept_name,
