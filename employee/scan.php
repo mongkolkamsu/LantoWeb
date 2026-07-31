@@ -183,8 +183,8 @@ try {
             <!-- 🎯 กรอบรูปกล้องสแกนเนอร์ (ขนาดเดิมใหญ่ชัดเจน w-72 h-72) -->
             <div class="relative w-72 h-72 mx-auto bg-slate-950 rounded-full overflow-hidden border-4 border-white shadow-2xl flex items-center justify-center mt-1 mb-2">
                 <!-- 📌 ป้ายคำสั่ง Liveness (ลอยอยู่ด้านบนภายในกล้องพอดี ไม่กินพื้นที่แนวตั้งด้านนอกเลย) -->
-                <div id="action-badge" class="absolute top-4 z-30 bg-amber-500/90 backdrop-blur-md text-slate-950 text-[10px] font-bold px-3 py-0.5 rounded-full border border-amber-300 flex items-center gap-1 shadow-xs max-w-[85%] truncate">
-                    <span id="action-icon" class="text-xs">🤖</span>
+                <div id="action-badge" class="absolute top-8 z-30 bg-amber-500/95 backdrop-blur-md text-slate-950 text-[9.5px] font-bold px-2.5 py-0.5 rounded-full border border-amber-300 flex items-center gap-1 shadow-md max-w-[75%] whitespace-nowrap overflow-hidden text-ellipsis">
+                    <span id="action-icon" class="text-[10px]">🤖</span>
                     <span id="action-text">กำลังโหลดระบบตรวจจับ...</span>
                 </div>
                 <video id="webcam" autoplay playsinline class="w-full h-full object-cover scale-x-[-1] rounded-full"></video>
@@ -495,7 +495,7 @@ try {
                         if (!isFaceCentered) {
                             actionIcon.innerText = "👤";
                             actionText.innerText = "กรุณาจัดใบหน้าให้อยู่ตรงกลางกรอบ";
-                            actionBadge.className = "absolute top-4 z-30 bg-amber-500/90 backdrop-blur-md text-slate-950 text-[10px] font-bold px-3 py-0.5 rounded-full border border-amber-300 flex items-center gap-1 shadow-xs max-w-[85%] truncate";
+                            actionBadge.className = "absolute top-8 z-30 bg-amber-500/90 backdrop-blur-md text-slate-950 text-[10px] font-bold px-3 py-0.5 rounded-full border border-amber-300 flex items-center gap-1 shadow-xs max-w-[85%] truncate";
                             targetBorder.className = "w-56 h-56 rounded-full border-2 border-dashed border-amber-400 flex items-center justify-center relative transition-colors duration-300";
                             return; 
                         }
@@ -506,21 +506,21 @@ try {
                         if (quality.brightness < 45) {
                             actionIcon.innerText = "💡";
                             actionText.innerText = "แสงน้อยเกินไป กรุณาอยู่ในที่สว่าง";
-                            actionBadge.className = "absolute top-4 z-30 bg-amber-500/90 backdrop-blur-md text-slate-950 text-[10px] font-bold px-3 py-0.5 rounded-full border border-amber-300 flex items-center gap-1 shadow-xs max-w-[85%] truncate";
+                            actionBadge.className = "absolute top-8 z-30 bg-amber-500/90 backdrop-blur-md text-slate-950 text-[10px] font-bold px-3 py-0.5 rounded-full border border-amber-300 flex items-center gap-1 shadow-xs max-w-[85%] truncate";
                             return;
                         }
 
                         if (quality.sharpness < 50) {
                             actionIcon.innerText = "🔍";
                             actionText.innerText = "กล้องไม่ชัด/ภาพเบลอ โปรดอยู่นิ่งๆ";
-                            actionBadge.className = "absolute top-4 z-30 bg-amber-500/90 backdrop-blur-md text-slate-950 text-[10px] font-bold px-3 py-0.5 rounded-full border border-amber-300 flex items-center gap-1 shadow-xs max-w-[85%] truncate";
+                            actionBadge.className = "absolute top-8 z-30 bg-amber-500/90 backdrop-blur-md text-slate-950 text-[10px] font-bold px-3 py-0.5 rounded-full border border-amber-300 flex items-center gap-1 shadow-xs max-w-[85%] truncate";
                             return;
                         }
 
                         // คืนค่าป้ายเป็นคำสั่งสุ่มเมื่อใบหน้าและคุณภาพภาพผ่าน
                         actionIcon.innerText = currentChallenge.icon;
                         actionText.innerText = currentChallenge.text;
-                        actionBadge.className = "absolute top-4 z-30 bg-amber-500/90 backdrop-blur-md text-slate-950 text-[10px] font-bold px-3 py-0.5 rounded-full border border-amber-300 flex items-center gap-1 shadow-xs max-w-[85%] truncate";
+                        actionBadge.className = "absolute top-8 z-30 bg-amber-500/90 backdrop-blur-md text-slate-950 text-[10px] font-bold px-3 py-0.5 rounded-full border border-amber-300 flex items-center gap-1 shadow-xs max-w-[85%] truncate";
                         targetBorder.className = "w-56 h-56 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300";
 
                         // 2. ตรวจสอบตามคำสั่งสุ่ม Liveness
@@ -583,7 +583,7 @@ try {
             
             actionIcon.innerText = "📸";
             actionText.innerText = "ผ่านการยืนยันแล้ว กำลังถ่ายรูปอัตโนมัติ...";
-            actionBadge.className = "absolute top-4 z-30 bg-emerald-600/90 backdrop-blur-md text-white text-[10px] font-bold px-3 py-0.5 rounded-full border border-emerald-300 flex items-center gap-1 shadow-xs max-w-[85%] truncate";
+            actionBadge.className = "absolute top-8 z-30 bg-emerald-600/90 backdrop-blur-md text-white text-[10px] font-bold px-3 py-0.5 rounded-full border border-emerald-300 flex items-center gap-1 shadow-xs max-w-[85%] truncate";
             targetBorder.className = "w-56 h-56 rounded-full border-2 border-solid border-emerald-400 flex items-center justify-center relative transition-colors duration-300 shadow-[0_0_20px_rgba(52,211,153,0.5)]";
 
             btnCapture.disabled = false;
@@ -632,7 +632,7 @@ try {
 
             actionIcon.innerText = currentChallenge.icon;
             actionText.innerText = currentChallenge.text;
-            actionBadge.className = "absolute top-4 z-30 bg-emerald-600/90 backdrop-blur-md text-white text-[10px] font-bold px-3 py-0.5 rounded-full border border-emerald-300 flex items-center gap-1 shadow-xs max-w-[85%] truncate";
+            actionBadge.className = "absolute top-8 z-30 bg-emerald-600/90 backdrop-blur-md text-white text-[10px] font-bold px-3 py-0.5 rounded-full border border-emerald-300 flex items-center gap-1 shadow-xs max-w-[85%] truncate";
             targetBorder.className = "w-56 h-56 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300";
 
             btnCapture.disabled = true;
