@@ -17,18 +17,31 @@ $avatar_url = !empty($profile_image) ? '../uploads/profiles/' . $profile_image :
 
 // ระบบคำนวณสถานะอัตโนมัติ (Smart Auto-Detect)
 $today = date('Y-m-d');
-$auto_type = 'check_in'; 
+$has_check_in = false;
+$has_check_out = false;
 
 try {
-    $stmt_check = $pdo->prepare("SELECT log_type FROM attendance WHERE user_id = :user_id AND DATE(scan_time) = :today ORDER BY scan_time DESC LIMIT 1");
+    // ดึงข้อมูลการลงเวลาทั้งหมดของวันนี้มาตรวจสอบว่ามี "เข้า" และ "ออก" แล้วหรือยัง
+    $stmt_check = $pdo->prepare("SELECT log_type FROM attendance WHERE user_id = :user_id AND DATE(scan_time) = :today ORDER BY scan_time ASC");
     $stmt_check->execute(['user_id' => $user_id, 'today' => $today]);
-    $last_log = $stmt_check->fetchColumn();
+    $today_logs = $stmt_check->fetchAll(PDO::FETCH_ASSOC);
 
-    if ($last_log === 'check_in') {
-        $auto_type = 'check_out';
+    foreach ($today_logs as $l) {
+        if ($l['log_type'] === 'check_in')  $has_check_in = true;
+        if ($l['log_type'] === 'check_out') $has_check_out = true;
     }
 } catch (PDOException $e) {
+    // ซ่อนข้อผิดพลาด
+}
+
+// 🎯 ตัวแปรสำคัญ: สแกนครบทั้ง เข้า (IN) และ ออก (OUT) ของวันนี้แล้วหรือยัง
+$is_completed_today = ($has_check_in && $has_check_out);
+
+// คำนวณสถานะให้อัตโนมัติ
+if (!$has_check_in) {
     $auto_type = 'check_in';
+} else {
+    $auto_type = 'check_out';
 }
 
 $type = $_GET['type'] ?? $auto_type;
@@ -117,10 +130,10 @@ try {
         ::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] min-h-screen flex items-center justify-center p-0 md:p-4 text-slate-800 antialiased select-none">
+<body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] h-screen overflow-hidden touch-none flex items-center justify-center text-slate-800 select-none antialiased p-0 md:p-4">
 
-    <div class="w-full min-h-screen bg-white/40 backdrop-blur-xl flex flex-col justify-between relative overflow-y-auto p-5 pb-28
-            md:max-w-md md:mx-auto md:my-6 md:min-h-[812px] md:rounded-[40px] md:border md:border-white/60 md:shadow-2xl">
+    <div class="w-full h-full bg-white/40 backdrop-blur-xl flex flex-col justify-between relative overflow-y-auto overscroll-contain p-5 pb-24
+        md:max-w-md md:mx-auto md:min-h-[812px] md:rounded-[40px] md:border md:border-white/60 md:shadow-2xl">
         
         <div>
             <!-- ส่วนหัวหน้าต่างระบบ -->
@@ -142,6 +155,29 @@ try {
                 </div>
             </div>
 
+            <?php if ($is_completed_today): ?>
+
+                <!-- 🟢 1. การ์ดแจ้งเตือนเมื่อสแกนเข้า-ออก ครบถ้วนแล้วประจำวันนี้ -->
+                <div class="my-8 bg-emerald-50 border border-emerald-200/80 p-6 rounded-3xl text-center space-y-3 shadow-xs">
+                    <div class="w-16 h-16 bg-emerald-500 text-white rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-md shadow-emerald-500/20">
+                        ✅
+                    </div>
+                    <div>
+                        <h3 class="text-base font-extrabold text-emerald-900">ลงเวลาประจำวันนี้เรียบร้อยแล้ว</h3>
+                        <p class="text-xs text-emerald-700/80 mt-1 font-medium leading-relaxed">
+                            คุณได้บันทึกเวลาสแกนเข้าและออกงานประจำวันที่ <br>
+                            <span class="font-bold text-emerald-900"><?php echo date('d/m/') . (date('Y') + 543); ?></span> ครบถ้วนแล้วครับ
+                        </p>
+                    </div>
+                    <div class="pt-2">
+                        <a href="../index.php?view=mobile" class="inline-flex items-center justify-center px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm">
+                            กลับหน้าหลัก
+                        </a>
+                    </div>
+                </div>
+
+            <?php else: ?>
+                
             <!-- 🎯 1. ป้ายคำสั่ง Liveness (ล็อกกล่อง h-9 my-2 แยกโซนชัดเจน ไม่โดนกล้องทับแน่นอน) -->
             <div class="flex justify-center items-center h-9 my-2">
                 <div id="action-badge" class="bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-sm">
@@ -223,6 +259,9 @@ try {
                 <span id="btn-text">มองกล้องและทำตามคำสั่งเพื่อสแกนอัตโนมัติ...</span>
             </button>
         </div>
+
+    <?php endif; ?>
+
     <?php include '../includes/navbar.php'; ?>
     </div>
 

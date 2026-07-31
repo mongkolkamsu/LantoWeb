@@ -16,12 +16,51 @@ $latitude = (isset($_POST['latitude']) && $_POST['latitude'] !== 'null') ? $_POS
 $longitude = (isset($_POST['longitude']) && $_POST['longitude'] !== 'null') ? $_POST['longitude'] : null;
 $image_data = $_POST['image'] ?? '';
 
-// 🎯 จุดสำคัญที่ 1: ดักรับค่า branch_id ที่ส่งมาจากหน้าบ้าน (ถ้าไม่มีหรือเป็นค่าว่างให้เซฟเป็น null)
+// 🎯 ดักรับค่า branch_id ที่ส่งมาจากหน้าบ้าน
 $branch_id = (!empty($_POST['branch_id'])) ? (int)$_POST['branch_id'] : null;
 
 if (empty($log_type) || empty($image_data)) {
     echo json_encode(['status' => 'error', 'message' => 'ข้อมูลสแกนไม่ครบถ้วน']);
     exit();
+}
+
+// 🎯 2. ดักจับและป้องกันการสแกนซ้ำ/เบิ้ล (Double Scan & Cooldown Protection)
+$today = date('Y-m-d');
+$has_in = false;
+$has_out = false;
+$last_scan_time = 0;
+
+try {
+    $stmt_chk = $pdo->prepare("SELECT log_type, scan_time FROM attendance WHERE user_id = :user_id AND DATE(scan_time) = :today ORDER BY scan_time ASC");
+    $stmt_chk->execute(['user_id' => $user_id, 'today' => $today]);
+    $logs = $stmt_chk->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($logs as $l) {
+        if ($l['log_type'] === 'check_in')  $has_in = true;
+        if ($l['log_type'] === 'check_out') $has_out = true;
+        $last_scan_time = strtotime($l['scan_time']);
+    }
+
+    // ❌ 2.1 หากลงเวลาทั้งเข้าและออกครบแล้ว ห้ามสแกนเพิ่มอีก
+    if ($has_in && $has_out) {
+        echo json_encode(['status' => 'error', 'message' => 'คุณได้ลงเวลาเข้า-ออกงานประจำวันนี้ครบถ้วนแล้ว']);
+        exit();
+    }
+
+    // ❌ 2.2 ป้องกันการสแกนซ้ำประเภทเดิม (เช่น สแกนเข้าซ้ำ ทั้งที่สแกนเข้างานไปแล้ว)
+    if ($log_type === 'check_in' && $has_in) {
+        echo json_encode(['status' => 'error', 'message' => 'คุณได้ทำการสแกนเข้างานประจำวันนี้ไปแล้ว']);
+        exit();
+    }
+
+    // ❌ 2.3 ป้องกันการสแกนกดเบิ้ลถี่เกินไป (Cooldown 60 วินาที)
+    if ($last_scan_time > 0 && (time() - $last_scan_time < 60)) {
+        echo json_encode(['status' => 'error', 'message' => 'คุณเพิ่งทำการสแกนไป กรุณารออย่างน้อย 1 นาทีเพื่อสแกนใหม่อีกครั้ง']);
+        exit();
+    }
+
+} catch (PDOException $e) {
+    // ซ่อนข้อผิดพลาด
 }
 
 try {
@@ -42,7 +81,7 @@ try {
     
     file_put_contents($file_path, $image_base64);
 
-    // 🎯 จุดสำคัญที่ 2: เพิ่มคอลัมน์ branch_id เข้าไปในโครงคำสั่ง SQL INSERT เพื่อเซฟลงตารางหลัก
+    // บันทึกลงตาราง attendance
     $stmt = $pdo->prepare("
         INSERT INTO attendance (user_id, log_type, branch_id, scan_time, latitude, longitude, photo_log) 
         VALUES (:user_id, :log_type, :branch_id, NOW(), :latitude, :longitude, :photo_log)
@@ -51,7 +90,7 @@ try {
     $stmt->execute([
         'user_id' => $user_id,
         'log_type' => $log_type,
-        'branch_id' => $branch_id, // ส่งค่าไอดีสาขาไปบันทึก
+        'branch_id' => $branch_id,
         'latitude' => $latitude,
         'longitude' => $longitude,
         'photo_log' => $file_name
