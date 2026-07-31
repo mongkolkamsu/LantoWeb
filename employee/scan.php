@@ -130,10 +130,10 @@ try {
         ::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] h-screen overflow-hidden touch-none flex items-center justify-center text-slate-800 select-none antialiased p-0 md:p-4">
+<body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] min-h-screen flex items-center justify-center p-0 md:p-4 text-slate-800 antialiased select-none">
 
-    <div class="w-full h-full bg-white/40 backdrop-blur-xl flex flex-col justify-between relative overflow-y-auto overscroll-contain p-5 pb-24
-        md:max-w-md md:mx-auto md:min-h-[812px] md:rounded-[40px] md:border md:border-white/60 md:shadow-2xl">
+    <div class="w-full min-h-screen bg-white/40 backdrop-blur-xl flex flex-col justify-between relative overflow-y-auto p-5 pb-28
+        md:max-w-md md:mx-auto md:my-6 md:min-h-[812px] md:rounded-[40px] md:border md:border-white/60 md:shadow-2xl">
         
         <div>
             <!-- ส่วนหัวหน้าต่างระบบ -->
@@ -178,7 +178,7 @@ try {
 
             <?php else: ?>
                 
-            <!-- 🎯 1. ป้ายคำสั่ง Liveness (ล็อกกล่อง h-9 my-2 แยกโซนชัดเจน ไม่โดนกล้องทับแน่นอน) -->
+            <!-- 🎯 1. ป้ายคำสั่ง Liveness -->
             <div class="flex justify-center items-center h-9 my-2">
                 <div id="action-badge" class="bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-sm">
                     <span id="action-icon">🤖</span>
@@ -186,8 +186,8 @@ try {
                 </div>
             </div>
 
-            <!-- 🎯 กรอบรูปกล้องสแกนเนอร์ -->
-            <div class="relative w-56 h-56 mx-auto bg-slate-950 rounded-full overflow-hidden border-4 border-white shadow-2xl flex items-center justify-center mt-1 mb-2">
+            <!-- 🎯 กรอบรูปกล้องสแกนเนอร์ (ขนาดเดิมใหญ่ชัดเจน w-72 h-72) -->
+            <div class="relative w-72 h-72 mx-auto bg-slate-950 rounded-full overflow-hidden border-4 border-white shadow-2xl flex items-center justify-center mt-1 mb-2">
 
                 <video id="webcam" autoplay playsinline class="w-full h-full object-cover scale-x-[-1] rounded-full"></video>
                 <canvas id="photo-preview" class="w-full h-full object-cover scale-x-[-1] hidden absolute inset-0 z-10 rounded-full"></canvas>
@@ -195,7 +195,7 @@ try {
                 
                 <!-- เส้นประUI นำสายตา -->
                 <div id="target-ui" class="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
-                    <div id="target-border" class="w-44 h-44 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300">
+                    <div id="target-border" class="w-56 h-56 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300">
                         <div class="absolute top-0 left-0 w-3.5 h-3.5 border-t-2 border-l-2 border-blue-400 rounded-tl-sm"></div>
                         <div class="absolute top-0 right-0 w-3.5 h-3.5 border-t-2 border-r-2 border-blue-400 rounded-tr-sm"></div>
                         <div class="absolute bottom-0 left-0 w-3.5 h-3.5 border-b-2 border-l-2 border-blue-400 rounded-bl-sm"></div>
@@ -245,8 +245,8 @@ try {
 
         </div>
 
-        <!-- ส่วนปุ่มควบคุมการบันทึกข้อมูลเวลาทำงาน -->
-        <div class="pt-2 pb-16 space-y-2">
+        <!-- ส่วนปุ่มควบคุมการบันทึกข้อมูลเวลาทำงาน (เว้น pb-12 หลบ Navbar ล่าง) -->
+        <div class="pt-2 pb-12 space-y-2">
             <button id="btnRetake" class="w-full hidden bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium py-2.5 rounded-2xl text-xs tracking-wide transition-all active:scale-[0.98] cursor-pointer items-center justify-center gap-2 shadow-xs">
                 <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path>
@@ -498,7 +498,7 @@ try {
                             actionIcon.innerText = "👤";
                             actionText.innerText = "กรุณาจัดใบหน้าให้อยู่ตรงกลางกรอบ";
                             actionBadge.className = "bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-sm";
-                            targetBorder.className = "w-44 h-44 rounded-full border-2 border-dashed border-amber-400 flex items-center justify-center relative transition-colors duration-300";
+                            targetBorder.className = "w-56 h-56 rounded-full border-2 border-dashed border-amber-400 flex items-center justify-center relative transition-colors duration-300";
                             return; 
                         }
 
@@ -523,7 +523,7 @@ try {
                         actionIcon.innerText = currentChallenge.icon;
                         actionText.innerText = currentChallenge.text;
                         actionBadge.className = "bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-sm";
-                        targetBorder.className = "w-44 h-44 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300";
+                        targetBorder.className = "w-56 h-56 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300";
 
                         // 2. ตรวจสอบตามคำสั่งสุ่ม Liveness
                         if (currentChallenge.id === 'blink') {
@@ -586,7 +586,7 @@ try {
             actionIcon.innerText = "📸";
             actionText.innerText = "ผ่านการยืนยันแล้ว กำลังถ่ายรูปอัตโนมัติ...";
             actionBadge.className = "bg-emerald-600 text-white text-xs font-extrabold px-4 py-1.5 rounded-full border border-emerald-300 transition-all flex items-center gap-1.5 shadow-md";
-            targetBorder.className = "w-44 h-44 rounded-full border-2 border-solid border-emerald-400 flex items-center justify-center relative transition-colors duration-300 shadow-[0_0_20px_rgba(52,211,153,0.5)]";
+            targetBorder.className = "w-56 h-56 rounded-full border-2 border-solid border-emerald-400 flex items-center justify-center relative transition-colors duration-300 shadow-[0_0_20px_rgba(52,211,153,0.5)]";
 
             btnCapture.disabled = false;
             btnCapture.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -635,7 +635,7 @@ try {
             actionIcon.innerText = currentChallenge.icon;
             actionText.innerText = currentChallenge.text;
             actionBadge.className = "bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-sm";
-            targetBorder.className = "w-44 h-44 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300";
+            targetBorder.className = "w-56 h-56 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300";
 
             btnCapture.disabled = true;
             btnCapture.classList.add('opacity-50', 'cursor-not-allowed');
