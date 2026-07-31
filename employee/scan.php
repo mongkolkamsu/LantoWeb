@@ -178,17 +178,15 @@ try {
 
             <?php else: ?>
                 
-            <!-- 🎯 1. ป้ายคำสั่ง Liveness -->
-            <div class="flex justify-center items-center h-7 my-1">
-                <div id="action-badge" class="bg-amber-500 text-slate-950 text-[10px] font-bold px-3 py-0.5 rounded-full border border-amber-300 transition-all flex items-center gap-1 shadow-xs">
-                    <span id="action-icon" class="text-xs">🤖</span>
-                    <span id="action-text">กำลังโหลดระบบตรวจจับ...</span>
-                </div>
-            </div>
+            
 
             <!-- 🎯 กรอบรูปกล้องสแกนเนอร์ (ขนาดเดิมใหญ่ชัดเจน w-72 h-72) -->
             <div class="relative w-72 h-72 mx-auto bg-slate-950 rounded-full overflow-hidden border-4 border-white shadow-2xl flex items-center justify-center mt-1 mb-2">
-
+                <!-- 📌 ป้ายคำสั่ง Liveness (ลอยอยู่ด้านบนภายในกล้องพอดี ไม่กินพื้นที่แนวตั้งด้านนอกเลย) -->
+                <div id="action-badge" class="absolute top-4 z-30 bg-amber-500/90 backdrop-blur-md text-slate-950 text-[10px] font-bold px-3 py-0.5 rounded-full border border-amber-300 flex items-center gap-1 shadow-xs max-w-[85%] truncate">
+                    <span id="action-icon" class="text-xs">🤖</span>
+                    <span id="action-text">กำลังโหลดระบบตรวจจับ...</span>
+                </div>
                 <video id="webcam" autoplay playsinline class="w-full h-full object-cover scale-x-[-1] rounded-full"></video>
                 <canvas id="photo-preview" class="w-full h-full object-cover scale-x-[-1] hidden absolute inset-0 z-10 rounded-full"></canvas>
                 <div id="laser-line" class="scanner-line absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-blue-500 to-transparent shadow-[0_0_12px_#3b82f6] z-20 mx-6"></div>
@@ -246,7 +244,7 @@ try {
         </div>
 
         <!-- ส่วนปุ่มควบคุมการบันทึกข้อมูลเวลาทำงาน (เว้น pb-12 หลบ Navbar ล่าง) -->
-        <div class="pt-2 pb-2 space-y-2">
+        <div class="pt-2 pb-16 space-y-2">
             <button id="btnRetake" class="w-full hidden bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium py-2.5 rounded-2xl text-xs tracking-wide transition-all active:scale-[0.98] cursor-pointer items-center justify-center gap-2 shadow-xs">
                 <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path>
@@ -497,7 +495,7 @@ try {
                         if (!isFaceCentered) {
                             actionIcon.innerText = "👤";
                             actionText.innerText = "กรุณาจัดใบหน้าให้อยู่ตรงกลางกรอบ";
-                            actionBadge.className = "bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-sm";
+                            actionBadge.className = "absolute top-4 z-30 bg-amber-500/90 backdrop-blur-md text-slate-950 text-[10px] font-bold px-3 py-0.5 rounded-full border border-amber-300 flex items-center gap-1 shadow-xs max-w-[85%] truncate";
                             targetBorder.className = "w-56 h-56 rounded-full border-2 border-dashed border-amber-400 flex items-center justify-center relative transition-colors duration-300";
                             return; 
                         }
@@ -508,21 +506,21 @@ try {
                         if (quality.brightness < 45) {
                             actionIcon.innerText = "💡";
                             actionText.innerText = "แสงน้อยเกินไป กรุณาอยู่ในที่สว่าง";
-                            actionBadge.className = "bg-rose-500 text-white text-xs font-extrabold px-4 py-1.5 rounded-full border border-rose-300 transition-all flex items-center gap-1.5 shadow-sm";
+                            actionBadge.className = "absolute top-4 z-30 bg-amber-500/90 backdrop-blur-md text-slate-950 text-[10px] font-bold px-3 py-0.5 rounded-full border border-amber-300 flex items-center gap-1 shadow-xs max-w-[85%] truncate";
                             return;
                         }
 
                         if (quality.sharpness < 50) {
                             actionIcon.innerText = "🔍";
                             actionText.innerText = "กล้องไม่ชัด/ภาพเบลอ โปรดอยู่นิ่งๆ";
-                            actionBadge.className = "bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-sm";
+                            actionBadge.className = "absolute top-4 z-30 bg-amber-500/90 backdrop-blur-md text-slate-950 text-[10px] font-bold px-3 py-0.5 rounded-full border border-amber-300 flex items-center gap-1 shadow-xs max-w-[85%] truncate";
                             return;
                         }
 
                         // คืนค่าป้ายเป็นคำสั่งสุ่มเมื่อใบหน้าและคุณภาพภาพผ่าน
                         actionIcon.innerText = currentChallenge.icon;
                         actionText.innerText = currentChallenge.text;
-                        actionBadge.className = "bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-sm";
+                        actionBadge.className = "absolute top-4 z-30 bg-amber-500/90 backdrop-blur-md text-slate-950 text-[10px] font-bold px-3 py-0.5 rounded-full border border-amber-300 flex items-center gap-1 shadow-xs max-w-[85%] truncate";
                         targetBorder.className = "w-56 h-56 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300";
 
                         // 2. ตรวจสอบตามคำสั่งสุ่ม Liveness
@@ -585,7 +583,7 @@ try {
             
             actionIcon.innerText = "📸";
             actionText.innerText = "ผ่านการยืนยันแล้ว กำลังถ่ายรูปอัตโนมัติ...";
-            actionBadge.className = "bg-emerald-600 text-white text-xs font-extrabold px-4 py-1.5 rounded-full border border-emerald-300 transition-all flex items-center gap-1.5 shadow-md";
+            actionBadge.className = "absolute top-4 z-30 bg-emerald-600/90 backdrop-blur-md text-white text-[10px] font-bold px-3 py-0.5 rounded-full border border-emerald-300 flex items-center gap-1 shadow-xs max-w-[85%] truncate";
             targetBorder.className = "w-56 h-56 rounded-full border-2 border-solid border-emerald-400 flex items-center justify-center relative transition-colors duration-300 shadow-[0_0_20px_rgba(52,211,153,0.5)]";
 
             btnCapture.disabled = false;
@@ -634,7 +632,7 @@ try {
 
             actionIcon.innerText = currentChallenge.icon;
             actionText.innerText = currentChallenge.text;
-            actionBadge.className = "bg-amber-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-300 transition-all flex items-center gap-1.5 shadow-sm";
+            actionBadge.className = "absolute top-4 z-30 bg-emerald-600/90 backdrop-blur-md text-white text-[10px] font-bold px-3 py-0.5 rounded-full border border-emerald-300 flex items-center gap-1 shadow-xs max-w-[85%] truncate";
             targetBorder.className = "w-56 h-56 rounded-full border-2 border-dashed border-white/40 flex items-center justify-center relative transition-colors duration-300";
 
             btnCapture.disabled = true;
