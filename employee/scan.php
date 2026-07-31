@@ -254,9 +254,9 @@ try {
                 ยกเลิกและสแกนใหม่อีกครั้ง (Retake Photo)
             </button>
 
-            <button id="btnCapture" class="w-full bg-gradient-to-r <?php echo $type_color; ?> text-white font-semibold py-3 rounded-2xl shadow-md text-xs tracking-wide transition-all transform active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 opacity-50 cursor-not-allowed" disabled>
+            <button id="btnCapture" class="hidden w-full bg-gradient-to-r <?php echo $type_color; ?> text-white font-semibold py-3 rounded-2xl shadow-md text-xs tracking-wide transition-all transform active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2">
                 <svg id="btn-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                <span id="btn-text">มองกล้องและทำตามคำสั่งเพื่อสแกนอัตโนมัติ...</span>
+                <span id="btn-text">ยืนยันและส่งข้อมูลบันทึกเวลา</span>
             </button>
         </div>
 
@@ -616,6 +616,7 @@ try {
             
             isCaptured = true;
             btnText.innerText = "ยืนยันและส่งข้อมูลบันทึกเวลา";
+            btnCapture.classList.remove('hidden');
             btnRetake.classList.remove('hidden');
             btnRetake.classList.add('flex');
         }
@@ -639,6 +640,7 @@ try {
             btnCapture.disabled = true;
             btnCapture.classList.add('opacity-50', 'cursor-not-allowed');
             btnText.innerText = "มองกล้องและทำตามคำสั่งเพื่อสแกนอัตโนมัติ...";
+            btnCapture.classList.add('hidden');
             btnRetake.classList.remove('flex');
             btnRetake.classList.add('hidden');
         }
