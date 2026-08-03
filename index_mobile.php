@@ -249,11 +249,11 @@ try {
     }
     </script>
 </head>
-<body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] h-screen overflow-hidden touch-none flex items-center justify-center text-slate-800 select-none antialiased p-0 md:p-4">
+<body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] min-h-screen flex justify-center text-slate-800 antialiased p-0 md:py-6">
 
     <!-- 📱 Main Mobile Container (ขยายเต็มจอมือถืออัตโนมัติ / บนคอมเป็นกรอบสมาร์ตโฟน) -->
-    <div class="w-full h-full bg-slate-50/90 backdrop-blur-xl flex flex-col justify-between relative overflow-hidden pb-24 border-0 shadow-none
-            md:max-w-md md:min-h-[812px] md:rounded-[40px] md:shadow-2xl md:border md:border-white/60">
+    <div class="w-full min-h-screen bg-slate-50/90 backdrop-blur-xl flex flex-col justify-between relative overflow-y-auto pb-28 border-0 shadow-none
+        md:max-w-md md:min-h-[812px] md:h-auto md:rounded-[40px] md:shadow-2xl md:border md:border-white/60">
         
         <div>
             <!-- 🔝 ส่วนหัวดีไซน์เรียบหรูสไตล์แอปชั้นนำ -->
@@ -377,15 +377,15 @@ try {
                             <div class="w-11 h-11 bg-slate-50 border border-slate-200/60 rounded-2xl flex items-center justify-center shadow-2xs mb-1.5 p-2">
                                 <img src="assets/images/italy.png" alt="IT Support" class="w-full h-full object-contain">
                             </div>
-                            <span class="text-slate-600 text-[10px] font-medium tracking-tight">แจ้งปัญหาไอที</span>
+                            <span class="text-slate-600 text-[10px] font-medium tracking-tight">IT Service</span>
                         </a>
 
-                        <!-- 7. จองยืมของไอที -->
-                        <a href="#" class="flex flex-col items-center group active:scale-95 transition-transform">
+                        <!-- 7. จองรถองค์กร (แทนที่จองยืมของไอทีเดิม) -->
+                        <a href="car_request/index.php" class="flex flex-col items-center group active:scale-95 transition-transform">
                             <div class="w-11 h-11 bg-slate-50 border border-slate-200/60 rounded-2xl flex items-center justify-center shadow-2xs mb-1.5 p-2">
-                                <img src="assets/images/exchange.png" alt="IT Booking" class="w-full h-full object-contain">
+                                <img src="assets/images/car.png" alt="Car Booking" class="w-full h-full object-contain" onerror="this.src='assets/images/box.png'">
                             </div>
-                            <span class="text-slate-600 text-[10px] font-medium tracking-tight leading-tight">จองยืมของไอที</span>
+                            <span class="text-slate-600 text-[10px] font-medium tracking-tight leading-tight">Car Request</span>
                         </a>
 
                         <!-- 8. จัดการระบบ -->

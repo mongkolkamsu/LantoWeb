@@ -130,10 +130,9 @@ try {
         ::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] min-h-screen flex items-center justify-center p-0 md:p-4 text-slate-800 antialiased select-none">
+<body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] min-h-screen flex justify-center text-slate-800 antialiased p-0 md:py-6">
 
-    <div class="w-full min-h-screen bg-white/40 backdrop-blur-xl flex flex-col justify-between relative overflow-y-auto p-5 pb-20
-        md:max-w-md md:mx-auto md:my-6 md:min-h-[812px] md:rounded-[40px] md:border md:border-white/60 md:shadow-2xl">
+    <div class="w-full min-h-screen bg-white/40 backdrop-blur-xl flex flex-col justify-between relative p-5 pb-28 md:max-w-md md:min-h-[812px] md:h-auto md:rounded-[40px] md:border md:border-white/60 md:shadow-2xl">
         
         <div>
             <!-- ส่วนหัวหน้าต่างระบบ -->

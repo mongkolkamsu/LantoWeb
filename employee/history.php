@@ -160,11 +160,10 @@ foreach ($logs as $log) {
         ::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] h-screen overflow-hidden touch-none flex items-center justify-center text-slate-800 select-none antialiased p-0 md:p-4">
+<body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] min-h-screen flex justify-center text-slate-800 antialiased p-0 md:py-6">
 
     <!-- 📱 Main Mobile App Shell Layout -->
-    <div class="w-full h-full bg-white/40 backdrop-blur-xl flex flex-col justify-between relative overflow-hidden p-5 pb-24
-        md:max-w-md md:mx-auto md:min-h-[812px] md:rounded-[40px] md:border md:border-white/60 md:shadow-2xl">
+    <div class="w-full min-h-screen bg-white/40 backdrop-blur-xl flex flex-col justify-between relative p-5 pb-28 md:max-w-md md:min-h-[812px] md:h-auto md:rounded-[40px] md:border md:border-white/60 md:shadow-2xl">
         
         <div>
             <!-- Header Bar -->
@@ -251,7 +250,7 @@ foreach ($logs as $log) {
                 </div>
                 
                 <!-- 🎯 ล็อกความสูง max-h-[340px] เพื่อให้พอดีสำหรับการแสดงผลประมาณ 3 การ์ด -->
-                <div id="logs-container" class="space-y-2.5 max-h-[390px] overflow-y-auto pr-1">
+                <div id="logs-container" class="space-y-2.5">
                     <?php if (empty($grouped_days)): ?>
                         <div class="bg-white/60 text-center py-10 rounded-2xl text-slate-400 border border-slate-200/50 text-xs font-light">
                             🚫 ไม่พบข้อมูลบันทึกเวลางานในเดือนนี้
