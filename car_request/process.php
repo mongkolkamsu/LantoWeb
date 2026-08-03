@@ -53,8 +53,12 @@ $action = $_POST['action'] ?? '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'request_car') {
     $car_id          = trim($_POST['car_id'] ?? '');
     $destination     = trim($_POST['destination'] ?? '');
-    $passenger_count = (int)($_POST['passenger_count'] ?? 1);
-    $start_mileage   = (int)($_POST['start_mileage'] ?? 0);
+    $passenger_count = !empty($_POST['passenger_count']) ? (int)$_POST['passenger_count'] : 0;
+    $passengers_name = trim($_POST['passengers_name'] ?? '');
+    $booking_type    = $_POST['booking_type'] ?? 'now';
+    
+    // 🎯 ไม่ว่าจะจองทันทีหรือล่วงหน้า ให้เริ่มที่ 0 เพื่อรอกดรับรถและกรอกไมล์จริงหน้างาน
+    $start_mileage   = 0; 
     
     $raw_start_date  = $_POST['start_date'] ?? '';
     $raw_start_time  = $_POST['start_time'] ?? '';
@@ -67,27 +71,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'request_car') {
     }
 
     try {
-        $stmt_check = $pdo->prepare("
+        // เช็กคิวชนในวันเดียวกัน (ป้องกันการจองซ้อนทับ)
+        $stmt_check_overlap = $pdo->prepare("
             SELECT COUNT(*) FROM car_requests 
             WHERE car_id = :car_id 
-              AND status IN ('pending', 'approved')
+              AND status IN ('approved', 'pending')
+              AND actual_end_datetime IS NULL
+              AND DATE(start_datetime) = DATE(:start_dt)
         ");
-        $stmt_check->execute(['car_id' => $car_id]);
+        $stmt_check_overlap->execute([
+            'car_id'   => $car_id,
+            'start_dt' => $start_datetime
+        ]);
 
-        if ($stmt_check->fetchColumn() > 0) {
-            $_SESSION['error_msg'] = 'รถคันนี้กำลังถูกจองหรือใช้งานอยู่ ไม่สามารถยื่นจองซ้ำได้';
+        if ($stmt_check_overlap->fetchColumn() > 0) {
+            $_SESSION['error_msg'] = 'รถคันนี้มีคิวจองในวันดังกล่าวแล้ว กรุณาเลือกวันอื่นหรือรถคันอื่น';
             redirectBack();
         }
 
         $stmt_insert = $pdo->prepare("
-            INSERT INTO car_requests (user_id, car_id, destination, passenger_count, start_mileage, start_datetime, status)
-            VALUES (:user_id, :car_id, :destination, :passenger_count, :start_mileage, :start_dt, 'pending')
+            INSERT INTO car_requests (user_id, car_id, destination, passenger_count, passengers_name, start_mileage, start_datetime, status)
+            VALUES (:user_id, :car_id, :destination, :passenger_count, :passengers_name, :start_mileage, :start_dt, 'pending')
         ");
         $stmt_insert->execute([
             'user_id'         => $user_id,
             'car_id'          => $car_id,
             'destination'     => $destination,
             'passenger_count' => $passenger_count,
+            'passengers_name' => $passengers_name,
             'start_mileage'   => $start_mileage,
             'start_dt'        => $start_datetime
         ]);
@@ -99,6 +110,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'request_car') {
         $_SESSION['error_msg'] = 'เกิดข้อผิดพลาดจากฐานข้อมูล: ' . $e->getMessage();
         redirectBack();
     }
+}
+
+// -------------------------------------------------------------
+// 1.5 บันทึกรับรถ/เริ่มเดินทาง (สำหรับคนจองล่วงหน้าลงไมล์เริ่ม)
+// -------------------------------------------------------------
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'start_trip') {
+    $request_id    = (int)($_POST['request_id'] ?? 0);
+    $start_mileage = (int)($_POST['start_mileage'] ?? 0);
+
+    if ($request_id > 0 && $start_mileage > 0) {
+        try {
+            $stmt = $pdo->prepare("UPDATE car_requests SET start_mileage = :sm WHERE id = :id");
+            $stmt->execute(['sm' => $start_mileage, 'id' => $request_id]);
+            $_SESSION['success_msg'] = 'บันทึกไมล์ออกเดินทางเรียบร้อยแล้ว เดินทางปลอดภัยครับ';
+        } catch (PDOException $e) {
+            $_SESSION['error_msg'] = 'เกิดข้อผิดพลาด: ' . $e->getMessage();
+        }
+    } else {
+        $_SESSION['error_msg'] = 'กรุณากรอกเลขไมล์เริ่มต้นให้ถูกต้อง';
+    }
+    redirectBack();
 }
 
 // -------------------------------------------------------------

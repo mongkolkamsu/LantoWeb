@@ -1,6 +1,6 @@
 <!-- 📌 MODAL 1: ฟอร์มยื่นคำขอจองรถ -->
 <div id="bookingModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4 my-auto">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4 my-auto max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
             <div>
                 <h3 class="text-xs font-extrabold text-slate-800" id="modal_car_name">ยื่นขอจองรถ</h3>
@@ -12,6 +12,19 @@
         <form action="process.php" method="POST" class="space-y-3 text-xs">
             <input type="hidden" name="action" value="request_car">
             <input type="hidden" name="car_id" id="modal_car_id" value="">
+            <input type="hidden" name="booking_type" id="modal_booking_type" value="now">
+
+            <!-- 🎯 ปุ่มเลือกโหมดการจอง -->
+            <div class="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-2xl text-xs font-bold">
+                <button type="button" id="tab_now" onclick="switchBookingMode('now')" 
+                    class="py-2 rounded-xl bg-blue-600 text-white shadow-xs transition-all cursor-pointer">
+                    ⚡ ใช้งานทันที
+                </button>
+                <button type="button" id="tab_advance" onclick="switchBookingMode('advance')" 
+                    class="py-2 rounded-xl text-slate-500 hover:text-slate-800 transition-all cursor-pointer">
+                    📅 จองล่วงหน้า
+                </button>
+            </div>
 
             <div>
                 <label class="block font-bold text-slate-700 mb-1">สถานที่ปลายทาง / วัตถุประสงค์ <span class="text-rose-500">*</span></label>
@@ -21,8 +34,14 @@
 
             <div>
                 <label class="block font-bold text-slate-700 mb-1">จำนวนผู้ร่วมเดินทาง (คน)</label>
-                <input type="number" name="passenger_count" min="1" max="20" value="1" required 
+                <input type="number" name="passenger_count" min="1" max="20" placeholder="ระบุจำนวน (ถ้ามี)" 
                     class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">รายชื่อผู้ร่วมเดินทางไปด้วย</label>
+                <textarea name="passengers_name" rows="2" placeholder="เช่น นาย A, นางสาว B (ถ้ามี)" 
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-medium focus:outline-none focus:border-blue-500"></textarea>
             </div>
 
             <!-- วัน-เวลา เริ่มเดินทาง -->
@@ -30,20 +49,15 @@
                 <label class="block font-bold text-slate-700 mb-1">วัน-เวลา เริ่มเดินทาง <span class="text-rose-500">*</span></label>
                 <div class="grid grid-cols-3 gap-2">
                     <div class="col-span-2 relative">
-                        <input type="text" name="start_date" required autocomplete="off" class="calendar-trigger w-full bg-slate-50 border border-slate-200 rounded-xl pl-3 pr-8 py-2 font-medium focus:outline-none focus:border-blue-500 cursor-pointer" placeholder="วว/ดด/ปปปป">
+                        <input type="text" name="start_date" id="modal_start_date" required autocomplete="off" 
+                            class="calendar-trigger w-full bg-slate-50 border border-slate-200 rounded-xl pl-3 pr-8 py-2 font-medium focus:outline-none focus:border-blue-500 cursor-pointer" placeholder="วว/ดด/ปปปป">
                         <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none text-slate-400">📅</div>
                     </div>
                     <div class="relative">
-                        <input type="text" name="start_time" value="" placeholder="เวลาเริ่ม" required class="time-picker-trigger w-full bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 font-bold focus:outline-none focus:border-blue-500 text-center cursor-pointer">
+                        <input type="text" name="start_time" id="modal_start_time" value="" placeholder="เวลาเริ่ม" required 
+                            class="time-picker-trigger w-full bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 font-bold focus:outline-none focus:border-blue-500 text-center cursor-pointer">
                     </div>
                 </div>
-            </div>
-
-            <!-- ช่องกรอกเลขไมล์เริ่มต้น -->
-            <div>
-                <label class="block font-bold text-slate-700 mb-1">เลขไมล์เริ่มต้นก่อนออกเดินทาง (กม.) <span class="text-rose-500">*</span></label>
-                <input type="number" name="start_mileage" id="modal_start_mileage" min="0" required placeholder="กรอกเลขไมล์เริ่มต้น" 
-                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-blue-600 focus:outline-none focus:border-blue-500 text-sm">
             </div>
 
             <div class="flex gap-2 pt-2">
@@ -52,6 +66,39 @@
                 </button>
                 <button type="submit" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-500/20 transition-colors cursor-pointer">
                     ยืนยันส่งคำขอ
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 🚗 MODAL NEW: บันทึกเลขไมล์ออกเดินทาง (สำหรับกดรับรถ) -->
+<div id="startTripModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4 my-auto">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
+            <div>
+                <h3 class="text-xs font-extrabold text-slate-800" id="start_modal_title">รับรถ / เริ่มเดินทาง</h3>
+                <p class="text-[10px] text-slate-400">ระบุเลขไมล์เริ่มต้นเพื่อเปิดการใช้งานรถ</p>
+            </div>
+            <button type="button" onclick="closeStartTripModal()" class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold flex items-center justify-center text-xs transition-colors cursor-pointer">✕</button>
+        </div>
+
+        <form action="process.php" method="POST" class="space-y-3 text-xs">
+            <input type="hidden" name="action" value="start_trip">
+            <input type="hidden" name="request_id" id="start_trip_request_id" value="">
+
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">เลขไมล์เริ่มต้นก่อนออกเดินทาง (กม.) <span class="text-rose-500">*</span></label>
+                <input type="number" name="start_mileage" id="input_trip_start_mileage" min="0" required placeholder="กรอกเลขไมล์ปัจจุบันของรถ" 
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-blue-600 focus:outline-none focus:border-blue-500 text-sm">
+            </div>
+
+            <div class="flex gap-2 pt-1">
+                <button type="button" onclick="closeStartTripModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors cursor-pointer">
+                    ยกเลิก
+                </button>
+                <button type="submit" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-500/20 transition-colors cursor-pointer">
+                    🚗 เริ่มเดินทาง
                 </button>
             </div>
         </form>
@@ -108,7 +155,6 @@
 </div>
 
 <!-- 👑 MODAL 3: ฟอร์มแก้ไขรถยนต์ (เฉพาะสิทธิ์ Admin/HR/IT) -->
-<!-- 👑 MODAL 3: ฟอร์มแก้ไขรถยนต์ (เฉพาะสิทธิ์ Admin/HR/IT) -->
 <div id="editCarModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4 my-auto overflow-visible">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
@@ -146,7 +192,6 @@
                         class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold focus:outline-none focus:border-purple-500">
                 </div>
                 
-                <!-- 🎯 Custom Dropdown สำหรับเลือกสถานะใช้งาน -->
                 <div class="relative">
                     <label class="block font-bold text-slate-700 mb-1">สถานะใช้งาน <span class="text-rose-500">*</span></label>
                     <input type="hidden" name="is_active" id="edit_is_active" value="1">
@@ -203,21 +248,29 @@
                 </div>
             <?php else: ?>
                 <?php foreach ($pending_requests as $p_req): 
-                    $p_start = new DateTime($p_req['start_datetime']);
+                    $p_start    = new DateTime($p_req['start_datetime']);
                 ?>
                     <div class="bg-slate-50 rounded-2xl p-3 border border-slate-200/80 text-xs space-y-2">
-                        <div class="border-b border-slate-200/60 pb-1.5">
-                            <h4 class="font-extrabold text-slate-800"><?php echo htmlspecialchars($p_req['brand_model']); ?></h4>
-                            <span class="text-[10px] font-bold text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200">
-                                <?php echo htmlspecialchars($p_req['license_plate'] . ' ' . $p_req['province']); ?>
-                            </span>
+                        <div class="border-b border-slate-200/60 pb-1.5 flex items-center justify-between">
+                            <div>
+                                <h4 class="font-extrabold text-slate-800"><?php echo htmlspecialchars($p_req['brand_model']); ?></h4>
+                                <span class="text-[10px] font-bold text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200">
+                                    <?php echo htmlspecialchars($p_req['license_plate'] . ' ' . $p_req['province']); ?>
+                                </span>
+                            </div>
                         </div>
 
                         <div class="space-y-1 text-[11px] text-slate-600">
-                            <p>👤 <strong>ผู้จอง:</strong> <?php echo htmlspecialchars($p_req['requester_name']); ?> (👥 <?php echo $p_req['passenger_count']; ?> คน)</p>
+                            <p>👤 <strong>ผู้จอง:</strong> <?php echo htmlspecialchars($p_req['requester_name']); ?> <?php echo !empty($p_req['passenger_count']) ? '(👥 ' . $p_req['passenger_count'] . ' คน)' : ''; ?></p>
+                            
+                            <!-- 🎯 เพิ่มส่วนแสดงรายชื่อผู้ร่วมเดินทาง -->
+                            <?php if (!empty($p_req['passengers_name'])): ?>
+                                <p>👥 <strong>ผู้ร่วมเดินทาง:</strong> <span class="text-slate-800 font-semibold"><?php echo htmlspecialchars($p_req['passengers_name']); ?></span></p>
+                            <?php endif; ?>
+
                             <p>📍 <strong>จุดหมาย:</strong> <?php echo htmlspecialchars($p_req['destination']); ?></p>
                             <p class="text-blue-900 font-semibold">📅 <strong>เริ่มเดินทาง:</strong> <?php echo $p_start->format('d/m/Y H:i'); ?> น.</p>
-                            <p class="text-slate-500 font-semibold">🚘 <strong>ไมล์เริ่มต้น:</strong> <?php echo number_format((int)($p_req['start_mileage'] ?? 0)); ?> กม.</p>
+                            <p class="text-purple-600 font-semibold">🚘 <strong>เลขไมล์:</strong> รอระบุตอนกดรับรถ</p>
                         </div>
 
                         <div class="flex gap-2 pt-1 border-t border-slate-200/60">
