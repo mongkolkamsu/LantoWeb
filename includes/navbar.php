@@ -1,10 +1,8 @@
 <?php
-// 🎯 คำนวณ Base Path อัตโนมัติ ป้องกันรูปภาพ Face ID และลิงก์พังเมื่อเปิดจากโฟลเดอร์ย่อย
+// 🎯 คำนวณ Base Path อัตโนมัติ (แก้ไขเอา ../../ ออก ป้องกัน open_basedir restriction)
 $base_path = './';
 if (file_exists('../assets/images/face-id.png')) {
     $base_path = '../';
-} elseif (file_exists('../../assets/images/face-id.png')) {
-    $base_path = '../../';
 }
 
 $current_page = basename($_SERVER['PHP_SELF']);
