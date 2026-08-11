@@ -168,7 +168,7 @@ foreach ($logs as $log) {
             <!-- 🔝 เรียกใช้งาน Header (พร้อมปุ่มย้อนกลับ) -->
             <?php 
             $page_title    = 'ประวัติการลงเวลางาน';
-            $page_subtitle = 'ตรวจสอบประวัติเวลาปฏิบัติงานและการเข้า-ออกงานย้อนหลัง';
+            $page_subtitle = 'ตรวจสอบประวัติเวลาปฏิบัติงานและการเข้า-ออกงาน';
             $show_back     = true;
             $back_url      = '../index_pc.php';
             include_once '../includes/header.php'; 

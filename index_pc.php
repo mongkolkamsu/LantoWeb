@@ -369,7 +369,7 @@ try {
                 </button>
 
                 <!-- 5. จองแมส -->
-                <a href="messenger_request/index.php" class="p-4 bg-slate-50 hover:bg-blue-50/60 border border-slate-200/60 hover:border-blue-300 rounded-2xl flex items-center gap-4 transition-all group shadow-3xs">
+                <a href="messenger_request/msg_index.php" class="p-4 bg-slate-50 hover:bg-blue-50/60 border border-slate-200/60 hover:border-blue-300 rounded-2xl flex items-center gap-4 transition-all group shadow-3xs">
                     <div class="w-12 h-12 bg-white border border-slate-200/60 rounded-xl flex items-center justify-center p-2.5 shadow-3xs group-hover:scale-105 transition-transform shrink-0">
                         <img src="assets/images/box.png" class="w-full h-full object-contain">
                     </div>

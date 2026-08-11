@@ -150,7 +150,7 @@ $urgent_options = [
                 </div>
 
                 <!-- 🎯 2. ตรงกลาง: ปุ่มเปลี่ยนเดือน (แสดงชื่อเดือนที่อยู่ตอนนี้ตรงกลาง) -->
-                <div class="flex items-center justify-center gap-10 bg-slate-100/80 p-2 rounded-2xl border border-slate-200/80 shadow-3xs -translate-x-10">
+                <div class="flex items-center justify-between sm:justify-center gap-2 sm:gap-6 bg-slate-100/80 p-1.5 sm:p-2 rounded-2xl border border-slate-200/80 shadow-3xs w-full max-w-xs sm:w-auto mx-auto">
                     <a href="?month=<?php echo $prev_month; ?>&year=<?php echo $prev_year; ?>" class="px-3.5 py-2 bg-white hover:bg-slate-200 text-slate-700 rounded-xl transition-colors font-bold text-xs shadow-2xs shrink-0">
                         ‹ ก่อนหน้า
                     </a>
@@ -309,13 +309,13 @@ $urgent_options = [
     <div class="sm:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 py-1.5 z-40 shadow-lg grid grid-cols-3 gap-1">
         
         <!-- ปุ่มที่ 1: ตารางปฏิทิน -->
-        <a href="index.php" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-2xl text-[10px] transition-all <?php echo (basename($_SERVER['PHP_SELF']) == 'index.php') ? 'bg-blue-50 text-blue-600 border border-blue-200/80 font-black' : 'text-slate-500 hover:bg-slate-50 border border-transparent font-bold'; ?>">
+        <a href="msg_index.php" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-2xl text-[10px] transition-all <?php echo (basename($_SERVER['PHP_SELF']) == 'index.php') ? 'bg-blue-50 text-blue-600 border border-blue-200/80 font-black' : 'text-slate-500 hover:bg-slate-50 border border-transparent font-bold'; ?>">
             <span class="text-base leading-none">📅</span>
             <span class="mt-0.5">ตารางปฏิทิน</span>
         </a>
 
         <!-- ปุ่มที่ 2: ประวัติงาน -->
-        <a href="history.php" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-2xl text-[10px] transition-all <?php echo (basename($_SERVER['PHP_SELF']) == 'history.php') ? 'bg-blue-50 text-blue-600 border border-blue-200/80 font-black' : 'text-slate-500 hover:bg-slate-50 border border-transparent font-bold'; ?>">
+        <a href="msg_history.php" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-2xl text-[10px] transition-all <?php echo (basename($_SERVER['PHP_SELF']) == 'history.php') ? 'bg-blue-50 text-blue-600 border border-blue-200/80 font-black' : 'text-slate-500 hover:bg-slate-50 border border-transparent font-bold'; ?>">
             <span class="text-base leading-none">📋</span>
             <span class="mt-0.5">ประวัติงาน</span>
         </a>

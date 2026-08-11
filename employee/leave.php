@@ -122,7 +122,7 @@ $duration_options = array(
             <!-- 🔝 ดึง Header ด้านบน -->
             <?php 
             $page_title    = 'ระบบแจ้งลาออนไลน์';
-            $page_subtitle = 'ยื่นคำขออนุมัติการลาและตรวจสอบสิทธิ์โควตาคงเหลือประจำปี';
+            $page_subtitle = 'ยื่นคำขออนุมัติการลา';
             $show_back     = true;
             $back_url      = '../index_pc.php';
             include_once '../includes/header.php'; 

@@ -120,7 +120,7 @@ try {
             ?>
 
             <!-- 💻/📱 Main Centered Container -->
-            <main class="p-6 lg:p-10 max-w-xl mx-auto md:-translate-x-32 w-full">
+            <main class="p-6 lg:p-10 max-w-xl mx-auto md:-translate-x-32 w-full pb-28 md:pb-10">
                 <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/80 shadow-xl space-y-6">
                     
                     <?php if ($is_completed_today): ?>

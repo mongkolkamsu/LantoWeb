@@ -159,7 +159,7 @@ foreach ($status_opts as $opt) {
     $page_title    = '📋 ประวัติและตารางวิ่งงาน';
     $page_subtitle = $can_view_all ? 'ตรวจสอบรายการจองและคิววิ่งงานแมสเซนเจอร์ในระบบ' : 'รายการประวัติงานที่คุณเคยแจ้งจองไว้';
     $show_back     = true;
-    $back_url      = 'index.php';
+    $back_url      = 'msg_index.php';
     include_once '../includes/header.php'; 
     ?>
 
@@ -167,7 +167,7 @@ foreach ($status_opts as $opt) {
 
         <!-- 🔎 แถบตัวกรอง -->
         <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col md:flex-row justify-between items-center gap-3">
-            <form method="GET" action="history.php" class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <form method="GET" action="msg_history.php" class="flex flex-wrap items-center gap-3 w-full md:w-auto">
 
                 <div class="w-full sm:w-60 relative">
                     <span class="absolute left-3.5 top-3 text-slate-400">
@@ -194,7 +194,7 @@ foreach ($status_opts as $opt) {
                         </svg>
                         <span>ค้นหา</span>
                     </button>
-                    <a href="history.php" class="bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold px-3.5 py-2.5 rounded-xl transition-colors h-10 flex items-center justify-center gap-1.5 cursor-pointer">
+                    <a href="msg_history.php" class="bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold px-3.5 py-2.5 rounded-xl transition-colors h-10 flex items-center justify-center gap-1.5 cursor-pointer">
                         <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path>
                         </svg>
@@ -381,13 +381,13 @@ foreach ($status_opts as $opt) {
     <div class="sm:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 py-1.5 z-40 shadow-lg grid grid-cols-3 gap-1">
         
         <!-- ปุ่มที่ 1: ตารางปฏิทิน -->
-        <a href="index.php" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-2xl text-[10px] transition-all <?php echo (basename($_SERVER['PHP_SELF']) == 'index.php') ? 'bg-blue-50 text-blue-600 border border-blue-200/80 font-black' : 'text-slate-500 hover:bg-slate-50 border border-transparent font-bold'; ?>">
+        <a href="msg_index.php" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-2xl text-[10px] transition-all <?php echo (basename($_SERVER['PHP_SELF']) == 'index.php') ? 'bg-blue-50 text-blue-600 border border-blue-200/80 font-black' : 'text-slate-500 hover:bg-slate-50 border border-transparent font-bold'; ?>">
             <span class="text-base leading-none">📅</span>
             <span class="mt-0.5">ตารางปฏิทิน</span>
         </a>
 
         <!-- ปุ่มที่ 2: ประวัติงาน -->
-        <a href="history.php" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-2xl text-[10px] transition-all <?php echo (basename($_SERVER['PHP_SELF']) == 'history.php') ? 'bg-blue-50 text-blue-600 border border-blue-200/80 font-black' : 'text-slate-500 hover:bg-slate-50 border border-transparent font-bold'; ?>">
+        <a href="msg_history.php" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-2xl text-[10px] transition-all <?php echo (basename($_SERVER['PHP_SELF']) == 'history.php') ? 'bg-blue-50 text-blue-600 border border-blue-200/80 font-black' : 'text-slate-500 hover:bg-slate-50 border border-transparent font-bold'; ?>">
             <span class="text-base leading-none">📋</span>
             <span class="mt-0.5">ประวัติงาน</span>
         </a>

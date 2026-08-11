@@ -94,12 +94,11 @@ $employee_url = $default_index;
 
                     <!-- 🎯 เมนูประวัติการใช้งาน (แยกตามระบบรถยนต์ และ แมสเซนเจอร์) -->
                     <?php 
-                        $current_page = basename($_SERVER['PHP_SELF']);
                         $is_car_system = in_array($current_page, ['car_index.php', 'car_history.php']);
-                        $is_msg_system = in_array($current_page, ['jobs.php', 'index.php', 'history.php']);
+                        $is_msg_system = in_array($current_page, ['jobs.php', 'msg_index.php', 'msg_history.php']);
 
                         if ($is_car_system || $is_msg_system):
-                            $history_link = $is_car_system ? 'car_history.php' : 'history.php';
+                            $history_link = $is_car_system ? 'car_history.php' : 'msg_history.php';
                             $history_label = $is_car_system ? 'ประวัติและตารางใช้รถ' : 'ประวัติงาน';
                     ?>
                         <a href="<?php echo $history_link; ?>" class="relative z-10 flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">

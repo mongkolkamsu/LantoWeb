@@ -144,7 +144,7 @@ $avatar_url = (!empty($user['profile_image']) && file_exists($profile_path))
             <!-- 🔝 ดึง Header ด้านบน -->
             <?php 
             $page_title    = 'ข้อมูลส่วนตัว / บัตรพนักงาน';
-            $page_subtitle = 'บัตรประจำตัวพนักงานดิจิทัลและข้อมูลรายละเอียดส่วนบุคคล';
+            $page_subtitle = 'บัตรประจำตัวพนักงานดิจิทัล';
             $show_back     = true;
             $back_url      = '../index_pc.php';
             include_once '../includes/header.php'; 

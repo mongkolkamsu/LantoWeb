@@ -111,12 +111,12 @@ if ($action === 'create_request' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
 
         $_SESSION['success_msg'] = 'สร้างคำขอส่งเอกสาร/พัสดุสำเร็จ รหัสงาน: ' . $job_no;
-        header("Location: history.php");
+        header("Location: msg_history.php");
         exit();
 
     } catch (PDOException $e) {
         $_SESSION['error_msg'] = 'เกิดข้อผิดพลาด: ' . $e->getMessage();
-        header("Location: index.php");
+        header("Location: msg_index.php");
         exit();
     }
 }

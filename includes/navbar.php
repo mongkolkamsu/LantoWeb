@@ -1,5 +1,4 @@
 <?php
-// 🎯 คำนวณ Base Path อัตโนมัติ
 $base_path = './';
 if (file_exists('../assets/images/face-id.png')) {
     $base_path = '../';
@@ -8,7 +7,6 @@ if (file_exists('../assets/images/face-id.png')) {
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 
-<!-- 📌 เปลี่ยน absolute เป็น fixed เพื่อให้ Navbar ลอยติดขอบล่างหน้าจอเสมอไม่ว่าจะเลื่อนไปไหน -->
 <div class="fixed bottom-4 left-4 right-4 max-w-md mx-auto h-16 bg-white/95 backdrop-blur-xl border border-slate-200/60 rounded-2xl shadow-xl z-50 flex items-center justify-between px-2">
     <div class="w-full grid grid-cols-5 text-center items-center relative h-full">
         
