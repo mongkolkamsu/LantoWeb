@@ -2,7 +2,7 @@
 session_start();
 require_once '../config/db.php'; 
 require_once '../includes/rounded_dropdown.php';
-
+require_once '../config/auth.php';
 if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['admin', 'it_support', 'hr'])) {
     header("Location: ../login.php");
     exit();
@@ -223,6 +223,8 @@ function buildFilterUrl($new_status, $search, $req_date, $dept, $branch, $target
     if ($target_page > 1) $p['page'] = $target_page;
     return 'attendance_history.php?' . http_build_query($p);
 }
+$page_title    = 'ประวัติการเข้าออกงาน';
+$page_subtitle = 'ตรวจสอบบันทึกเวลาการเข้า-ออกงาน พฤติกรรมลงเวลา และสถานะการเข้ากะของพนักงาน';
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -233,7 +235,7 @@ function buildFilterUrl($new_status, $search, $req_date, $dept, $branch, $target
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Noto Sans Thai', sans-serif; }
         ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -250,22 +252,13 @@ function buildFilterUrl($new_status, $search, $req_date, $dept, $branch, $target
 
     <!-- 👤 SIDEBAR NAVIGATION (Light & Clean Theme) -->
     <?php include '../includes/sidebar.php'; ?>
+    <!-- 💻 WORKSPACE WRAPPER ฝั่งขวา -->
+    <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
 
+        <!-- 🔝 HEADER ADMIN -->
+        <?php include_once '../includes/header_admin.php'; ?>
     <!-- 💻 2. MAIN WORKSPACE -->
     <main class="flex-1 p-4 sm:p-6 lg:p-8 w-full min-h-screen md:h-screen overflow-y-auto space-y-4 sm:space-y-6 pb-20 md:pb-8">
-        
-        <!-- Header Topbar -->
-        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-            <div>
-                <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">ประวัติการเข้าออกงาน</h1>
-                <p class="text-slate-400 text-xs mt-0.5 font-medium">ตรวจสอบบันทึกเวลาการเข้า-ออกงาน พฤติกรรมลงเวลา และสถานะการเข้ากะของพนักงาน</p>
-            </div>
-            <div class="flex items-center gap-2.5 self-end sm:self-center">
-                <div class="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-2xs text-xs font-bold text-slate-600 flex items-center gap-1.5">
-                    สวัสดีคุณ, <span class="text-blue-600 font-extrabold"><?php echo htmlspecialchars($admin_fullname); ?></span> 👋
-                </div>
-            </div>
-        </div>
 
         <!-- 📊 3. KPI STAT CARDS (สไตล์ Clean Box แบบ system_settings.php) -->
         <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-2xs">

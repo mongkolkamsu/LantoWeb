@@ -38,10 +38,9 @@ function formatThaiDateToMySQL($dateStr, $timeStr = '00:00') {
     return $dateStr;
 }
 
-// 🎯 ฟังก์ชัน Redirect กลับหน้าเดิมที่เรียกมา
+// 🎯 ฟังก์ชัน Redirect กลับหน้า car_index.php โดยตรงเพื่อความเสถียร
 function redirectBack() {
-    $referer = $_SERVER['HTTP_REFERER'] ?? 'index.php';
-    header("Location: " . $referer);
+    header("Location: car_index.php");
     exit();
 }
 
@@ -57,7 +56,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'request_car') {
     $passengers_name = trim($_POST['passengers_name'] ?? '');
     $booking_type    = $_POST['booking_type'] ?? 'now';
     
-    // 🎯 ไม่ว่าจะจองทันทีหรือล่วงหน้า ให้เริ่มที่ 0 เพื่อรอกดรับรถและกรอกไมล์จริงหน้างาน
     $start_mileage   = 0; 
     
     $raw_start_date  = $_POST['start_date'] ?? '';
@@ -71,7 +69,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'request_car') {
     }
 
     try {
-        // เช็กคิวชนในวันเดียวกัน (ป้องกันการจองซ้อนทับ)
         $stmt_check_overlap = $pdo->prepare("
             SELECT COUNT(*) FROM car_requests 
             WHERE car_id = :car_id 
@@ -113,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'request_car') {
 }
 
 // -------------------------------------------------------------
-// 1.5 บันทึกรับรถ/เริ่มเดินทาง (สำหรับคนจองล่วงหน้าลงไมล์เริ่ม)
+// 1.5 บันทึกรับรถ/เริ่มเดินทาง
 // -------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'start_trip') {
     $request_id    = (int)($_POST['request_id'] ?? 0);

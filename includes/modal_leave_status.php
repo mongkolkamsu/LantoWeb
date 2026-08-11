@@ -4,7 +4,7 @@ require_once __DIR__ . '/rounded_dropdown.php';
 
 <!-- 📑 POPUP MODAL ติดตามสถานะคำขอลา (ปรับดีไซน์ Soft Minimal สบายตา) -->
 <div id="leaveStatusModal" class="hidden fixed inset-0 bg-slate-900/65 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4 relative animate-in fade-in zoom-in duration-150 max-h-[92vh] overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-sm md:max-w-xl w-full p-5 md:p-7 shadow-2xl border border-slate-100 space-y-4 relative animate-in fade-in zoom-in duration-150 max-h-[92vh] overflow-y-auto">
         
         <!-- Header & ปุ่มปิด Modal -->
         <div class="flex justify-between items-center border-b border-slate-100 pb-3">

@@ -2,17 +2,20 @@
 // 🎯 ระบบดึงชื่อหน้าปัจจุบันมาเช็ก Active Menu อัตโนมัติ
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
+
+
 <!-- 📱 แถบ Header ปุ่มเมนูเฉพาะบนมือถือ -->
-<div class="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center sticky top-0 z-40 shadow-md">
+<div class="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center sticky top-0 z-40 shadow-md w-full shrink-0 h-auto">
     <div class="flex items-center gap-2">
         <span class="text-base">⚙️</span>
         <span class="font-extrabold text-sm tracking-wide">Lanto Admin System</span>
     </div>
-    <button type="button" onclick="document.getElementById('adminSidebar').classList.toggle('hidden')" class="px-3 py-1.5 bg-slate-800 rounded-xl text-xs font-bold text-slate-300 hover:text-white cursor-pointer active:scale-95">
-        🍔 เมนู
+    <button type="button" onclick="const sb=document.getElementById('adminSidebar'); sb.classList.toggle('hidden'); sb.classList.toggle('flex');" class="px-3 py-1.5 bg-slate-800 rounded-xl text-xs font-bold text-slate-300 hover:text-white cursor-pointer active:scale-95">
+        ☰ เมนู
     </button>
 </div>
-<!-- 👤 SIDEBAR NAVIGATION (Modern Clean with Standard Lucide Vector Icons) -->
+
+<!-- 👤 SIDEBAR NAVIGATION -->
 <aside id="adminSidebar" class="hidden md:flex flex-col w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-slate-200/80 p-4 space-y-4 shrink-0 transition-all">
     <div>
         <!-- LOGO HEADER -->
@@ -27,16 +30,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <!-- NAV MENUS -->
         <nav class="p-3.5 space-y-1 text-xs font-semibold">
             
-            <!-- ปุ่มกลับหน้าหลักพนักงาน (ไอคอน Smartphone) -->
-            <a href="../index_mobile.php" class="flex items-center gap-3 px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 rounded-2xl transition-all font-bold mb-3 shadow-3xs active:scale-95 group">
-                <div class="w-7 h-7 bg-emerald-500 text-white rounded-xl flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
-                        <line x1="12" y1="18" x2="12.01" y2="18" stroke-width="3"></line>
-                    </svg>
-                </div>
-                <span>กลับหน้าหลักพนักงาน</span>
-            </a>
 
             <!-- 1. แดชบอร์ดภาพรวม (ไอคอน Dashboard Grid) -->
             <?php $active = ($current_page == 'dashboard.php'); ?>
@@ -136,24 +129,5 @@ $current_page = basename($_SERVER['PHP_SELF']);
             </a>
 
         </nav>
-    </div>
-
-    <!-- FOOTER BUTTONS -->
-    <div class="p-4 border-t border-slate-100 bg-slate-50/50 space-y-1">
-        <a href="#" class="flex items-center justify-center gap-2 w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-2xl transition-all shadow-md shadow-blue-500/20 active:scale-95">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-            </svg>
-            <span>คู่มือการใช้งาน</span>
-        </a>
-        <a href="../logout.php" class="flex items-center justify-center gap-1.5 w-full py-2 text-slate-400 hover:text-rose-600 text-[11px] font-bold transition-colors rounded-xl">
-            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                <polyline points="16 17 21 12 16 7"></polyline>
-                <line x1="21" y1="12" x2="9" y2="12"></line>
-            </svg>
-            <span>ออกจากระบบ</span>
-        </a>
     </div>
 </aside>

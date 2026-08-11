@@ -4,14 +4,17 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 define('SITE_NAME', 'Lanto Web');
 
+// 🎯 ดึงชื่อ Host โดยตัดเรื่อง Port (เช่น :8080) ออก
+$http_host = isset($_SERVER['HTTP_HOST']) ? explode(':', $_SERVER['HTTP_HOST'])[0] : '';
+
 // 🎯 เช็คอัตโนมัติว่ารันบนเครื่องตัวเอง (XAMPP) หรือรันบนเซิร์ฟเวอร์จริง (Plesk)
-if ($_SERVER['HTTP_HOST'] === 'localhost' || $_SERVER['SERVER_NAME'] === '127.0.0.1') {
+if ($http_host === 'localhost' || $http_host === '127.0.0.1') {
     
     // 💻 [ค่าสำหรับรันใน XAMPP เครื่องคุณ]
     $host = 'localhost';
-    $db   = 'lanto_web'; // ใส่ชื่อฐานข้อมูลที่คุณใช้ใน XAMPP (เช่น lanto_web)
+    $db   = 'lanto_web'; 
     $user = 'root';
-    $pass = '';          // XAMPP ปกติรหัสผ่านว่างเปล่า
+    $pass = '';          
     
 } else {
     
@@ -34,6 +37,12 @@ $options = [
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
-    die("การเชื่อมต่อฐานข้อมูลล้มเหลว: " . $e->getMessage());
+    // แสดงข้อผิดพลาดชัดเจนเพื่อการแก้ไข
+    header("HTTP/1.1 500 Internal Server Error");
+    die("<div style='font-family: sans-serif; padding: 20px; border: 1px solid #f87171; background: #fef2f2; color: #991b1b; rounded: 12px;'>
+            <h3>⚠️ การเชื่อมต่อฐานข้อมูลล้มเหลว</h3>
+            <p><b>Host:</b> {$host} | <b>Database:</b> {$db}</p>
+            <p><b>Error Details:</b> " . htmlspecialchars($e->getMessage()) . "</p>
+         </div>");
 }
 ?>

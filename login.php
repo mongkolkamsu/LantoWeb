@@ -2,9 +2,9 @@
 session_start();
 require_once 'config/db.php';
 
-// 🎯 หากผู้ใช้ล็อกอินอยู่แล้ว ให้ดีดไปหน้าแดชบอร์ดหลักทันที
+// 🎯 หากผู้ใช้ล็อกอินอยู่แล้ว ให้ดีดไปหน้า index.php เพื่อให้ตัวคัดแยกทำงาน
 if (isset($_SESSION['user_id'])) {
-    header("Location: index_mobile.php");
+    header("Location: index.php");
     exit();
 }
 
@@ -39,8 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['role']          = $user['role'];
                 $_SESSION['profile_image'] = $user['profile_image'];
 
-                // 🎯 แก้ไขเสร็จสิ้น: ปรับให้วิ่งไปหาหน้า index_mobile.php ในระดับเดียวกันตรง ๆ
-                $redirect_url = 'index_mobile.php';
+                // 🎯 ปรับให้วิ่งไปหา index.php เพื่อแยกหน้าจอมือถือ/คอมให้อัตโนมัติ
+                $redirect_url = 'index.php';
                 
                 if ($is_ajax) {
                     header('Content-Type: application/json');
@@ -84,11 +84,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <!-- 📱 ตั้งค่า PWA (รองรับทั้ง Android และ iOS iPhone) -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e3a8a">
-
-    <!-- 🍎 สำหรับ iPhone / Safari (แก้ชื่อแอปและรูปไอคอน) -->
     <link rel="apple-touch-icon" href="assets/images/Logo.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -100,7 +97,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] min-h-screen flex items-center justify-center p-4">
 
     <div class="bg-white/40 backdrop-blur-xl border border-white/60 p-8 rounded-3xl shadow-2xl shadow-slate-300/50 w-full max-w-md transition-all">
-        
         <div class="text-center mb-6 flex flex-col items-center">
             <div class="w-32 h-32 bg-white/80 p-2 rounded-2xl shadow-sm mb-4 flex items-center justify-center overflow-hidden">
                 <img src="assets/images/LOGO-Lanto.png" alt="Lanto Logo" class="object-contain w-full h-full">
@@ -153,7 +149,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (typeof LantoAlert === 'undefined') return; 
 
         e.preventDefault();
-        // 1. แสดงหน้าต่างกำลังโหลด
         LantoAlert.loading('กำลังเข้าสู่ระบบ', 'กำลังพาคุณเข้าสู่แดชบอร์ด Lanto Web...');
 
         const formData = new FormData(this);
@@ -165,13 +160,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Promise.all([fetchServer, minimumDelay])
             .then(([data]) => {
                 if (data.status === 'success') {
-                    // 2. ถ้าสำเร็จ ไม่ต้องเรียกปุ่มกดตกลง ให้เปลี่ยนข้อความ Loading เป็นสำเร็จชั่วพริบตา แล้วพุ่งไปหน้าแดชบอร์ดทันที
                     if (typeof LantoAlert.update === 'function') {
                         LantoAlert.update('เข้าสู่ระบบสำเร็จ', 'กำลังเปลี่ยนหน้า...');
                     }
                     setTimeout(() => {
                         window.location.href = data.redirect;
-                    }, 500); // หน่วงเวลาสั้นๆ 0.5 วินาทีให้ผู้ใช้เห็นสถานะ แล้วพาเข้าหน้าเว็บทันที
+                    }, 500);
                 } else {
                     LantoAlert.close();
                     setTimeout(() => {

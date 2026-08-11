@@ -1,6 +1,6 @@
 <!-- 📌 MODAL 1: ฟอร์มยื่นคำขอจองรถ -->
 <div id="bookingModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4 my-auto max-h-[90vh] overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-sm md:max-w-xl w-full p-5 md:p-7 shadow-2xl border border-slate-100 space-y-4 my-auto max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
             <div>
                 <h3 class="text-xs font-extrabold text-slate-800" id="modal_car_name">ยื่นขอจองรถ</h3>
@@ -74,7 +74,7 @@
 
 <!-- 🚗 MODAL NEW: บันทึกเลขไมล์ออกเดินทาง (สำหรับกดรับรถ) -->
 <div id="startTripModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4 my-auto">
+    <div class="bg-white rounded-3xl max-w-sm md:max-w-xl w-full p-5 md:p-7 shadow-2xl border border-slate-100 space-y-4 my-auto">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
             <div>
                 <h3 class="text-xs font-extrabold text-slate-800" id="start_modal_title">รับรถ / เริ่มเดินทาง</h3>
@@ -108,13 +108,13 @@
 <!-- 👑 MODAL 2: ฟอร์มเพิ่มรถใหม่ (เฉพาะสิทธิ์ Admin/HR/IT) -->
 <?php if (!empty($can_manage_cars)): ?>
 <div id="addCarModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4 my-auto">
+    <div class="bg-white rounded-3xl max-w-sm md:max-w-xl w-full p-5 md:p-7 shadow-2xl border border-slate-100 space-y-4 my-auto">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
             <h3 class="text-xs font-extrabold text-purple-900 flex items-center gap-1.5"><span>➕</span> เพิ่มรถยนต์เข้าสู่ระบบ</h3>
             <button type="button" onclick="closeAddCarModal()" class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold flex items-center justify-center text-xs transition-colors cursor-pointer">✕</button>
         </div>
 
-        <form action="index.php" method="POST" class="space-y-3 text-xs">
+        <form action="car_index.php" method="POST" class="space-y-3 text-xs">
             <input type="hidden" name="action" value="add_car">
 
             <div>
@@ -156,13 +156,13 @@
 
 <!-- 👑 MODAL 3: ฟอร์มแก้ไขรถยนต์ (เฉพาะสิทธิ์ Admin/HR/IT) -->
 <div id="editCarModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4 my-auto overflow-visible">
+    <div class="bg-white rounded-3xl max-w-sm md:max-w-xl w-full p-5 md:p-7 shadow-2xl border border-slate-100 space-y-4 my-auto overflow-visible">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
             <h3 class="text-xs font-extrabold text-purple-900 flex items-center gap-1.5"><span>✏️</span> แก้ไขข้อมูลรถยนต์</h3>
             <button type="button" onclick="closeEditCarModal()" class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold flex items-center justify-center text-xs transition-colors cursor-pointer">✕</button>
         </div>
 
-        <form action="index.php" method="POST" class="space-y-3 text-xs">
+        <form action="car_index.php" method="POST" class="space-y-3 text-xs">
             <input type="hidden" name="action" value="edit_car">
             <input type="hidden" name="car_id" id="edit_car_id" value="">
 
@@ -227,65 +227,96 @@
     </div>
 </div>
 
-<!-- 👑 MODAL 4: รายการคำขอรออนุมัติ (เฉพาะ Admin / HR / IT) -->
+<!-- 👑 MODAL 4: รายการคำขอรออนุมัติ (ขนาดกะทัดรัด ดีไซน์สวยงามสมส่วน) -->
 <div id="pendingApprovalModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4 my-auto max-h-[85vh] flex flex-col">
+    <div class="bg-white rounded-3xl max-w-sm md:max-w-lg w-full p-5 md:p-6 shadow-2xl border border-slate-100 space-y-4 my-auto max-h-[85vh] flex flex-col">
         
-        <div class="flex justify-between items-center border-b border-slate-100 pb-2.5 shrink-0">
-            <h3 class="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
-                <span>✅</span> คำขอรอการอนุมัติ
-                <?php if (!empty($pending_count)): ?>
-                    <span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[10px] font-bold"><?php echo $pending_count; ?> รายการ</span>
-                <?php endif; ?>
-            </h3>
+        <!-- ส่วนหัว Modal -->
+        <div class="flex justify-between items-center border-b border-slate-100 pb-3 shrink-0">
+            <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-xs">
+                    ✅
+                </div>
+                <h3 class="text-xs sm:text-sm font-extrabold text-slate-800">
+                    คำขอรอการอนุมัติ 
+                    <?php if (!empty($pending_count)): ?>
+                        <span class="ml-1 px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full text-[10px] font-black"><?php echo $pending_count; ?> รายการ</span>
+                    <?php endif; ?>
+                </h3>
+            </div>
             <button type="button" onclick="closePendingApprovalModal()" class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold flex items-center justify-center text-xs transition-colors cursor-pointer">✕</button>
         </div>
 
+        <!-- รายการคำขอภายใน Modal -->
         <div class="overflow-y-auto space-y-3 pr-1">
             <?php if (empty($pending_requests)): ?>
-                <div class="p-6 text-center text-slate-400 text-xs font-light">
+                <div class="p-8 text-center text-slate-400 text-xs font-light">
                     🎉 ไม่มีคำขอรอการอนุมัติในขณะนี้
                 </div>
             <?php else: ?>
                 <?php foreach ($pending_requests as $p_req): 
-                    $p_start    = new DateTime($p_req['start_datetime']);
+                    $p_start = new DateTime($p_req['start_datetime']);
                 ?>
-                    <div class="bg-slate-50 rounded-2xl p-3 border border-slate-200/80 text-xs space-y-2">
-                        <div class="border-b border-slate-200/60 pb-1.5 flex items-center justify-between">
+                    <div class="bg-slate-50 rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-2xs space-y-3">
+                        
+                        <!-- ข้อมูลรถ -->
+                        <div class="border-b border-slate-200/60 pb-2.5 flex items-center justify-between">
                             <div>
-                                <h4 class="font-extrabold text-slate-800"><?php echo htmlspecialchars($p_req['brand_model']); ?></h4>
-                                <span class="text-[10px] font-bold text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200">
-                                    <?php echo htmlspecialchars($p_req['license_plate'] . ' ' . $p_req['province']); ?>
+                                <h4 class="font-extrabold text-slate-800 text-xs sm:text-sm"><?php echo htmlspecialchars($p_req['brand_model']); ?></h4>
+                                <span class="inline-block mt-0.5 text-[10px] font-bold text-slate-600 bg-white px-2 py-0.5 rounded-md border border-slate-200">
+                                    ทะเบียนรถ: <?php echo htmlspecialchars($p_req['license_plate'] . ' ' . $p_req['province']); ?>
                                 </span>
                             </div>
                         </div>
 
-                        <div class="space-y-1 text-[11px] text-slate-600">
-                            <p>👤 <strong>ผู้จอง:</strong> <?php echo htmlspecialchars($p_req['requester_name']); ?> <?php echo !empty($p_req['passenger_count']) ? '(👥 ' . $p_req['passenger_count'] . ' คน)' : ''; ?></p>
+                        <!-- รายละเอียดการจอง -->
+                        <div class="space-y-1.5 text-[11px] sm:text-xs text-slate-600">
+                            <p class="flex items-center gap-1">
+                                <span>👤</span> <strong>ผู้จอง:</strong> 
+                                <span class="text-slate-800 font-semibold"><?php echo htmlspecialchars($p_req['requester_name']); ?></span>
+                                <?php if (!empty($p_req['passenger_count'])): ?>
+                                    <span class="text-[10px] text-slate-500">(👥 <?php echo $p_req['passenger_count']; ?> คน)</span>
+                                <?php endif; ?>
+                            </p>
                             
-                            <!-- 🎯 เพิ่มส่วนแสดงรายชื่อผู้ร่วมเดินทาง -->
                             <?php if (!empty($p_req['passengers_name'])): ?>
-                                <p>👥 <strong>ผู้ร่วมเดินทาง:</strong> <span class="text-slate-800 font-semibold"><?php echo htmlspecialchars($p_req['passengers_name']); ?></span></p>
+                                <p class="flex items-start gap-1">
+                                    <span>👥</span> <strong>ผู้ร่วมเดินทาง:</strong> 
+                                    <span class="text-slate-800 font-medium"><?php echo htmlspecialchars($p_req['passengers_name']); ?></span>
+                                </p>
                             <?php endif; ?>
 
-                            <p>📍 <strong>จุดหมาย:</strong> <?php echo htmlspecialchars($p_req['destination']); ?></p>
-                            <p class="text-blue-900 font-semibold">📅 <strong>เริ่มเดินทาง:</strong> <?php echo $p_start->format('d/m/Y H:i'); ?> น.</p>
-                            <p class="text-purple-600 font-semibold">🚘 <strong>เลขไมล์:</strong> รอระบุตอนกดรับรถ</p>
+                            <p class="flex items-start gap-1">
+                                <span>📍</span> <strong>จุดหมาย / วัตถุประสงค์:</strong> 
+                                <span class="text-slate-800 font-medium"><?php echo htmlspecialchars($p_req['destination']); ?></span>
+                            </p>
+
+                            <p class="flex items-center gap-1 text-blue-900 font-semibold">
+                                <span>📅</span> <strong>เริ่มเดินทาง:</strong> 
+                                <span><?php echo $p_start->format('d/m/Y H:i'); ?> น.</span>
+                            </p>
+
+                            <p class="flex items-center gap-1 text-purple-700 font-semibold">
+                                <span>🚘</span> <strong>เลขไมล์:</strong> 
+                                <span class="text-purple-600 font-medium">รอระบุตอนกดรับรถ</span>
+                            </p>
                         </div>
 
-                        <div class="flex gap-2 pt-1 border-t border-slate-200/60">
+                        <!-- ปุ่มอนุมัติ / ปฏิเสธ -->
+                        <div class="flex gap-2 pt-2 border-t border-slate-200/60">
                             <form action="process.php" method="POST" class="flex-1">
                                 <input type="hidden" name="action" value="approve_booking">
                                 <input type="hidden" name="request_id" value="<?php echo $p_req['id']; ?>">
-                                <button type="submit" class="w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer">
-                                    ✅ อนุมัติ
+                                <button type="submit" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1">
+                                    <span>✅</span> อนุมัติคำขอ
                                 </button>
                             </form>
 
-                            <button type="button" onclick="openRejectModalFromIndex(<?php echo $p_req['id']; ?>)" class="flex-1 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-xl text-xs border border-rose-200 transition-colors cursor-pointer">
-                                ❌ ปฏิเสธ
+                            <button type="button" onclick="openRejectModalFromIndex(<?php echo $p_req['id']; ?>)" class="flex-1 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-xl text-xs border border-rose-200 transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1">
+                                <span>❌</span> ปฏิเสธคำขอ
                             </button>
                         </div>
+
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>
@@ -294,9 +325,9 @@
     </div>
 </div>
 
-<!-- 👑 MODAL 5: ระบุเหตุผลการปฏิเสธ (สำหรับหน้า Index) -->
+<!-- 👑 MODAL 5: ระบุเหตุผลการปฏิเสธ -->
 <div id="indexRejectModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl space-y-4 my-auto">
+    <div class="bg-white rounded-3xl max-w-sm md:max-w-xl w-full p-5 md:p-7 shadow-2xl space-y-4 my-auto">
         <h3 class="text-xs font-extrabold text-slate-800 border-b border-slate-100 pb-2">ระบุเหตุผลที่ไม่อนุมัติ</h3>
         <form action="process.php" method="POST" class="space-y-3 text-xs">
             <input type="hidden" name="action" value="reject_booking">
@@ -318,7 +349,7 @@
 
 <!-- 🏁 MODAL 6: บันทึกคืนรถยนต์ -->
 <div id="returnCarModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4 my-auto">
+    <div class="bg-white rounded-3xl max-w-sm md:max-w-xl w-full p-5 md:p-7 shadow-2xl border border-slate-100 space-y-4 my-auto">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
             <div>
                 <h3 class="text-xs font-extrabold text-slate-800" id="return_modal_title">บันทึกคืนรถยนต์</h3>

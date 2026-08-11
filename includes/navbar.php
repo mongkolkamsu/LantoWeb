@@ -1,5 +1,5 @@
 <?php
-// 🎯 คำนวณ Base Path อัตโนมัติ (แก้ไขเอา ../../ ออก ป้องกัน open_basedir restriction)
+// 🎯 คำนวณ Base Path อัตโนมัติ
 $base_path = './';
 if (file_exists('../assets/images/face-id.png')) {
     $base_path = '../';
@@ -12,7 +12,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <div class="w-full grid grid-cols-5 text-center items-center relative h-full">
         
         <!-- เมนู: หน้าแรก -->
-        <a href="<?php echo $base_path; ?>index.php?view=mobile" class="flex flex-col items-center active:scale-90 transition-transform <?php echo ($current_page == 'index.php' || $current_page == 'index_mobile.php') ? 'text-blue-700 font-bold' : 'text-slate-400 hover:text-slate-600 font-medium'; ?>">
+        <a href="<?php echo $base_path; ?>index_mobile.php" class="flex flex-col items-center active:scale-90 transition-transform <?php echo ($current_page == 'index.php' || $current_page == 'index_mobile.php') ? 'text-blue-700 font-bold' : 'text-slate-400 hover:text-slate-600 font-medium'; ?>">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
             <span class="text-[9px] mt-0.5">หน้าแรก</span>
         </a>

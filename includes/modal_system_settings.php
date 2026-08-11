@@ -226,9 +226,11 @@
                 <?php 
                     $grant_role_opts = [
                         ['id' => 'hr', 'name' => 'ฝ่ายบุคคล (HR)'],
-                        ['id' => 'it_support', 'name' => 'IT Support']
+                        ['id' => 'it_support', 'name' => 'IT Support'],
+                        ['id' => 'messenger', 'name' => 'Messenger']
                     ];
-                    renderRoundedDropdown('grant_role_select', 'role', 'ฝ่ายบุคคล (HR)', $grant_role_opts, 'hr', false);
+                    // 🎯 เปลี่ยนตัวที่ 3 เป็น '-- เลือกสิทธิ์ --' และตัวที่ 5 เป็น '' (ค่าว่าง)
+                    renderRoundedDropdown('grant_role_select', 'role', '-- เลือกสิทธิ์การใช้งาน --', $grant_role_opts, '', false);
                 ?>
             </div>
 

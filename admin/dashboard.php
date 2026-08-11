@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once '../config/db.php'; // เชื่อมต่อฐานข้อมูลหลัก
-
+require_once '../config/auth.php';
 // 🔑 1. SECURITY LAYER: ตรวจสอบสิทธิ์ความปลอดภัยก่อนเข้าใช้งาน
 if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['admin', 'it_support', 'hr'])) {
     header("Location: ../login.php");
@@ -154,8 +154,8 @@ try {
     $stmt_out->execute(['today' => $today]);
     $recent_out = $stmt_out->fetchAll(PDO::FETCH_ASSOC);
 
-    // 📉 5. กราฟข้อมูลย้อนหลังตามจำนวนวัน (7 หรือ 30 วัน) และวันที่เลือกในปฏิทิน
-    $graph_range = $_GET['graph_range'] ?? '7d'; // ค่าเริ่มต้น 7 วันล่าสุด
+    // 📉 5. กราฟข้อมูลย้อนหลังตามจำนวนวัน
+    $graph_range = $_GET['graph_range'] ?? '7d';
     
     $chart_labels   = [];
     $chart_in_early  = [];  
@@ -164,47 +164,77 @@ try {
     $thai_months     = [1 => 'ม.ค.', 2 => 'ก.พ.', 3 => 'มี.ค.', 4 => 'เม.ย.', 5 => 'พ.ค.', 6 => 'มิ.ย.', 7 => 'ก.ค.', 8 => 'ส.ค.', 9 => 'ก.ย.', 10 => 'ต.ค.', 11 => 'พ.ย.', 12 => 'ธ.ค.'];
 
     if ($graph_range === 'this_month') {
-        // กรณีเลือก "เดือนนี้": ดึงตั้งแต่วันที่ 1 ถึงวันปัจจุบันของเดือนนี้
         $start_ts = strtotime(date('Y-m-01'));
         $end_ts   = strtotime(date('Y-m-d'));
     } elseif ($graph_range === 'last_month') {
-        // กรณีเลือก "เดือนที่แล้ว": ดึงวันแรกถึงวันสิ้นสุดของเดือนก่อน
         $start_ts = strtotime(date('Y-m-01', strtotime('-1 month')));
         $end_ts   = strtotime(date('Y-m-t', strtotime('-1 month')));
     } elseif ($graph_range === '30d') {
-        // 30 วันล่าสุด
         $start_ts = strtotime('-29 days');
         $end_ts   = strtotime(date('Y-m-d'));
     } else {
-        // 7 วันล่าสุด (Default)
         $start_ts = strtotime('-6 days');
         $end_ts   = strtotime(date('Y-m-d'));
     }
 
-    // ลูปดึงข้อมูลรายวันตามช่วงเวลาที่กำหนด
+    // 🎯 เตรียมคำสั่ง SQL ไว้นอกลูปเพียงครั้งเดียว (ลดภาระฐานข้อมูล)
+    $s1 = $pdo->prepare("
+        SELECT COUNT(*) FROM attendance a 
+        INNER JOIN users u ON a.user_id = u.id 
+        LEFT JOIN work_shifts w ON u.work_shift = w.id 
+        WHERE a.log_type = 'check_in' 
+          AND a.scan_time >= :start_dt AND a.scan_time < :end_dt 
+          AND TIME(a.scan_time) < SUBTIME(IFNULL(w.start_time, '08:30:00'), '00:10:00')
+    ");
+    
+    $s2 = $pdo->prepare("
+        SELECT COUNT(*) FROM attendance a 
+        INNER JOIN users u ON a.user_id = u.id 
+        LEFT JOIN work_shifts w ON u.work_shift = w.id 
+        WHERE a.log_type = 'check_in' 
+          AND a.scan_time >= :start_dt AND a.scan_time < :end_dt 
+          AND TIME(a.scan_time) >= SUBTIME(IFNULL(w.start_time, '08:30:00'), '00:10:00') 
+          AND TIME(a.scan_time) <= IFNULL(w.start_time, '08:30:00')
+    ");
+    
+    $s3 = $pdo->prepare("
+        SELECT COUNT(*) FROM attendance a 
+        INNER JOIN users u ON a.user_id = u.id 
+        LEFT JOIN work_shifts w ON u.work_shift = w.id 
+        WHERE a.log_type = 'check_in' 
+          AND a.scan_time >= :start_dt AND a.scan_time < :end_dt 
+          AND TIME(a.scan_time) > IFNULL(w.start_time, '08:30:00')
+    ");
+
+    // วนลูปดึงข้อมูลรายวัน
     for ($current_ts = $start_ts; $current_ts <= $end_ts; $current_ts += 86400) {
         $target_date = date('Y-m-d', $current_ts);
+        $next_date   = date('Y-m-d', $current_ts + 86400);
         $m_num       = (int)date('n', $current_ts);
         $chart_labels[] = date('d ', $current_ts) . $thai_months[$m_num];
 
+        $params = [
+            'start_dt' => $target_date . ' 00:00:00', 
+            'end_dt'   => $next_date . ' 00:00:00'
+        ];
+
         // 1. เข้าก่อนเวลา
-        $s1 = $pdo->prepare("SELECT COUNT(*) FROM attendance a INNER JOIN users u ON a.user_id = u.id LEFT JOIN work_shifts w ON u.work_shift = w.id WHERE a.log_type = 'check_in' AND DATE(a.scan_time) = :d AND TIME(a.scan_time) < SUBTIME(IFNULL(w.start_time, '08:30:00'), '00:10:00')");
-        $s1->execute(['d' => $target_date]);
+        $s1->execute($params);
         $chart_in_early[] = (int)$s1->fetchColumn();
 
         // 2. เข้าตรงเวลา
-        $s2 = $pdo->prepare("SELECT COUNT(*) FROM attendance a INNER JOIN users u ON a.user_id = u.id LEFT JOIN work_shifts w ON u.work_shift = w.id WHERE a.log_type = 'check_in' AND DATE(a.scan_time) = :d AND TIME(a.scan_time) >= SUBTIME(IFNULL(w.start_time, '08:30:00'), '00:10:00') AND TIME(a.scan_time) <= IFNULL(w.start_time, '08:30:00')");
-        $s2->execute(['d' => $target_date]);
+        $s2->execute($params);
         $chart_in_normal[] = (int)$s2->fetchColumn();
 
         // 3. เข้าสาย
-        $s3 = $pdo->prepare("SELECT COUNT(*) FROM attendance a INNER JOIN users u ON a.user_id = u.id LEFT JOIN work_shifts w ON u.work_shift = w.id WHERE a.log_type = 'check_in' AND DATE(a.scan_time) = :d AND TIME(a.scan_time) > IFNULL(w.start_time, '08:30:00')");
-        $s3->execute(['d' => $target_date]);
+        $s3->execute($params);
         $chart_in_late[] = (int)$s3->fetchColumn();
     }
 } catch (PDOException $e) {
     die("เกิดข้อผิดพลาดของระบบ: " . $e->getMessage());
 }
+$page_title    = 'Dashboard ภาพรวมองค์กร';
+$page_subtitle = 'ดูสถานะการมาทำงาน คำขอคงค้าง และรายงานระบบไอทีของเครือ Lanto';
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -215,7 +245,7 @@ try {
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: 'Noto Sans Thai', sans-serif; }
@@ -234,25 +264,15 @@ try {
     <!-- 👤 SIDEBAR NAVIGATION (Light & Clean Theme) -->
     <?php include '../includes/sidebar.php'; ?>
 
-    <!-- 💻 2. MAIN WORKSPACE -->
-    <main class="flex-1 p-4 sm:p-6 lg:p-8 w-full min-h-screen md:h-screen overflow-y-auto space-y-4 sm:space-y-6 pb-20 md:pb-8">
+    <!-- 💻 2. RIGHT WORKSPACE WRAPPER -->
+    <div class="flex-1 flex flex-col min-w-0 h-auto md:h-screen overflow-y-auto md:overflow-hidden">
         
-        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-            <div>
-                <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Dashboard ภาพรวมองค์กร</h1>
-                <p class="text-slate-400 text-xs mt-0.5 font-medium">ดูสถานะการมาทำงาน คำขอคงค้าง และรายงานระบบไอทีของเครือ Lanto</p>
-            </div>
-            <div class="flex items-center gap-2.5 self-end sm:self-center">
-                <a href="../index_mobile.php" class="bg-white border border-slate-200 text-slate-600 font-bold text-xs px-3 py-2 rounded-xl shadow-2xs hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-1.5 active:scale-95">
-                    <span>📱</span> กลับหน้าหลักพนักงาน
-                </a>
-                <div class="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-2xs text-xs font-bold text-slate-600 flex items-center gap-1.5">
-                    สวัสดีคุณ, <span class="text-blue-600 font-extrabold"><?php echo htmlspecialchars($admin_fullname); ?></span> 👋
-                </div>
-            </div>
-        </div>
+        <!-- 🔝 3. ดึง HEADER ADMIN เข้ามาวางไว้ตรงนี้ (อยู่ภายใน Body และ Flex Container ฝั่งขวา) -->
+        <?php include_once '../includes/header_admin.php'; ?>
 
-        
+    <!-- 💻 2. MAIN WORKSPACE -->
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 w-full h-auto md:h-full overflow-y-auto space-y-4 sm:space-y-6 pb-20 md:pb-8">
+    
         <!-- 📊 3. MODERN PREMIUM KPI CARDS (ไอคอน SVG Vector มาตรฐาน คมชัด 100%) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
             

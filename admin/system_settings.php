@@ -1,14 +1,14 @@
 <?php
+ob_start();
 session_start();
 require_once '../config/db.php';
+require_once '../config/auth.php';
 require_once '../includes/rounded_dropdown.php';
-
 // 🔑 1. SECURITY LAYER (เปิดให้ Admin, IT Support และ HR เข้าใช้งานได้)
-if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['admin', 'it_support', 'it', 'hr'])) {
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['admin', 'hr', 'it_support'])) {
     header("Location: ../login.php");
     exit();
 }
-
 $role = $_SESSION['role'];
 $user_id = $_SESSION['user_id'];
 $admin_fullname = $_SESSION['fullname'] ?? 'ผู้ดูแลระบบ';
@@ -152,7 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         elseif ($act === 'save_leave') {
             $active_tab = 'leave';
             saveSetting($pdo, 'sick_quota', (int)($_POST['sick_quota'] ?? 30));
-            saveSetting($pdo, 'business_quota', (int)($_POST['business_quota'] ?? 6));
+            saveSetting($pdo, 'business_quota', (int)($_POST['business_quota'] ?? 3));
             saveSetting($pdo, 'vacation_start_quota', (int)($_POST['vacation_start_quota'] ?? 6));
             saveSetting($pdo, 'vacation_inc_quota', (int)($_POST['vacation_inc_quota'] ?? 1));
             saveSetting($pdo, 'vacation_max_quota', (int)($_POST['vacation_max_quota'] ?? 10));
@@ -287,14 +287,17 @@ try {
     $shift_list  = $pdo->query("SELECT * FROM work_shifts ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
     $users_list  = $pdo->query("SELECT id, CONCAT(first_name, ' ', last_name) AS fullname, employee_code FROM users WHERE is_active = 1 ORDER BY fullname ASC")->fetchAll(PDO::FETCH_ASSOC);
 
-    // 🛡️ ดึงเฉพาะพนักงานที่มีสิทธิ์พิเศษ (Admin, HR, IT Support)
+    // 🛡️ ดึงเฉพาะพนักงานที่มีสิทธิ์พิเศษ พร้อมดึงชื่อตำแหน่ง
     $perm_search = trim($_GET['perm_search'] ?? '');
+    
     $sql_perm = "
         SELECT u.id, CONCAT(u.first_name, ' ', u.last_name) AS fullname, u.employee_code, u.role, u.profile_image,
-               d.name AS dept_name
+               d.name AS dept_name,
+               p.name AS position_name
         FROM users u
         LEFT JOIN departments d ON u.department = d.id
-        WHERE u.role IN ('hr', 'it_support', 'it', 'admin')
+        LEFT JOIN positions p ON u.position_id = p.id
+        WHERE u.role IN ('admin', 'hr', 'it_support', 'messenger')
     ";
     $params_perm = [];
 
@@ -303,7 +306,8 @@ try {
         $params_perm['p_search'] = "%{$perm_search}%";
     }
 
-    $sql_perm .= " ORDER BY FIELD(u.role, 'admin', 'hr', 'it_support', 'it'), u.id DESC";
+    $sql_perm .= " ORDER BY u.id DESC";
+
     $stmt_perm = $pdo->prepare($sql_perm);
     $stmt_perm->execute($params_perm);
     $privileged_employees = $stmt_perm->fetchAll(PDO::FETCH_ASSOC);
@@ -337,6 +341,9 @@ foreach ($users_list as $u) {
 $success_msg = $_SESSION['success_msg'] ?? '';
 $error_msg   = $_SESSION['error_msg'] ?? '';
 unset($_SESSION['success_msg'], $_SESSION['error_msg']);
+
+$page_title    = 'ตั้งค่าระบบองค์กร';
+$page_subtitle = 'จัดการโครงสร้างบริษัท แผนก สาขา เวลาทำงาน เงื่อนไข และการแจ้งเตือน';
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -366,18 +373,13 @@ unset($_SESSION['success_msg'], $_SESSION['error_msg']);
 
     <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
     <?php include '../includes/sidebar.php'; ?>
+    <!-- 💻 WORKSPACE WRAPPER ฝั่งขวา -->
+    <div class="flex-1 flex flex-col min-w-0 h-auto md:h-screen overflow-y-auto md:overflow-hidden">
 
-    <main class="flex-1 p-4 sm:p-6 lg:p-8 w-full min-h-screen md:h-screen overflow-y-auto space-y-4 sm:space-y-6 pb-20 md:pb-8">
+        <!-- 🔝 HEADER ADMIN -->
+        <?php include_once '../includes/header_admin.php'; ?>
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 w-full h-auto md:h-full overflow-y-auto space-y-4 sm:space-y-6 pb-20 md:pb-8">
         
-        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-            <div>
-                <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">ตั้งค่าระบบองค์กร</h1>
-                <p class="text-slate-400 text-xs mt-0.5 font-medium">จัดการโครงสร้างบริษัท แผนก สาขา เวลาทำงาน เงื่อนไข และการแจ้งเตือน</p>
-            </div>
-            <div class="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-2xs text-xs font-bold text-slate-600 self-start sm:self-auto">
-                สวัสดีคุณ, <span class="text-blue-600 font-extrabold"><?php echo htmlspecialchars($admin_fullname); ?></span> 👋
-            </div>
-        </div>
 
         <!-- 📑 3. MAIN UI TABS HEADER -->
         <div class="bg-white p-2 rounded-2xl border border-slate-200/80 shadow-2xs overflow-x-auto">
@@ -517,10 +519,10 @@ unset($_SESSION['success_msg'], $_SESSION['error_msg']);
                         </button>
                     </div>
 
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto overflow-y-visible pb-32">
                         <table class="w-full text-left text-xs border-collapse">
                             <thead>
-                                <tr class="bg-slate-50 text-slate-400 font-semibold border-b border-slate-100 uppercase tracking-wider">
+                                <tr class="hover:bg-slate-50/50 transition-colors relative z-10 hover:z-30">
                                     <th class="p-3.5 text-center w-12"></th>
                                     <th class="p-3.5 text-center w-16">ลำดับ</th>
                                     <th class="p-3.5">ชื่อตำแหน่ง</th>
@@ -555,7 +557,7 @@ unset($_SESSION['success_msg'], $_SESSION['error_msg']);
                     <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-slate-100 pb-4">
                         <div>
                             <h2 class="text-sm font-extrabold text-slate-800 flex items-center gap-2">
-                                <span>🛡️</span> รายชื่อผู้ได้รับสิทธิ์ดูแลระบบ (Admin / HR / IT Support)
+                                <span>🛡️</span> รายชื่อผู้ได้รับสิทธิ์ดูแลระบบ
                             </h2>
                             <p class="text-xs text-slate-400 mt-0.5">กดที่ป้ายสิทธิ์เพื่อเปลี่ยนบทบาท หรือเลือกถอดสิทธิ์พนักงานออกได้ทันที</p>
                         </div>
@@ -569,7 +571,7 @@ unset($_SESSION['success_msg'], $_SESSION['error_msg']);
                     <form method="GET" action="system_settings.php" class="flex items-center gap-3">
                         <input type="hidden" name="tab" value="permissions">
                         <div class="flex-1 max-w-md">
-                            <input type="text" name="perm_search" value="<?php echo htmlspecialchars($perm_search); ?>" placeholder="🔍 ค้นหาผู้มีสิทธิ์ด้วยชื่อ หรือรหัสพนักงาน..." 
+                            <input type="text" name="perm_search" value="<?php echo htmlspecialchars($perm_search); ?>" placeholder="ค้นหาผู้มีสิทธิ์ด้วยชื่อ หรือรหัสพนักงาน..." 
                                 class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2 text-xs font-medium focus:outline-none focus:border-blue-500 transition-colors h-10">
                         </div>
                         <button type="submit" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors cursor-pointer h-10 flex items-center gap-1.5">
@@ -590,12 +592,13 @@ unset($_SESSION['success_msg'], $_SESSION['error_msg']);
                                     <th class="p-3.5 w-20 text-center">รหัส</th>
                                     <th class="p-3.5">พนักงาน</th>
                                     <th class="p-3.5">แผนก</th>
+                                    <th class="p-3.5">ตำแหน่ง</th>
                                     <th class="p-3.5 text-center w-52">สิทธิ์การใช้งาน (กดเพื่อเปลี่ยน)</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
                                 <?php if (empty($privileged_employees)): ?>
-                                    <tr><td colspan="4" class="p-8 text-center text-slate-400 font-light">🚫 ไม่พบผู้ได้รับสิทธิ์พิเศษตรงตามเงื่อนไข</td></tr>
+                                    <tr><td colspan="5" class="p-8 text-center text-slate-400 font-light">🚫 ไม่พบผู้ได้รับสิทธิ์พิเศษตรงตามเงื่อนไข</td></tr>
                                 <?php else: ?>
                                     <?php foreach ($privileged_employees as $emp): 
                                         $avatar = !empty($emp['profile_image']) ? '../uploads/profiles/' . $emp['profile_image'] : '';
@@ -613,6 +616,7 @@ unset($_SESSION['success_msg'], $_SESSION['error_msg']);
                                             <span class="font-bold text-slate-800"><?php echo htmlspecialchars($emp['fullname']); ?></span>
                                         </td>
                                         <td class="p-3.5 text-slate-600 font-semibold"><?php echo htmlspecialchars($emp['dept_name'] ?? 'ไม่ระบุ'); ?></td>
+                                        <td class="p-3.5 text-slate-600 font-semibold"><?php echo htmlspecialchars($emp['position_name'] ?? 'ไม่ระบุ'); ?></td>
                                         <td class="p-3.5 text-center whitespace-nowrap w-56">
                                             <?php if ($emp['role'] === 'admin'): ?>
                                                 <span class="inline-block bg-[#f0f4f9] text-[#1e293b] font-bold px-4 py-2 rounded-full border border-slate-200 text-xs">
@@ -624,12 +628,14 @@ unset($_SESSION['success_msg'], $_SESSION['error_msg']);
                                                     $role_options = [
                                                         ['id' => 'hr', 'name' => 'ฝ่ายบุคคล (HR)'],
                                                         ['id' => 'it_support', 'name' => 'IT Support'],
+                                                        ['id' => 'messenger', 'name' => 'Messenger'],
                                                         ['id' => 'employee', 'name' => '🔴 ถอดสิทธิ์ (พนักงานทั่วไป)']
                                                     ];
 
                                                     $current_role_label = 'พนักงานทั่วไป';
-                                                    if ($emp['role'] === 'hr') $current_role_label = 'ฝ่ายบุคคล (HR)';
-                                                    elseif (in_array($emp['role'], ['it_support', 'it'])) $current_role_label = 'IT Support';
+                                                    if ($emp['role'] === 'hr') $current_role_label = 'HR';
+                                                    elseif ($emp['role'] === 'it_support') $current_role_label = 'IT Support';
+                                                    elseif ($emp['role'] === 'messenger') $current_role_label = 'Messenger';
 
                                                     // 🎯 เรียกใช้ renderRoundedDropdown จาก rounded_dropdown.php
                                                     renderRoundedDropdown('perm_role_' . $emp['id'], 'user_role_' . $emp['id'], $current_role_label, $role_options, $emp['role'], false);
@@ -759,7 +765,7 @@ unset($_SESSION['success_msg'], $_SESSION['error_msg']);
                         </div>
                         <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/60 space-y-2">
                             <span class="font-bold text-slate-700 flex items-center gap-1.5">💼 โควตาลากิจ (วัน/ปี)</span>
-                            <input type="number" name="business_quota" value="<?php echo htmlspecialchars(getSetting($pdo, 'business_quota', '6')); ?>" class="w-full bg-white border border-slate-200 rounded-xl p-2 font-bold text-slate-800">
+                            <input type="number" name="business_quota" value="<?php echo htmlspecialchars(getSetting($pdo, 'business_quota', '3')); ?>" class="w-full bg-white border border-slate-200 rounded-xl p-2 font-bold text-slate-800">
                         </div>
                     </div>
 

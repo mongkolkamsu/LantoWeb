@@ -2,7 +2,7 @@
 session_start();
 require_once '../config/db.php';
 require_once '../includes/rounded_dropdown.php';
-
+require_once '../config/auth.php';
 // 🔑 1. SECURITY LAYER
 if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['admin', 'hr'])) {
     header("Location: ../login.php");
@@ -182,6 +182,9 @@ $next_sort = ($sort_order === 'asc') ? 'desc' : 'asc';
 $sort_link_params = $_GET;
 $sort_link_params['sort'] = $next_sort;
 $sort_url = 'manage_salaries.php?' . http_build_query($sort_link_params);
+
+$page_title    = 'บริหารสลิปเงินเดือน (Payroll & Payslips)';
+$page_subtitle = 'คำนวณ ออกสลิปเงินเดือนประจำงวด และปล่อยสลิปเข้าแอปพลิเคชันพนักงาน';
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -210,16 +213,14 @@ $sort_url = 'manage_salaries.php?' . http_build_query($sort_link_params);
     <!-- 👤 SIDEBAR NAVIGATION (Light & Clean Theme) -->
     <?php include '../includes/sidebar.php'; ?>
 
+    <!-- 💻 WORKSPACE WRAPPER ฝั่งขวา -->
+    <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+
+        <!-- 🔝 HEADER ADMIN -->
+        <?php include_once '../includes/header_admin.php'; ?>
+
     <!-- 💻 2. MAIN WORKSPACE -->
     <main class="flex-1 p-4 sm:p-6 lg:p-8 w-full min-h-screen md:h-screen overflow-y-auto space-y-4 sm:space-y-6 pb-20 md:pb-8">
-        
-        <!-- Header Topbar -->
-        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-            <div>
-                <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">บริหารสลิปเงินเดือน (Payroll & Payslips)</h1>
-                <p class="text-slate-400 text-xs mt-0.5 font-medium">คำนวณ ออกสลิปเงินเดือนประจำงวด และปล่อยสลิปเข้าแอปพลิเคชันพนักงาน</p>
-            </div>
-        </div>
 
         <!-- 📊 3. KPI SUMMARY CARDS (สไตล์ Clean Box แบบ system_settings.php) -->
         <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-2xs">

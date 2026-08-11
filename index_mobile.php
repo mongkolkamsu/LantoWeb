@@ -3,7 +3,7 @@ session_start();
 require_once 'config/db.php'; // เชื่อมต่อฐานข้อมูลหลัก
 require_once 'includes/rounded_dropdown.php'; // 🎯 เพิ่มเรียกใช้งานไฟล์ดรอปดาวน์ขอบมน
 require_once 'includes/functions.php';
-
+require_once 'config/auth.php';
 
 // 🎯 ดักจับความปลอดภัยระดับไฟล์หลัก ตรวจสอบสิทธิ์ก่อนเข้าใช้งานหน้าแดชบอร์ด
 if (!isset($_SESSION['user_id'])) {
@@ -17,6 +17,14 @@ $user_id       = $_SESSION['user_id'];
 $fullname      = $_SESSION['fullname'] ?? 'ไม่ระบุชื่อ';
 $employee_code = $_SESSION['employee_code'] ?? '-';
 $profile_image = $_SESSION['profile_image'] ?? '';
+
+$news_list = [];
+try {
+    $stmt_news = $pdo->query("SELECT * FROM news ORDER BY id DESC LIMIT 5");
+    $news_list = $stmt_news->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $news_list = [];
+}
 
 $avatar_url = !empty($profile_image) 
     ? 'uploads/profiles/' . htmlspecialchars($profile_image, ENT_QUOTES, 'UTF-8') 
@@ -229,7 +237,7 @@ try {
 
     <!-- 🍎 สำหรับ iPhone / Safari (แก้ชื่อแอปและรูปไอคอน) -->
     <link rel="apple-touch-icon" href="assets/images/Logo.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Lanto Web">
     <style>
@@ -237,6 +245,13 @@ try {
         ::-webkit-scrollbar { display: none; }
 
     </style>
+    <script>
+        // ป้องกันลูปดีดกลับเมื่อมีสกรอลล์บาร์ หรือเมื่อกดสลับโหมดดูบนมือถือ
+        const urlParams = new URLSearchParams(window.location.search);
+        if (window.matchMedia("(min-width: 768px)").matches && urlParams.get('view') !== 'mobile') {
+            window.location.replace('index_pc.php');
+        }
+    </script>
     <script src="assets/js/alerts.js"></script>
     <script>
     // ลงทะเบียน Service Worker
@@ -341,7 +356,7 @@ try {
                         </a>
 
                         <!-- 2. ข้อมูลบริษัท -->
-                        <a href="#" class="flex flex-col items-center group active:scale-95 transition-transform">
+                        <a href="company_info.php" class="flex flex-col items-center group active:scale-95 transition-transform">
                             <div class="w-11 h-11 bg-slate-50 border border-slate-200/60 rounded-2xl flex items-center justify-center shadow-2xs mb-1.5 p-2">
                                 <img src="assets/images/building.png" alt="Company" class="w-full h-full object-contain">
                             </div>
@@ -365,11 +380,11 @@ try {
                         </button>
 
                         <!-- 5. จองแมส -->
-                        <a href="#" class="flex flex-col items-center group active:scale-95 transition-transform">
+                        <a href="messenger_request/index.php?view=mobile" class="flex flex-col items-center group active:scale-95 transition-transform">
                             <div class="w-11 h-11 bg-slate-50 border border-slate-200/60 rounded-2xl flex items-center justify-center shadow-2xs mb-1.5 p-2">
                                 <img src="assets/images/box.png" alt="Messenger" class="w-full h-full object-contain">
                             </div>
-                            <span class="text-slate-600 text-[10px] font-medium tracking-tight">จองแมส</span>
+                            <span class="text-slate-600 text-[10px] font-medium tracking-tight">Messenger Request</span>
                         </a>
 
                         <!-- 6. แจ้งปัญหาไอที -->
@@ -381,7 +396,7 @@ try {
                         </a>
 
                         <!-- 7. จองรถองค์กร (แทนที่จองยืมของไอทีเดิม) -->
-                        <a href="car_request/index.php" class="flex flex-col items-center group active:scale-95 transition-transform">
+                        <a href="car_request/car_index.php" class="flex flex-col items-center group active:scale-95 transition-transform">
                             <div class="w-11 h-11 bg-slate-50 border border-slate-200/60 rounded-2xl flex items-center justify-center shadow-2xs mb-1.5 p-2">
                                 <img src="assets/images/car.png" alt="Car Booking" class="w-full h-full object-contain" onerror="this.src='assets/images/box.png'">
                             </div>
@@ -401,13 +416,103 @@ try {
                     </div>
                 </div>
 
-                <!-- การ์ดแจ้งพิกัด GPS -->
-                <div class="bg-gradient-to-r from-blue-900 to-slate-800 rounded-2xl p-4 text-white shadow-md relative overflow-hidden">
-                    <div class="relative z-10">
-                        <p class="text-[9px] text-blue-300 font-bold uppercase tracking-wider">GPS Verification Active</p>
-                        <p class="text-[11px] text-white/90 mt-1 font-light leading-relaxed">กรุณาเปิดสิทธิ์ระบุตำแหน่งที่ตั้งบนมือถือทุกครั้งขณะยืนยันใบหน้าเข้างานครับ</p>
+                <!-- 📢 การ์ดแสดงข่าวสารองค์กร (ดีไซน์รองรับมือถือ พร้อมสไลด์และคลิกดูรายละเอียด) -->
+                <div class="bg-white rounded-3xl p-5 shadow-2xs border border-slate-200/80 flex flex-col justify-between relative overflow-hidden">
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <div class="w-9 h-9 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center font-bold text-base">📢</div>
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                                ข่าวสารองค์กร
+                            </span>
+                        </div>
+                        
+                        <?php if (empty($news_list)): ?>
+                            <div class="py-6 text-center text-slate-400 text-xs">
+                                <p class="font-bold text-slate-700 text-sm">ข่าวสารและประกาศองค์กร</p>
+                                <p class="mt-1">ยังไม่มีประกาศข่าวสารในขณะนี้</p>
+                            </div>
+                        <?php else: ?>
+                            <!-- Slider Wrapper -->
+                            <div class="relative overflow-hidden w-full">
+                                <div id="newsSlider" class="flex transition-transform duration-300 ease-out w-full">
+                                    <?php 
+                                        $news_json_all = htmlspecialchars(json_encode($news_list, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
+                                        foreach ($news_list as $index => $news): 
+                                            $news_json_single = htmlspecialchars(json_encode($news, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
+                                    ?>
+                                    <div class="w-full shrink-0 px-0.5 space-y-2.5 news-slide cursor-pointer group" onclick='openNewsDetailModal(<?php echo $news_json_single; ?>, <?php echo $news_json_all; ?>)'>
+                                        <?php if (!empty($news['image'])): ?>
+                                        <div class="w-full h-36 rounded-2xl overflow-hidden bg-slate-900/5 border border-slate-200 shadow-xs relative group-hover:border-blue-400 transition-all flex items-center justify-center">
+                                            <img src="uploads/news/<?php echo htmlspecialchars($news['image']); ?>" alt="News Image" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
+                                        </div>
+                                        <?php endif; ?>
+
+                                        <div class="space-y-0.5">
+                                            <h3 class="font-extrabold text-slate-900 text-xs group-hover:text-blue-600 transition-colors truncate"><?php echo htmlspecialchars($news['title']); ?></h3>
+                                            <p class="text-[11px] text-slate-600 line-clamp-1 leading-relaxed"><?php echo htmlspecialchars($news['content']); ?></p>
+                                            <p class="text-[9.5px] text-slate-400 font-medium">เผยแพร่: <?php echo date('d/m/Y H:i', strtotime($news['created_at'])); ?></p>
+                                        </div>
+                                    </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+
+                            <!-- Dots Indicator (. . .) -->
+                            <div class="flex justify-center items-center gap-1.5 mt-3">
+                                <?php foreach ($news_list as $index => $news): ?>
+                                <button type="button" onclick="currentSlide(<?php echo $index; ?>)" class="news-dot h-1.5 rounded-full transition-all bg-slate-300 cursor-pointer <?php echo $index === 0 ? 'w-4 bg-blue-600' : 'w-1.5'; ?>" data-index="<?php echo $index; ?>"></button>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
+
+                    <!-- ปุ่มลงประกาศ (แสดงเฉพาะสิทธิ์ Admin, HR, IT) -->
+                    <?php if (in_array($user_role ?? 'employee', ['admin', 'it_support', 'hr'], true)): ?>
+                    <div class="pt-3 border-t border-slate-100 flex justify-end mt-3">
+                        <button type="button" onclick="openPostNewsModal()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer active:scale-95 flex items-center gap-1.5">
+                            <span>✍️</span> ลงประกาศข่าวสาร
+                        </button>
+                    </div>
+                    <?php endif; ?>
                 </div>
+
+                <script>
+                    let currentSlideIndex = 0;
+                    const slides = document.querySelectorAll('.news-slide');
+                    const dots = document.querySelectorAll('.news-dot');
+
+                    function showSlide(index) {
+                        if (!slides.length) return;
+                        if (index >= slides.length) currentSlideIndex = 0;
+                        else if (index < 0) currentSlideIndex = slides.length - 1;
+                        else currentSlideIndex = index;
+
+                        const slider = document.getElementById('newsSlider');
+                        if (slider) {
+                            slider.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
+                        }
+
+                        dots.forEach((dot, idx) => {
+                            if (idx === currentSlideIndex) {
+                                dot.classList.remove('bg-slate-300', 'w-1.5');
+                                dot.classList.add('bg-blue-600', 'w-4');
+                            } else {
+                                dot.classList.remove('bg-blue-600', 'w-4');
+                                dot.classList.add('bg-slate-300', 'w-1.5');
+                            }
+                        });
+                    }
+
+                    function currentSlide(index) {
+                        showSlide(index);
+                    }
+
+                    if (slides.length > 1) {
+                        setInterval(() => {
+                            showSlide(currentSlideIndex + 1);
+                        }, 5000);
+                    }
+                </script>
             </div>
         </div>
 
@@ -470,6 +575,7 @@ try {
     </div>
 
     <?php include_once 'includes/modal_leave_status.php'; ?>
+    <?php include_once 'modal_news.php'; ?>
 
     <script>
         function openPayslipModal() {

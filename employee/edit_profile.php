@@ -2,7 +2,7 @@
 ob_start(); // เปิดการจัดการ Output Buffer บนสุด ป้องกันข้อความ HTML/Script แทรก JSON
 session_start();
 require_once '../config/db.php';
-
+require_once '../config/auth.php';
 // 🔑 1. ตรวจสอบสิทธิ์การเข้าใช้งาน
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
@@ -97,10 +97,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $full_address_detail = "บ้านเลขที่ $house_no | หมู่บ้าน/อาคาร $village | ซอย $alley | ถนน $street";
 
     try {
+        // 🎯 กำหนดค่าเริ่มต้นให้ใช้รูปเดิมก่อน
         $profile_name = $user_data['profile_image'];
         $id_card_name = $user_data['id_card_image'];
 
-        // อัปโหลดรูปโปรไฟล์
+        // อัปโหลดรูปโปรไฟล์ใหม่ (ถ้ามี)
         if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
             $ext = pathinfo($_FILES['profile_image']['name'], PATHINFO_EXTENSION);
             $profile_name = "profile_" . $user_data['employee_code'] . "_" . time() . "." . $ext;
@@ -165,6 +166,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $pdo->prepare($update_sql);
         $stmt->execute($params);
 
+        $_SESSION['profile_image'] = $profile_name;
+        
         echo json_encode(['status' => 'success', 'message' => 'อัปเดตข้อมูลส่วนตัวสำเร็จเรียบร้อยแล้ว!']);
     } catch (PDOException $e) {
         echo json_encode(['status' => 'error', 'message' => 'เกิดข้อผิดพลาดของระบบ: ' . $e->getMessage()]);
@@ -293,7 +296,7 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                         
                         <div id="profile_wrap" class="<?php echo empty($profile_url) ? 'hidden' : ''; ?> relative mt-4 w-32 h-32 rounded-2xl border border-slate-200 overflow-hidden shadow-xs bg-white cursor-pointer group" title="คลิกเพื่อดูรูปขนาดใหญ่">
                             <img id="profile_view" src="<?php echo htmlspecialchars($profile_url); ?>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" onclick="openImagePreviewModal(this.src)">
-                            <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition-opacity pointer-events-none">🔍 ขยาย</div>
+                            <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition-opacity pointer-events-none">ขยาย</div>
                         </div>
                     </div>
 
@@ -318,7 +321,7 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                         
                         <div id="id_card_wrap" class="<?php echo empty($id_card_url) ? 'hidden' : ''; ?> relative mt-4 w-48 h-32 rounded-2xl border border-slate-200 overflow-hidden shadow-xs bg-white cursor-pointer group" title="คลิกเพื่อดูรูปขนาดใหญ่">
                             <img id="id_card_view" src="<?php echo htmlspecialchars($id_card_url); ?>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" onclick="openImagePreviewModal(this.src)">
-                            <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition-opacity pointer-events-none">🔍 ขยาย</div>
+                            <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition-opacity pointer-events-none">ขยาย</div>
                         </div>
                     </div>
                 </div>

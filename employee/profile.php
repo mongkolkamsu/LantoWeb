@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once '../config/db.php'; // เชื่อมต่อฐานข้อมูลหลัก
-
+require_once '../config/auth.php';
 // 1. ตรวจสอบสิทธิ์การเข้าใช้งาน (ต้องล็อกอินก่อน)
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../login.php");
@@ -67,7 +67,7 @@ try {
             $work_tenure = $diff->y . " ปี " . $diff->m . " เดือน " . $diff->d . " วัน";
         }
 
-        // ระบบจัดกลุ่มที่อยู่เป็น 3 บรรทัด
+        // ระบบจัดกลุ่มที่อยู่เป็นบรรทัด
         $address_list = array();
 
         if (!empty($user['address_detail'])) {
@@ -87,18 +87,19 @@ try {
         if (!empty($user['zipcode'])) $line3 .= $user['zipcode'];
         if (trim($line3) !== '') $address_list[] = trim($line3);
     }
-} catch (PDOException $e) {
-    // ซ่อนข้อผิดพลาด
-}
+} catch (PDOException $e) {}
 
-$avatar_url = !empty($profile_image) ? '../uploads/profiles/' . $profile_image : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&h=300&q=80';
+$profile_path = '../uploads/profiles/' . $user['profile_image'];
+$avatar_url = (!empty($user['profile_image']) && file_exists($profile_path)) 
+    ? $profile_path . '?v=' . filemtime($profile_path) 
+    : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=500&h=500&q=90';
 ?>
 <!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>บัตรพนักงานดิจิทัล - Lanto Web</title>
+    <title>บัตรพนักงานดิจิทัล - Lanto Workspace</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -115,7 +116,7 @@ $avatar_url = !empty($profile_image) ? '../uploads/profiles/' . $profile_image :
         }
         .card-flipped { transform: rotateY(180deg); }
         
-        /* 🎯 บังคับซ่อนหน้าหลังแบบ 100% สำหรับ iOS Safari */
+        /* บังคับซ่อนหน้าหลังแบบ 100% สำหรับ iOS Safari */
         .card-front, .card-back { 
             position: absolute;
             inset: 0;
@@ -131,150 +132,148 @@ $avatar_url = !empty($profile_image) ? '../uploads/profiles/' . $profile_image :
     </style>
     <script src="../assets/js/alerts.js"></script>
 </head>
-<body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] min-h-screen flex justify-center text-slate-800 antialiased p-0 md:py-6">
+<body class="bg-[#f4f6fa] min-h-screen text-slate-800 antialiased flex">
 
-    <div class="w-full min-h-screen bg-white/40 backdrop-blur-xl flex flex-col justify-between relative p-5 pb-28 md:max-w-md md:min-h-[812px] md:h-auto md:rounded-[40px] md:border md:border-white/60 md:shadow-2xl">
-        
-        <div>
-            <!-- Header Bar -->
-            <div class="flex items-center justify-between pb-4 border-b border-slate-200/60">
-                <a href="../index.php?view=mobile" class="w-10 h-10 bg-white/80 border border-slate-200 text-slate-600 rounded-full flex items-center justify-center shadow-xs active:scale-90 transition-transform cursor-pointer">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                </a>
-                <h2 class="text-[15px] font-bold tracking-wide text-slate-700">บัตรประจำตัวพนักงาน</h2>
-                <div class="w-10"></div>
-            </div>
+    <!-- 📁 ดึง Sidebar พนักงาน (แสดงเฉพาะบน PC) -->
+    <?php include_once 'sidebar.php'; ?>
 
-            <p class="text-[12px] text-center text-slate-400 mt-4 font-semibold">💡 แตะที่ตัวบัตรเพื่อพลิกดูข้อมูลส่วนตัวของพนักงาน</p>
+    <!-- 🖥️ ส่วนเนื้อหาฝั่งขวา -->
+    <div class="flex-1 flex flex-col min-w-0 justify-between md:ml-64">
+        <div class="w-full flex flex-col">
 
-            <!-- 💳 3D FLIP ID CARD -->
-            <div class="card-container w-80 h-[500px] mx-auto my-4 cursor-pointer" onclick="flipCard()">
-                <div id="id-card" class="card-inner w-full h-full relative shadow-2xl rounded-[32px]">
-                    
-                    <!-- ด้านหน้าบัตร -->
-                    <div class="card-front bg-white rounded-[32px] overflow-hidden border border-slate-200/40 flex flex-col justify-end">
-                        <img src="<?php echo $avatar_url; ?>" class="absolute top-[45px] left-1/2 -translate-x-1/2 w-[220px] h-[270px] object-cover" alt="Employee Photo">
-                        <img src="../assets/images/bg.png" class="absolute inset-0 w-full h-full object-cover pointer-events-none" alt="Card Background">
+            <!-- 🔝 ดึง Header ด้านบน -->
+            <?php 
+            $page_title    = 'ข้อมูลส่วนตัว / บัตรพนักงาน';
+            $page_subtitle = 'บัตรประจำตัวพนักงานดิจิทัลและข้อมูลรายละเอียดส่วนบุคคล';
+            $show_back     = true;
+            $back_url      = '../index_pc.php';
+            include_once '../includes/header.php'; 
+            ?>
+
+            <!-- 💻/📱 Main Container -->
+            <main class="p-4 md:p-8 max-w-lg mx-auto md:-translate-x-32 w-full space-y-4 pb-28 md:pb-12">
+                
+                <p class="text-xs text-center text-slate-400 font-semibold">💡 แตะที่ตัวบัตรเพื่อพลิกดูข้อมูลส่วนตัวของพนักงาน</p>
+
+                <!-- 💳 3D FLIP ID CARD (ขยายขนาดใหญ่ขึ้นและคมชัดบน PC: w-80 h-[500px] -> w-[340px] md:w-[380px] h-[540px] md:h-[600px]) -->
+                <div class="card-container w-[340px] md:w-[380px] h-[540px] md:h-[600px] mx-auto my-2 cursor-pointer" onclick="flipCard()">
+                    <div id="id-card" class="card-inner w-full h-full relative shadow-2xl rounded-[36px]">
                         
-                        <div class="relative text-center w-full px-5 pb-5 space-y-1">
-                            <h3 class="text-lg font-bold text-slate-950 tracking-wide leading-tight">
-                                <?php echo htmlspecialchars($fullname); ?>
-                            </h3>
-                            <p class="text-sm font-black text-slate-800">
-                                แผนก : <?php echo htmlspecialchars($dept_name); ?>
-                            </p>
-                            <p class="text-sm font-black text-slate-800 tracking-wide">
-                                ID NO : <?php echo htmlspecialchars($employee_code); ?>
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- ด้านหลังบัตร -->
-                    <div class="card-back absolute inset-0 w-full h-full bg-white rounded-[32px] overflow-hidden border border-slate-200/60 flex flex-col p-6 text-slate-800 text-left justify-between">
-                        
-                        <div class="space-y-3 w-full">
-                            <div class="flex items-center gap-2 border-b border-slate-100 pb-2.5">
-                                <span class="text-base">👤</span>
-                                <h4 class="text-sm font-bold tracking-wider text-back-600 uppercase">ข้อมูลส่วนตัวพนักงาน</h4>
+                        <!-- ด้านหน้าบัตร -->
+                        <div class="card-front bg-white rounded-[36px] overflow-hidden border border-slate-200/40 flex flex-col justify-end">
+                            <!-- ขยายขนาดรูปถ่ายให้ใหญ่และชัดขึ้น -->
+                            <img src="<?php echo $avatar_url; ?>" class="absolute top-[48px] md:top-[55px] left-1/2 -translate-x-1/2 w-[250px] md:w-[290px] h-[310px] md:h-[350px] object-cover rounded-2xl shadow-sm" alt="Employee Photo">
+                            <img src="../assets/images/bg.png" class="absolute inset-0 w-full h-full object-cover pointer-events-none" alt="Card Background">
+                            
+                            <div class="relative text-center w-full px-6 pb-6 space-y-1.5 z-10 bg-gradient-to-t from-white/95 via-white/80 to-transparent pt-8">
+                                <h3 class="text-xl md:text-2xl font-black text-slate-950 tracking-wide leading-tight">
+                                    <?php echo htmlspecialchars($fullname); ?>
+                                </h3>
+                                <p class="text-sm md:text-base font-bold text-slate-800">
+                                    แผนก : <?php echo htmlspecialchars($dept_name); ?>
+                                </p>
+                                <p class="text-sm md:text-base font-black text-slate-800 tracking-wide">
+                                    ID NO : <?php echo htmlspecialchars($employee_code); ?>
+                                </p>
                             </div>
+                        </div>
 
-                            <div class="space-y-2.5 text-xs pt-1">
-                                <div class="border-b border-slate-100 pb-1.5">
-                                    <span class="text-slate-700 block text-[12px] font-bold uppercase tracking-wide">ประเภทบุคลากร</span>
-                                    <span class="text-slate-500 font-semibold mt-0.5 block"><?php echo htmlspecialchars($employee_type); ?></span>
+                        <!-- ด้านหลังบัตร -->
+                        <div class="card-back absolute inset-0 w-full h-full bg-white rounded-[36px] overflow-hidden border border-slate-200/60 flex flex-col p-6 md:p-7 text-slate-800 text-left justify-between">
+                            
+                            <div class="space-y-3.5 w-full">
+                                <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+                                    <span class="text-lg">👤</span>
+                                    <h4 class="text-sm md:text-base font-bold tracking-wider text-slate-800 uppercase">ข้อมูลส่วนตัวพนักงาน</h4>
                                 </div>
-                                <div class="border-b border-slate-100 pb-1.5">
-                                    <span class="text-slate-700 block text-[12px] font-bold uppercase tracking-wide">กะเวลาปฏิบัติงานหลัก</span>
-                                    <span class="text-slate-500 font-semibold mt-0.5 block"><?php echo htmlspecialchars($work_shift); ?></span>
-                                </div>
-                                <div class="grid grid-cols-2 gap-2 border-b border-slate-100 pb-1.5">
+
+                                <div class="space-y-3 text-xs md:text-sm pt-1">
+                                    <div class="border-b border-slate-100 pb-2">
+                                        <span class="text-slate-400 block text-[11px] md:text-xs font-bold uppercase tracking-wide">ประเภทบุคลากร</span>
+                                        <span class="text-slate-800 font-bold mt-0.5 block"><?php echo htmlspecialchars($employee_type); ?></span>
+                                    </div>
+                                    <div class="border-b border-slate-100 pb-2">
+                                        <span class="text-slate-400 block text-[11px] md:text-xs font-bold uppercase tracking-wide">กะเวลาปฏิบัติงานหลัก</span>
+                                        <span class="text-slate-800 font-bold mt-0.5 block"><?php echo htmlspecialchars($work_shift); ?></span>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2 border-b border-slate-100 pb-2">
+                                        <div>
+                                            <span class="text-slate-400 block text-[11px] md:text-xs font-bold uppercase tracking-wide">วันเกิด</span>
+                                            <span class="text-slate-800 font-bold mt-0.5 block"><?php echo htmlspecialchars($birth_date); ?></span>
+                                        </div>
+                                        <div>
+                                            <span class="text-slate-400 block text-[11px] md:text-xs font-bold uppercase tracking-wide">วันเริ่มบรรจุงาน</span>
+                                            <span class="text-slate-800 font-bold mt-0.5 block"><?php echo htmlspecialchars($start_date); ?></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="border-b border-slate-100 pb-2">
+                                        <span class="text-slate-400 block text-[11px] md:text-xs font-bold uppercase tracking-wide">อายุงานรวม</span>
+                                        <span class="text-slate-800 font-bold mt-0.5 block"><?php echo htmlspecialchars($work_tenure); ?></span>
+                                    </div>
+                                    
                                     <div>
-                                        <span class="text-slate-700 block text-[12px] font-bold uppercase tracking-wide">วันเกิด</span>
-                                        <span class="text-slate-500 font-semibold mt-0.5 block"><?php echo htmlspecialchars($birth_date); ?></span>
+                                        <span class="text-slate-400 block text-[11px] md:text-xs font-bold uppercase tracking-wide mb-1">ที่อยู่อาศัยตามทะเบียน</span>
+                                        <div class="space-y-1 text-xs md:text-sm font-semibold text-slate-700 max-h-[110px] overflow-y-auto pr-1">
+                                            <?php if (empty($address_list)): ?>
+                                                <p class="text-slate-400 italic font-medium">- ไม่มีข้อมูลที่อยู่ -</p>
+                                            <?php else: ?>
+                                                <?php foreach ($address_list as $line): ?>
+                                                    <div class="flex items-start gap-1.5 leading-normal">
+                                                        <span class="text-orange-500 text-sm mt-0.5 select-none shrink-0">•</span>
+                                                        <span><?php echo htmlspecialchars($line); ?></span>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <span class="text-slate-700 block text-[12px] font-bold uppercase tracking-wide">วันเริ่มบรรจุงาน</span>
-                                        <span class="text-slate-500 font-semibold mt-0.5 block"><?php echo htmlspecialchars($start_date); ?></span>
-                                    </div>
-                                </div>
-                                
-                                <div class="border-b border-slate-100 pb-1.5">
-                                    <span class="text-slate-700 block text-[12px] font-bold uppercase tracking-wide">อายุงานรวม</span>
-                                    <span class="text-slate-500 font-semibold mt-0.5 block"><?php echo htmlspecialchars($work_tenure); ?></span>
-                                </div>
-                                
-                                <div>
-                                    <span class="text-slate-700 block text-[12px] font-bold uppercase tracking-wide mb-1">ที่อยู่อาศัยตามทะเบียน</span>
-                                    <div class="space-y-1 text-[12px] font-semibold text-slate-500 max-h-[125px] overflow-y-auto pr-1">
-                                        <?php if (empty($address_list)): ?>
-                                            <p class="text-slate-600 italic font-semibold">- ไม่มีข้อมูลที่อยู่ -</p>
-                                        <?php else: ?>
-                                            <?php foreach ($address_list as $line): ?>
-                                                <div class="flex items-start gap-1.5 leading-normal">
-                                                    <span class="text-orange-500 text-[13px] mt-0.5 select-none shrink-0">•</span>
-                                                    <span><?php echo htmlspecialchars($line); ?></span>
-                                                </div>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
 
+                                </div>
+                            </div>
+
+                            <div class="border-t border-slate-200 pt-3 flex flex-col gap-1.5 text-xs text-slate-600 mt-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-slate-700 truncate max-w-[220px]">Email: <?php echo htmlspecialchars($email); ?></span>
+                                    <span class="bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-lg text-xs font-bold shrink-0">ID : <?php echo htmlspecialchars($employee_code); ?></span>
+                                </div>
+                                <div class="font-bold text-slate-700">
+                                    เบอร์โทร: <span class="text-blue-600"><?php echo htmlspecialchars($phone); ?></span>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="border-t border-slate-200 pt-3 flex flex-col gap-1 text-[10px] text-slate-500 mt-2">
-                            <div class="flex justify-between items-center">
-                                <span class="font-bold text-slate-700 truncate max-w-[200px]">Email: <?php echo htmlspecialchars($email); ?></span>
-                                <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[10px] font-bold shrink-0">ID : <?php echo htmlspecialchars($employee_code); ?></span>
-                            </div>
-                            <!-- 🎯 แสดงเบอร์โทรศัพท์ -->
-                            <div class="font-bold text-slate-700">
-                                เบอร์โทร: <span class="text-blue-600"><?php echo htmlspecialchars($phone); ?></span>
-                            </div>
-                        </div>
                     </div>
-
                 </div>
-            </div>
 
-            <!-- ✏️ ปุ่มแก้ไขข้อมูลส่วนตัว -->
-            <div class="w-full max-w-[320px] mx-auto mt-3">
-                <a href="edit_profile.php" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold transition-all shadow-md shadow-blue-500/20 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
-                    <span>✏️</span> แก้ไขข้อมูลส่วนตัว
-                </a>
-            </div>
+                <!-- ✏️ ปุ่มแก้ไขข้อมูลส่วนตัว -->
+                <div class="w-full max-w-[340px] md:max-w-[380px] mx-auto pt-3">
+                    <a href="edit_profile.php" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs md:text-sm font-bold transition-all shadow-md shadow-blue-500/20 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
+                        <span>✏️</span> แก้ไขข้อมูลส่วนตัว
+                    </a>
+                </div>
 
-            <!-- 🚪 ปุ่มออกจากระบบ -->
-            <div class="w-full max-w-[320px] mx-auto mt-2.5 mb-2">
-                <a href="../logout.php" 
-                onclick="confirmLogout(event)" 
-                class="w-full py-3 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/80 rounded-2xl text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-3xs">
-                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                        <polyline points="16 17 21 12 16 7"></polyline>
-                        <line x1="21" y1="12" x2="9" y2="12"></line>
-                    </svg>
-                    <span>ออกจากระบบ (Logout)</span>
-                </a>
-            </div>
+            </main>
         </div>
-        
-        <?php include '../includes/navbar.php'; ?>                                        
-        
     </div>
+
+    <!-- 📱 แถบเมนูด้านล่างแสดงเฉพาะบนมือถือ -->
+    <div class="md:hidden">
+        <?php include '../includes/navbar.php'; ?>
+    </div>
+
     <script>
         function flipCard() {
             const card = document.getElementById('id-card');
             card.classList.toggle('card-flipped');
         }
 
-        // 🎯 ใช้ LantoAlert ระบบหลักของเว็บ
+        // ใช้ LantoAlert ระบบแจ้งเตือนหลักของเว็บ
         function confirmLogout(event) {
-            event.preventDefault(); // ยับยั้งไม่ให้เปลี่ยนหน้าทันที
+            event.preventDefault();
 
             LantoAlert.confirm(
                 'ยืนยันการออกจากระบบ?',                            
-                'คุณต้องการออกจากระบบ Lanto Workforce ใช่หรือไม่', 
+                'คุณต้องการออกจากระบบ Lanto Workspace ใช่หรือไม่', 
                 function() {                                       
                     window.location.href = '../logout.php';
                 },
