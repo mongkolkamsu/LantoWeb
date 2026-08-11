@@ -273,33 +273,62 @@ try {
         <div>
             <!-- 🔝 ส่วนหัวดีไซน์เรียบหรูสไตล์แอปชั้นนำ -->
             <div class="bg-gradient-to-b from-blue-900 via-blue-800 to-indigo-700 pt-10 pb-24 px-5 rounded-b-[35px] shadow-lg relative">
-                <div class="flex justify-between items-center mb-6">
-                    <div class="flex items-center gap-3">
-                        <img src="<?php echo $avatar_url; ?>" alt="Profile" class="w-11 h-11 rounded-full object-cover border-2 border-white/40 shadow-sm">
-                        <div>
-                            <p class="text-white/60 text-[10px] font-light">รหัสพนักงาน: <?php echo htmlspecialchars($employee_code, ENT_QUOTES, 'UTF-8'); ?></p>
-                            <h2 class="text-white text-sm font-medium tracking-wide"><?php echo htmlspecialchars($fullname, ENT_QUOTES, 'UTF-8'); ?></h2>
-                        </div>
-                    </div>
+                
+                <!-- จัดการเรียงเป็น justify-end เพื่อดันกระดิ่งและโปรไฟล์ไปชิดขวาอย่างเดียว -->
+                <div class="flex justify-end items-center mb-6">
                     
-                    <!-- 🔔 ปุ่มแจ้งเตือน (Notification Bell) แทนปุ่ม Logout -->
-                    <button type="button" 
-                            onclick="LantoAlert.warning('การแจ้งเตือน', '<?php echo $unread_notifications_count > 0 ? "คุณมี ".$unread_notifications_count." รายการแจ้งเตือนใหม่" : "ขณะนี้ยังไม่มีรายการแจ้งเตือนใหม่ครับ"; ?>')" 
-                            class="relative w-10 h-10 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full flex items-center justify-center shadow-sm hover:bg-white/25 active:scale-90 transition-all cursor-pointer shrink-0">
+                    <!-- 👉 ฝั่งขวา: ปุ่มแจ้งเตือน + ปุ่มโปรไฟล์ Dropdown -->
+                    <div class="flex items-center gap-2.5 shrink-0">
                         
-                        <svg class="w-5 h-5 text-white opacity-95" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"></path>
-                        </svg>
+                        <!-- 🔔 ปุ่มแจ้งเตือน -->
+                        <button type="button" 
+                                onclick="LantoAlert.warning('การแจ้งเตือน', '<?php echo $unread_notifications_count > 0 ? "คุณมี ".$unread_notifications_count." รายการแจ้งเตือนใหม่" : "ขณะนี้ยังไม่มีรายการแจ้งเตือนใหม่ครับ"; ?>')" 
+                                class="relative w-9 h-9 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full flex items-center justify-center shadow-sm hover:bg-white/25 active:scale-90 transition-all cursor-pointer">
+                            
+                            <svg class="w-4.5 h-4.5 text-white opacity-95" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"></path>
+                            </svg>
 
-                        <!-- 🔴 จุดไฟแจ้งเตือนสีแดง (แสดงเฉพาะเมื่อ $unread_notifications_count > 0) -->
-                        <?php if ($unread_notifications_count > 0): ?>
-                        <span class="absolute top-2.5 right-2.5 flex h-2 w-2">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-rose-500 border border-white"></span>
-                        </span>
-                        <?php endif; ?>
+                            <?php if ($unread_notifications_count > 0): ?>
+                            <span class="absolute top-2 right-2 flex h-2 w-2">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-rose-500 border border-white"></span>
+                            </span>
+                            <?php endif; ?>
 
-                    </button>
+                        </button>
+
+                        <!-- 👤 Profile Dropdown Container -->
+                        <div class="relative inline-block" id="mobile-profile-dropdown-container">
+                            <button type="button" onclick="window.toggleMobileProfileDropdown(event)" class="relative group active:scale-90 transition-transform flex items-center cursor-pointer">
+                                <img src="<?php echo $avatar_url; ?>" alt="Profile" class="w-9 h-9 rounded-full object-cover border-2 border-white/40 shadow-sm group-hover:border-white">
+                            </button>
+
+                            <!-- Dropdown Menu -->
+                            <div id="mobile-profile-menu" class="hidden absolute right-0 top-full mt-3 w-52 bg-white border border-slate-200/80 rounded-2xl shadow-xl z-50 p-1.5 space-y-0.5 text-slate-800">
+                                <div class="absolute -top-[7px] right-3.5 w-3.5 h-3.5 bg-white border-t border-l border-slate-200/80 rotate-45 z-0"></div>
+                                
+                                <a href="index_mobile.php" class="relative z-10 flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-purple-50 hover:text-purple-600 transition-colors">
+                                    <span>🏢</span> หน้าหลักพนักงาน
+                                </a>
+                                
+                                <a href="employee/profile.php" class="relative z-10 flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                                    <span>👤</span> ข้อมูลส่วนตัว / บัตร
+                                </a>
+
+                                <a href="employee/history.php" class="relative z-10 flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                                    <span>📋</span> ประวัติการลงเวลางาน
+                                </a>
+
+                                <div class="border-t border-slate-100 my-1 relative z-10"></div>
+                                
+                                <a href="logout.php" class="relative z-10 flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors">
+                                    <span>🚪</span> ออกจากระบบ
+                                </a>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
 
                 <!-- แสดงสถานะ -->
@@ -607,6 +636,22 @@ try {
                     filterSlipsByYear(yearInput.value);
                 });
                 observer.observe(yearInput, { attributes: true, attributeFilter: ['value'] });
+            }
+        });
+
+        function toggleMobileProfileDropdown(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('mobile-profile-menu');
+            if (menu) {
+                menu.classList.toggle('hidden');
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            const container = document.getElementById('mobile-profile-dropdown-container');
+            const menu = document.getElementById('mobile-profile-menu');
+            if (container && menu && !container.contains(e.target)) {
+                menu.classList.add('hidden');
             }
         });
     </script>

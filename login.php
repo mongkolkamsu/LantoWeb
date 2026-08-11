@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Welcome Back - Lanto Web</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -91,48 +91,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Lanto Web">
     <style>
-        body { font-family: 'Prompt', sans-serif; }
+        body { font-family: 'Prompt', sans-serif; -webkit-tap-highlight-color: transparent; }
+        ::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] min-h-screen flex items-center justify-center p-4">
+<body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] min-h-screen flex items-center justify-center p-4 sm:p-6 antialiased">
 
-    <div class="bg-white/40 backdrop-blur-xl border border-white/60 p-8 rounded-3xl shadow-2xl shadow-slate-300/50 w-full max-w-md transition-all">
-        <div class="text-center mb-6 flex flex-col items-center">
-            <div class="w-32 h-32 bg-white/80 p-2 rounded-2xl shadow-sm mb-4 flex items-center justify-center overflow-hidden">
+    <!-- 📱/💻 Responsive Card Container -->
+    <div class="bg-white/50 backdrop-blur-xl border border-white/70 p-6 sm:p-8 rounded-3xl shadow-2xl shadow-slate-300/50 w-full max-w-sm sm:max-w-md transition-all duration-200">
+        
+        <!-- โลโก้และส่วนหัว -->
+        <div class="text-center mb-5 sm:mb-6 flex flex-col items-center">
+            <div class="w-24 h-24 sm:w-28 sm:h-28 bg-white/80 p-2 rounded-2xl shadow-sm mb-3 sm:mb-4 flex items-center justify-center overflow-hidden">
                 <img src="assets/images/LOGO-Lanto.png" alt="Lanto Logo" class="object-contain w-full h-full">
             </div>
-            <h1 class="text-2xl font-semibold text-slate-800 tracking-wide">Welcome Back</h1>
-            <p class="text-slate-500 text-xs mt-1">Sign in to Lanto Global Logistics</p>
+            <h1 class="text-xl sm:text-2xl font-semibold text-slate-800 tracking-wide">Welcome Back</h1>
+            <p class="text-slate-500 text-xs mt-0.5">Sign in to Lanto Global Logistics</p>
         </div>
 
         <?php if (!empty($error_message)): ?>
-            <div class="bg-red-500/10 border border-red-500/20 text-red-700 p-3 mb-5 rounded-2xl text-xs text-center" role="alert">
+            <div class="bg-red-500/10 border border-red-500/20 text-red-700 p-3 mb-4 rounded-2xl text-xs text-center" role="alert">
                 <p class="font-medium">⚠️ <?php echo $error_message; ?></p>
             </div>
         <?php endif; ?>
 
-        <form id="loginForm" method="POST" action="login.php" class="space-y-5">
+        <form id="loginForm" method="POST" action="login.php" class="space-y-4 sm:space-y-5">
             <div>
-                <label for="employee_code" class="block text-xs font-medium text-slate-600 mb-2 px-1">รหัสพนักงาน (Employee ID)</label>
+                <label for="employee_code" class="block text-xs font-medium text-slate-600 mb-1.5 px-1">รหัสพนักงาน (Employee ID)</label>
                 <input type="text" id="employee_code" name="employee_code" required
-                    class="w-full px-4 py-3 bg-white/60 border border-slate-200/80 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-slate-800 placeholder-slate-400 text-sm"
+                    class="w-full px-4 py-2.5 sm:py-3 bg-white/70 border border-slate-200/80 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-slate-800 placeholder-slate-400 text-xs sm:text-sm"
                     placeholder="กรอกรหัสพนักงานของคุณ">
             </div>
 
             <div>
-                <label for="password" class="block text-xs font-medium text-slate-600 mb-2 px-1">รหัสผ่าน (Password)</label>
+                <label for="password" class="block text-xs font-medium text-slate-600 mb-1.5 px-1">รหัสผ่าน (Password)</label>
                 <input type="password" id="password" name="password" required
-                    class="w-full px-4 py-3 bg-white/60 border border-slate-200/80 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-slate-800 placeholder-slate-400 text-sm"
+                    class="w-full px-4 py-2.5 sm:py-3 bg-white/70 border border-slate-200/80 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-slate-800 placeholder-slate-400 text-xs sm:text-sm"
                     placeholder="••••••••">
             </div>
 
             <button type="submit" 
-                class="w-full bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-800 hover:to-blue-700 text-white font-medium py-3 rounded-2xl shadow-lg shadow-blue-700/20 transition-all duration-200 transform active:scale-[0.99] mt-2 text-sm tracking-wide cursor-pointer">
+                class="w-full bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-800 hover:to-blue-700 text-white font-medium py-3 rounded-2xl shadow-lg shadow-blue-700/20 transition-all duration-200 transform active:scale-[0.98] mt-2 text-xs sm:text-sm tracking-wide cursor-pointer">
                 Sign In
             </button>
         </form>
 
-        <div class="border-t border-slate-200/60 my-6"></div>
+        <div class="border-t border-slate-200/60 my-5 sm:my-6"></div>
 
         <div class="text-center text-xs text-slate-500">
             Don't have an account? 
