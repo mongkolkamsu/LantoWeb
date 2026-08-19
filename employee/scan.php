@@ -62,26 +62,71 @@ try {
     }
 } catch (PDOException $e) {}
 
+// 🏢 ดึงเฉพาะสาขาที่พนักงานคนนี้ได้รับมอบหมายเท่านั้น
 $branches = [];
+$assigned_branch_id = null;
+
 try {
-    $stmt_u_branch = $pdo->prepare("SELECT branch_id FROM users WHERE id = :user_id LIMIT 1");
+    $stmt_u_branch = $pdo->prepare("SELECT branch_id, role FROM users WHERE id = :user_id LIMIT 1");
     $stmt_u_branch->execute(['user_id' => $user_id]);
-    $assigned_branch_id = $stmt_u_branch->fetchColumn();
+    $u_row = $stmt_u_branch->fetch(PDO::FETCH_ASSOC);
+    $assigned_branch_id = $u_row['branch_id'] ?? null;
 
-    $stmt_branches = $pdo->prepare("
-        SELECT DISTINCT b.id, b.name, b.latitude, b.longitude, b.radius 
-        FROM branches b
-        LEFT JOIN user_branches ub ON b.id = ub.branch_id
-        WHERE b.is_active = 1 
-          AND (b.id = :branch_id OR ub.user_id = :user_id)
-    ");
-    $stmt_branches->execute(['branch_id' => $assigned_branch_id, 'user_id' => $user_id]);
-    $branches = $stmt_branches->fetchAll(PDO::FETCH_ASSOC);
-
-    if (empty($branches)) {
-        $branches = $pdo->query("SELECT id, name, latitude, longitude, radius FROM branches WHERE is_active = 1")->fetchAll(PDO::FETCH_ASSOC);
+    // 1. ดึงเฉพาะสาขาที่ถูกผูกกับพนักงาน (users.branch_id หรือตาราง user_branches)
+    try {
+        $stmt_b = $pdo->prepare("
+            SELECT DISTINCT b.id, b.name, b.latitude, b.longitude, b.radius 
+            FROM branches b
+            LEFT JOIN user_branches ub ON b.id = ub.branch_id
+            WHERE (b.is_active = 1 OR b.is_active IS NULL)
+              AND (b.id = :branch_id OR ub.user_id = :user_id)
+            ORDER BY b.id ASC
+        ");
+        $stmt_b->execute([
+            'branch_id' => $assigned_branch_id,
+            'user_id'   => $user_id
+        ]);
+        $branches = $stmt_b->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        // หากไม่มีตาราง user_branches ให้ดึงเฉพาะ users.branch_id
+        if (!empty($assigned_branch_id)) {
+            $stmt_b = $pdo->prepare("
+                SELECT id, name, latitude, longitude, radius 
+                FROM branches 
+                WHERE id = :branch_id AND (is_active = 1 OR is_active IS NULL)
+            ");
+            $stmt_b->execute(['branch_id' => $assigned_branch_id]);
+            $branches = $stmt_b->fetchAll(PDO::FETCH_ASSOC);
+        }
     }
-} catch (PDOException $e) { $branches = []; }
+
+    // 2. ถ้าพนักงานยังไม่เคยถูกกำหนดสาขาเลย ให้ดึงสาขาหลักที่เปิดใช้งานอยู่
+    if (empty($branches)) {
+        $stmt_fallback = $pdo->query("SELECT id, name, latitude, longitude, radius FROM branches WHERE is_active = 1 OR is_active IS NULL ORDER BY id ASC");
+        $branches = $stmt_fallback->fetchAll(PDO::FETCH_ASSOC);
+    }
+} catch (PDOException $e) {
+    $branches = [];
+}
+
+// กำหนดค่าเริ่มต้นของสาขา
+$default_branch = '';
+$default_label  = 'โปรดคลิกเลือกสาขาที่ทำงาน';
+
+if (!empty($assigned_branch_id)) {
+    foreach ($branches as $b) {
+        if ($b['id'] == $assigned_branch_id) {
+            $default_branch = (string)$b['id'];
+            $default_label  = $b['name'];
+            break;
+        }
+    }
+}
+
+if (empty($default_branch) && count($branches) > 0) {
+    $default_branch = (string)$branches[0]['id'];
+    $default_label  = $branches[0]['name'];
+}
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -107,7 +152,7 @@ try {
         .scanner-line { animation: scan 3s linear infinite; }
         ::-webkit-scrollbar { display: none; }
         .leaflet-container img { max-width: none !important; max-height: none !important; }
-        #scanMap { min-height: 180px !important; z-index: 10; }
+        #scanMap { min-height: 200px !important; z-index: 10; }
     </style>
 </head>
 <body class="bg-[#f4f6fa] min-h-screen text-slate-800 antialiased flex">
@@ -126,7 +171,7 @@ try {
             include_once '../includes/header.php'; 
             ?>
 
-            <!-- 💻/📱 Main Centered Container (ลบ md:-translate-x-32 เพื่อแก้บัคดรอปดาวน์ลอย) -->
+            <!-- 💻/📱 Main Centered Container -->
             <main class="p-4 sm:p-6 lg:p-8 max-w-xl mx-auto w-full pb-28 md:pb-10">
                 <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/80 shadow-xl space-y-6">
                     
@@ -195,14 +240,11 @@ try {
                                 $branch_opts = [];
                                 foreach ($branches as $b) {
                                     $branch_opts[] = [
-                                        'id' => $b['id'],
+                                        'id' => (string)$b['id'],
                                         'name' => $b['name'],
                                         'data_attributes' => "data-lat='{$b['latitude']}' data-lng='{$b['longitude']}' data-radius='{$b['radius']}'"
                                     ];
                                 }
-                                
-                                $default_branch = (count($branches) === 1) ? $branches[0]['id'] : '';
-                                $default_label  = (count($branches) === 1) ? $branches[0]['name'] : 'โปรดคลิกเลือกสาขาที่ทำงาน';
 
                                 renderRoundedDropdown('branch_select', 'branch_id', $default_label, $branch_opts, $default_branch);
                                 ?>
@@ -221,15 +263,15 @@ try {
                             </div>
 
                             <!-- 🗺️ แผนที่ Leaflet ตรวจสอบตำแหน่งและรัศมีสาขา -->
-                            <div class="space-y-1 pt-1">
+                            <div class="space-y-1.5 pt-1">
                                 <div class="flex justify-between items-center px-0.5">
-                                    <span class="text-[11px] font-bold text-slate-600">แผนผังตรวจสอบตำแหน่งและรัศมีเช็คอิน</span>
-                                    <span class="text-[10px] text-slate-400 font-medium">🏢 สาขา | 📍 คุณ</span>
+                                    <span class="text-[11px] font-bold text-slate-700">แผนผังพิกัดและรัศมีลงเวลา (Check-in Area)</span>
+                                    <span class="text-[10px] text-slate-400 font-medium">🏢 สาขา | 📍 ตัวคุณ</span>
                                 </div>
-                                <div class="w-full h-48 rounded-2xl overflow-hidden border border-slate-200 shadow-inner relative bg-slate-100">
+                                <div class="w-full h-52 rounded-2xl overflow-hidden border border-slate-200 shadow-inner relative bg-slate-100">
                                     <div id="scanMap" class="w-full h-full"></div>
                                     <div id="map-loading" class="absolute inset-0 bg-slate-100/90 flex items-center justify-center text-slate-400 text-xs font-bold z-20">
-                                        กำลังโหลดแผนที่ดาวเทียม...
+                                        กำลังโหลดแผนที่...
                                     </div>
                                 </div>
                             </div>
@@ -286,17 +328,7 @@ try {
         let branchCircle = null;
         let userMarker = null;
 
-        // Fix Leaflet Marker Icon Path
-        if (typeof L !== 'undefined' && L.Icon && L.Icon.Default) {
-            delete L.Icon.Default.prototype._getIconUrl;
-            L.Icon.Default.mergeOptions({
-                iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-                iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-                shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-            });
-        }
-
-        function initScanMap(lat, lng) {
+        function initScanMap(lat = 13.7563, lng = 100.5018) {
             const mapContainer = document.getElementById('scanMap');
             if (!mapContainer || typeof L === 'undefined') return;
 
@@ -305,7 +337,7 @@ try {
                 scanMapInstance = null;
             }
 
-            scanMapInstance = L.map('scanMap', { zoomControl: true }).setView([lat || 13.7563, lng || 100.5018], 15);
+            scanMapInstance = L.map('scanMap', { zoomControl: true }).setView([lat, lng], 16);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '© OpenStreetMap'
@@ -316,32 +348,40 @@ try {
 
             setTimeout(() => {
                 if (scanMapInstance) scanMapInstance.invalidateSize();
-            }, 250);
+            }, 300);
         }
 
         function updateScanMapVisuals(bLat, bLng, bRadius, isInside) {
             if (!scanMapInstance) {
-                initScanMap(bLat || userLat, bLng || userLng);
+                const initLat = (bLat !== null && !isNaN(bLat)) ? bLat : (userLat || 13.7563);
+                const initLng = (bLng !== null && !isNaN(bLng)) ? bLng : (userLng || 100.5018);
+                initScanMap(initLat, initLng);
             }
             if (!scanMapInstance) return;
 
             const group = [];
 
-            // 1. หมุดและรัศมีสาขา
-            if (!isNaN(bLat) && !isNaN(bLng)) {
+            // 1. ปักหมุดและวาดรัศมีสาขา
+            if (bLat !== null && bLng !== null && !isNaN(bLat) && !isNaN(bLng)) {
                 if (branchMarker) scanMapInstance.removeLayer(branchMarker);
                 if (branchCircle) scanMapInstance.removeLayer(branchCircle);
 
                 const circleColor = isInside ? '#10b981' : '#f43f5e';
                 const fillColor   = isInside ? '#34d399' : '#fb7185';
 
-                branchMarker = L.marker([bLat, bLng]).addTo(scanMapInstance)
-                    .bindPopup('<b>🏢 จุดเช็คอินสาขา</b>');
-                
+                const branchIcon = L.divIcon({
+                    className: 'custom-branch-icon',
+                    html: '<div style="background-color:#1e3a8a; color:white; border-radius:12px; padding:3px 8px; font-weight:bold; font-size:10px; box-shadow:0 3px 6px rgba(0,0,0,0.25); border:2px solid white; display:inline-flex; align-items:center; gap:2px; white-space:nowrap;">🏢 สาขาที่เลือก</div>',
+                    iconSize: [80, 26],
+                    iconAnchor: [40, 13]
+                });
+
+                branchMarker = L.marker([bLat, bLng], { icon: branchIcon }).addTo(scanMapInstance);
                 branchCircle = L.circle([bLat, bLng], {
                     color: circleColor,
                     fillColor: fillColor,
-                    fillOpacity: 0.2,
+                    fillOpacity: 0.22,
+                    weight: 2.5,
                     radius: bRadius || 100
                 }).addTo(scanMapInstance);
 
@@ -349,24 +389,28 @@ try {
                 group.push(branchCircle);
             }
 
-            // 2. หมุดตำแหน่งผู้ใช้
+            // 2. ปักหมุดตำแหน่งผู้ใช้
             if (userLat !== null && userLng !== null) {
                 if (userMarker) scanMapInstance.removeLayer(userMarker);
 
-                userMarker = L.circleMarker([userLat, userLng], {
-                    radius: 8,
-                    color: '#2563eb',
-                    fillColor: '#60a5fa',
-                    fillOpacity: 0.9,
-                    weight: 3
-                }).addTo(scanMapInstance).bindPopup('<b>📍 ตำแหน่งของคุณ</b>');
+                const userIcon = L.divIcon({
+                    className: 'custom-user-icon',
+                    html: '<div style="background-color:#2563eb; color:white; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 12px rgba(37,99,235,0.7); border:2.5px solid white; font-size:13px;">📍</div>',
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 14]
+                });
+
+                userMarker = L.marker([userLat, userLng], { icon: userIcon }).addTo(scanMapInstance)
+                    .bindPopup('<b>📍 ตำแหน่งปัจจุบันของคุณ</b>');
 
                 group.push(userMarker);
             }
 
-            if (group.length > 0) {
+            if (group.length > 1) {
                 const featureGroup = L.featureGroup(group);
-                scanMapInstance.fitBounds(featureGroup.getBounds().pad(0.25));
+                scanMapInstance.fitBounds(featureGroup.getBounds().pad(0.35));
+            } else if (bLat && bLng) {
+                scanMapInstance.setView([bLat, bLng], 16);
             }
         }
 
@@ -442,12 +486,17 @@ try {
             const branchInput = document.getElementById('branch_select');
             const branchId = branchInput ? branchInput.value : '';
             
+            const distanceText = document.getElementById('distance-text');
+            const badge = document.getElementById('gps-status-badge');
+
             if (!branchId) {
-                const distText = document.getElementById('distance-text');
-                if (distText) distText.innerText = "กรุณาเลือกสาขาก่อน";
+                if (distanceText) distanceText.innerText = "กรุณาเลือกสาขาก่อน";
+                if (badge) {
+                    badge.innerText = "Waiting...";
+                    badge.className = "px-2.5 py-0.5 rounded-md font-bold bg-slate-200 text-slate-500 text-[11px]";
+                }
                 return;
             }
-            if (userLat === null || userLng === null) return;
 
             const selectedItem = document.querySelector(`#list-branch_select [data-value="${branchId}"]`);
             if (!selectedItem) return;
@@ -456,11 +505,8 @@ try {
             const branchLng = parseFloat(selectedItem.getAttribute('data-lng'));
             const branchRadius = parseInt(selectedItem.getAttribute('data-radius')) || 100;
 
-            const distanceText = document.getElementById('distance-text');
-            const badge = document.getElementById('gps-status-badge');
-
             if (isNaN(branchLat) || isNaN(branchLng)) {
-                if (distanceText) distanceText.innerText = "ได้รับข้อยกเว้นพื้นที่";
+                if (distanceText) distanceText.innerText = "ได้รับข้อยกเว้นพื้นที่ (WFH/นอกสถานที่)";
                 if (badge) {
                     badge.innerText = "นอกสถานที่อนุมัติ (ผ่าน)";
                     badge.className = "px-2.5 py-0.5 rounded-md font-bold bg-blue-100 text-blue-700 text-[11px]";
@@ -469,6 +515,18 @@ try {
                 return;
             }
 
+            // ถ้าพิกัด GPS ยังค้นหาไม่เสร็จ ให้ปักหมุดสาขารอไว้ก่อน
+            if (userLat === null || userLng === null) {
+                if (distanceText) distanceText.innerText = "กำลังค้นหาพิกัด GPS ของคุณ...";
+                if (badge) {
+                    badge.innerText = "กำลังหาพิกัด GPS...";
+                    badge.className = "px-2.5 py-0.5 rounded-md font-bold bg-amber-100 text-amber-700 text-[11px]";
+                }
+                updateScanMapVisuals(branchLat, branchLng, branchRadius, false);
+                return;
+            }
+
+            // คำนวณระยะทางเมื่อได้ครบทั้ง 2 ฝั่ง
             const distance = calculateHaversine(userLat, userLng, branchLat, branchLng);
             if (distanceText) {
                 distanceText.innerText = distance >= 1000 ? (distance / 1000).toFixed(2) + " กิโลเมตร" : distance.toFixed(0) + " เมตร";
@@ -787,9 +845,14 @@ try {
 
         window.addEventListener('DOMContentLoaded', () => {
             startLiveClock();
+            initScanMap();
             trackUserLocation();
             initFaceMeshLiveness();
-            initScanMap();
+
+            // ตรวจสอบและแสดงผลแผนที่ของสาขาเริ่มต้นทันทีเมื่อเปิดหน้า
+            setTimeout(() => {
+                checkBranchDistance();
+            }, 400);
         });
 
         document.addEventListener('click', function(e) {
