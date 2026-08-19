@@ -247,7 +247,8 @@ if (empty($default_branch) && count($branches) > 0) {
                         </div>
 
                         <!-- 📍 กล่องเลือกสถานที่ / สาขา พร้อมแผนที่แสดงรัศมี -->
-                        <div id="branch-section" class="<?php echo ($type === 'check_in') ? '' : 'hidden'; ?> bg-slate-50 border border-slate-200/80 p-4 rounded-2xl shadow-2xs space-y-3">
+                        <?php if ($type === 'check_in'): ?>
+                        <div id="branch-section" class="bg-slate-50 border border-slate-200/80 p-4 rounded-2xl shadow-2xs space-y-3">
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5 pl-0.5">📍 เลือกสถานที่ / สาขาปฏิบัติงาน</label>
                                 <?php 
@@ -265,7 +266,7 @@ if (empty($default_branch) && count($branches) > 0) {
                                 ?>
                             </div>
                             
-                            <!-- แผงแสดงระยะห่างและสถานะ (ปรับขนาดและคำไม่ให้ตกบรรทัดบนมือถือ) -->
+                            <!-- แผงแสดงระยะห่างและสถานะ -->
                             <div class="bg-white p-2.5 sm:p-3 rounded-2xl border border-slate-200/60 flex flex-col gap-1.5 text-xs">
                                 <div class="flex justify-between items-center gap-2">
                                     <span class="text-slate-400 font-medium text-[11px] sm:text-xs shrink-0">ระยะห่างจากสาขา:</span>
@@ -277,7 +278,7 @@ if (empty($default_branch) && count($branches) > 0) {
                                 </div>
                             </div>
 
-                            <!-- 🗺️ แผนที่ Leaflet ตรวจสอบตำแหน่งและรัศมีสาขา -->
+                            <!-- 🗺️ แผนที่ Leaflet -->
                             <div class="space-y-1.5 pt-0.5">
                                 <div class="flex justify-between items-center px-0.5 text-slate-600 gap-2">
                                     <span class="text-[10.5px] sm:text-[11px] font-bold truncate">แผนผังพิกัดและรัศมีลงเวลา</span>
@@ -292,17 +293,57 @@ if (empty($default_branch) && count($branches) > 0) {
                             </div>
                         </div>
 
-                        <!-- ปุ่มควบคุมการบันทึก -->
+                        <!-- 📤 2. กรณีสแกนออกงาน (Check-Out): แสดงการ์ดสรุปเวลาออกงาน + พิกัด GPS สวยงาม -->
+                        <?php else: ?>
+                        <div class="bg-slate-50 border border-slate-200/80 p-4 rounded-2xl shadow-2xs space-y-3">
+                            <div class="flex items-center justify-between border-b border-slate-200/60 pb-2.5">
+                                <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                    <span>🏢</span> ข้อมูลการเลิกงาน
+                                </span>
+                                <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-lg bg-rose-50 text-rose-600 border border-rose-200">
+                                    Check-Out Mode
+                                </span>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <div class="bg-white p-3 rounded-xl border border-slate-200/60 shadow-3xs">
+                                    <p class="text-[10px] text-slate-400 font-medium">กะเวลาทำงาน</p>
+                                    <p class="text-slate-800 font-bold mt-0.5 truncate"><?php echo htmlspecialchars($shift_display_name); ?></p>
+                                </div>
+                                <div class="bg-white p-3 rounded-xl border border-slate-200/60 shadow-3xs">
+                                    <p class="text-[10px] text-slate-400 font-medium">เวลาสิ้นสุดกะงาน</p>
+                                    <p class="text-slate-800 font-bold mt-0.5"><?php echo substr($shift_end, 0, 5); ?> น.</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-white p-3 rounded-xl border border-slate-200/60 flex items-center justify-between shadow-3xs text-xs">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-base">📍</span>
+                                    <div>
+                                        <p class="text-[10px] text-slate-400 font-medium">พิกัดสถานที่ปัจจุบัน</p>
+                                        <p id="checkout-gps-text" class="text-slate-800 font-bold text-[11px]">กำลังระบุพิกัด GPS...</p>
+                                    </div>
+                                </div>
+                                <span id="checkout-gps-badge" class="px-2 py-0.5 rounded-md font-bold bg-slate-100 text-slate-500 text-[10px]">Checking</span>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
+                        <!-- 🔘 ปุ่มควบคุมการบันทึก (แสดงให้กดสแกนถ่ายรูปได้เลย) -->
                         <div class="space-y-2 pt-2">
+                            <button type="button" id="btnManualCapture" onclick="freezeCapturePhoto()" class="w-full bg-gradient-to-r <?php echo $type_color; ?> hover:opacity-95 text-white font-bold py-3.5 rounded-2xl shadow-md text-xs tracking-wide transition-all transform active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2">
+                                <span>📸</span>
+                                <span>ถ่ายรูปและบันทึกเวลา<?php echo ($type === 'check_out') ? 'ออกงาน' : 'เข้างาน'; ?></span>
+                            </button>
+
                             <button id="btnRetake" class="w-full hidden bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold py-3 rounded-2xl text-xs tracking-wide transition-all active:scale-[0.98] cursor-pointer items-center justify-center gap-2 shadow-xs">
-                                🔄 ยกเลิกและสแกนใหม่อีกครั้ง
+                                🔄 ยกเลิกและถ่ายใหม่อีกครั้ง
                             </button>
 
                             <button id="btnCapture" class="hidden w-full bg-gradient-to-r <?php echo $type_color; ?> text-white font-bold py-3.5 rounded-2xl shadow-md text-xs tracking-wide transition-all transform active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2">
                                 <span id="btn-text">ยืนยันและส่งข้อมูลบันทึกเวลา</span>
                             </button>
                         </div>
-
                     <?php endif; ?>
 
                 </div>
@@ -506,10 +547,29 @@ if (empty($default_branch) && count($branches) > 0) {
                         userLat = position.coords.latitude;
                         userLng = position.coords.longitude;
                         checkBranchDistance();
+
+                        // 🎯 เพิ่มการอัปเดตพิกัดสำหรับหน้า Check-Out
+                        const outGpsText = document.getElementById('checkout-gps-text');
+                        const outGpsBadge = document.getElementById('checkout-gps-badge');
+                        if (outGpsText) {
+                            outGpsText.innerText = `${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
+                        }
+                        if (outGpsBadge) {
+                            outGpsBadge.innerText = 'GPS พร้อมใช้งาน';
+                            outGpsBadge.className = 'px-2 py-0.5 rounded-md font-bold bg-emerald-100 text-emerald-700 text-[10px]';
+                        }
                     },
                     (error) => {
                         const distText = document.getElementById('distance-text');
                         if (distText) distText.innerText = "โปรดเปิดสิทธิ์เข้าถึง GPS";
+                        
+                        const outGpsText = document.getElementById('checkout-gps-text');
+                        const outGpsBadge = document.getElementById('checkout-gps-badge');
+                        if (outGpsText) outGpsText.innerText = "ไม่สามารถระบุพิกัดได้";
+                        if (outGpsBadge) {
+                            outGpsBadge.innerText = 'GPS ปิดอยู่';
+                            outGpsBadge.className = 'px-2 py-0.5 rounded-md font-bold bg-rose-100 text-rose-700 text-[10px]';
+                        }
                     },
                     { enableHighAccuracy: true }
                 );
