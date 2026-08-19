@@ -18,6 +18,18 @@ $fullname      = $_SESSION['fullname'] ?? 'ไม่ระบุชื่อ';
 $employee_code = $_SESSION['employee_code'] ?? '-';
 $profile_image = $_SESSION['profile_image'] ?? '';
 
+// 🎯 ดึงรูปภาพล่าสุดจากฐานข้อมูลตรงๆ ป้องกันค่าใน Session ตกหล่น
+if (isset($pdo) && $user_id) {
+    try {
+        $stmt_u = $pdo->prepare("SELECT profile_image, first_name, last_name FROM users WHERE id = :id LIMIT 1");
+        $stmt_u->execute(['id' => $user_id]);
+        $u_row = $stmt_u->fetch(PDO::FETCH_ASSOC);
+        if ($u_row && !empty($u_row['profile_image'])) {
+            $profile_image = $u_row['profile_image'];
+        }
+    } catch (PDOException $e) {}
+}
+
 $news_list = [];
 try {
     $stmt_news = $pdo->query("SELECT * FROM news ORDER BY id DESC LIMIT 5");
@@ -25,10 +37,8 @@ try {
 } catch (PDOException $e) {
     $news_list = [];
 }
-
-$avatar_url = !empty($profile_image) 
-    ? 'uploads/profiles/' . htmlspecialchars($profile_image, ENT_QUOTES, 'UTF-8') 
-    : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80';
+$clean_img = !empty($profile_image) ? basename(trim($profile_image)) : '';
+$avatar_url = !empty($clean_img) ? 'uploads/profiles/' . $clean_img . '?v=' . time() : '';
 
 // 🎯 1. ตรรกะดึงข้อมูลบันทึกเวลาจริงประจำวันของพนักงานคนนี้
 $today          = date('Y-m-d');
@@ -301,7 +311,17 @@ try {
                         <!-- 👤 Profile Dropdown Container -->
                         <div class="relative inline-block" id="mobile-profile-dropdown-container">
                             <button type="button" onclick="window.toggleMobileProfileDropdown(event)" class="relative group active:scale-90 transition-transform flex items-center cursor-pointer">
-                                <img src="<?php echo $avatar_url; ?>" alt="Profile" class="w-9 h-9 rounded-full object-cover border-2 border-white/40 shadow-sm group-hover:border-white">
+                                <div class="w-9 h-9 rounded-full bg-white/20 border-2 border-white/40 shadow-sm overflow-hidden flex items-center justify-center font-bold text-white text-sm shrink-0">
+                                    <?php if (!empty($avatar_url)): ?>
+                                        <img src="<?php echo htmlspecialchars($avatar_url); ?>" 
+                                            class="w-full h-full object-cover" 
+                                            alt=""
+                                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                        <span style="display:none;"><?php echo mb_substr($fullname, 0, 1, 'UTF-8'); ?></span>
+                                    <?php else: ?>
+                                        <span><?php echo mb_substr($fullname, 0, 1, 'UTF-8'); ?></span>
+                                    <?php endif; ?>
+                                </div>
                             </button>
 
                             <!-- Dropdown Menu -->
