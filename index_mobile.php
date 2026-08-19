@@ -254,7 +254,7 @@ try {
     <meta name="apple-mobile-web-app-title" content="Lanto Web">
     <style>
         html { 
-            font-size: 20px; /* ปรับเป็น 17px - 18px ตามความเหมาะสม */
+            font-size: 17.5px; /* ปรับเป็น 17px - 18px ตามความเหมาะสม */
         }
         body { font-family: 'Noto Sans Thai', sans-serif; -webkit-tap-highlight-color: transparent; }
         ::-webkit-scrollbar { display: none; }
@@ -382,14 +382,14 @@ try {
                     <div class="bg-emerald-50/40 p-3 rounded-xl flex items-center gap-3 border border-emerald-100/40">
                         <div class="w-8 h-8 bg-emerald-600 text-white rounded-lg flex items-center justify-center font-bold text-xs shadow-xs">IN</div>
                         <div>
-                            <p class="text-slate-400 text-[9px]">เวลาเข้างาน</p>
+                            <p class="text-slate-400 text-[12px]">เวลาเข้างาน</p>
                             <p class="text-slate-800 text-xs font-bold tracking-wide"><?php echo htmlspecialchars($checkin_time, ENT_QUOTES, 'UTF-8'); ?></p>
                         </div>
                     </div>
                     <div class="bg-rose-50/40 p-3 rounded-xl flex items-center gap-3 border border-rose-100/40">
                         <div class="w-8 h-8 bg-rose-600 text-white rounded-lg flex items-center justify-center font-bold text-xs shadow-xs">OUT</div>
                         <div>
-                            <p class="text-slate-400 text-[9px]">เวลาเลิกงาน</p>
+                            <p class="text-slate-400 text-[12px]">เวลาเลิกงาน</p>
                             <p class="text-slate-800 text-xs font-bold tracking-wide"><?php echo htmlspecialchars($checkout_time, ENT_QUOTES, 'UTF-8'); ?></p>
                         </div>
                     </div>
@@ -406,7 +406,7 @@ try {
                             <div class="w-11 h-11 bg-slate-50 border border-slate-200/60 rounded-2xl flex items-center justify-center shadow-2xs mb-1.5 overflow-hidden p-1">
                                 <img src="assets/images/LOGO-IST.jpg" alt="IST Logo" class="w-full h-full object-contain rounded-md">
                             </div>
-                            <span class="text-slate-600 text-[10px] font-medium tracking-tight">Intershipping</span>
+                            <span class="text-slate-600 text-[12px] font-medium tracking-tight">Intershipping</span>
                         </a>
 
                         <!-- 2. ข้อมูลบริษัท -->
@@ -414,7 +414,7 @@ try {
                             <div class="w-11 h-11 bg-slate-50 border border-slate-200/60 rounded-2xl flex items-center justify-center shadow-2xs mb-1.5 p-2">
                                 <img src="assets/images/building.png" alt="Company" class="w-full h-full object-contain">
                             </div>
-                            <span class="text-slate-600 text-[10px] font-medium tracking-tight">ข้อมูลบริษัท</span>
+                            <span class="text-slate-600 text-[12px] font-medium tracking-tight">ข้อมูลบริษัท</span>
                         </a>
 
                         <!-- 3. สถานะการลา -->
@@ -422,7 +422,7 @@ try {
                             <div class="w-11 h-11 bg-slate-50 border border-slate-200/60 rounded-2xl flex items-center justify-center shadow-2xs mb-1.5 p-2">
                                 <img src="assets/images/health-check.png" alt="Leave" class="w-full h-full object-contain">
                             </div>
-                            <span class="text-slate-600 text-[10px] font-medium tracking-tight">สถานะการลา</span>
+                            <span class="text-slate-600 text-[12px] font-medium tracking-tight">สถานะการลา</span>
                         </button>
 
                         <!-- 4. สลิปเงินเดือน -->
@@ -430,7 +430,7 @@ try {
                             <div class="w-11 h-11 bg-slate-50 border border-slate-200/60 rounded-2xl flex items-center justify-center shadow-2xs mb-1.5 p-2">
                                 <img src="assets/images/payslip.png" alt="Payslip" class="w-full h-full object-contain">
                             </div>
-                            <span class="text-slate-600 text-[10px] font-medium tracking-tight">สลิปเงินเดือน</span>
+                            <span class="text-slate-600 text-[12px] font-medium tracking-tight">สลิปเงินเดือน</span>
                         </button>
 
                         <!-- 5. จองแมส -->
@@ -438,7 +438,7 @@ try {
                             <div class="w-11 h-11 bg-slate-50 border border-slate-200/60 rounded-2xl flex items-center justify-center shadow-2xs mb-1.5 p-2">
                                 <img src="assets/images/box.png" alt="Messenger" class="w-full h-full object-contain">
                             </div>
-                            <span class="text-slate-600 text-[10px] font-medium tracking-tight">Messenger Request</span>
+                            <span class="text-slate-600 text-[12px] font-medium tracking-tight">Messenger Request</span>
                         </a>
 
                         <!-- 6. จองรถองค์กร (แทนที่จองยืมของไอทีเดิม) -->
@@ -446,7 +446,7 @@ try {
                             <div class="w-11 h-11 bg-slate-50 border border-slate-200/60 rounded-2xl flex items-center justify-center shadow-2xs mb-1.5 p-2">
                                 <img src="assets/images/car.png" alt="Car Booking" class="w-full h-full object-contain" onerror="this.src='assets/images/box.png'">
                             </div>
-                            <span class="text-slate-600 text-[10px] font-medium tracking-tight leading-tight">Car Request</span>
+                            <span class="text-slate-600 text-[12px] font-medium tracking-tight leading-tight">Car Request</span>
                         </a>
 
                         <!-- 7. แจ้งปัญหาไอที -->
@@ -454,7 +454,7 @@ try {
                             <div class="w-11 h-11 bg-slate-50 border border-slate-200/60 rounded-2xl flex items-center justify-center shadow-2xs mb-1.5 p-2">
                                 <img src="assets/images/italy.png" alt="IT Support" class="w-full h-full object-contain">
                             </div>
-                            <span class="text-slate-600 text-[10px] font-medium tracking-tight">IT Service</span>
+                            <span class="text-slate-600 text-[12px] font-medium tracking-tight">IT Service</span>
                         </a>
 
                         <!-- 8. จัดการระบบ -->
@@ -463,7 +463,7 @@ try {
                             <div class="w-11 h-11 bg-slate-50 border border-slate-200/60 rounded-2xl flex items-center justify-center shadow-2xs mb-1.5 p-2">
                                 <img src="assets/images/key.png" alt="Admin Key" class="w-full h-full object-contain">
                             </div>
-                            <span class="text-purple-700 text-[10px] font-bold tracking-tight">จัดการระบบ</span>
+                            <span class="text-purple-700 text-[12px] font-bold tracking-tight">จัดการระบบ</span>
                         </a>
                         <?php endif; ?>
 
@@ -514,8 +514,8 @@ try {
 
                                         <div class="space-y-0.5">
                                             <h3 class="font-extrabold text-slate-900 text-xs group-hover:text-blue-600 transition-colors truncate"><?php echo htmlspecialchars($news['title']); ?></h3>
-                                            <p class="text-[11px] text-slate-600 line-clamp-1 leading-relaxed"><?php echo htmlspecialchars($news['content']); ?></p>
-                                            <p class="text-[9.5px] text-slate-400 font-medium">เผยแพร่: <?php echo date('d/m/Y H:i', strtotime($news['created_at'])); ?></p>
+                                            <p class="text-xs text-slate-600 line-clamp-1 leading-relaxed font-medium"><?php echo htmlspecialchars($news['content']); ?></p>
+                                            <p class="text-[11px] text-slate-400 font-medium">เผยแพร่: <?php echo date('d/m/Y H:i', strtotime($news['created_at'])); ?></p>
                                         </div>
                                     </div>
                                     <?php endforeach; ?>

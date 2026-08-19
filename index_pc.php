@@ -209,11 +209,11 @@ try {
                 <div class="flex gap-4 mt-6">
                     <div class="bg-white/10 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/15 flex items-center gap-3">
                         <div class="w-9 h-9 bg-emerald-500 text-white rounded-xl flex items-center justify-center font-bold text-xs shadow-xs">IN</div>
-                        <div><p class="text-[10px] text-blue-200">เวลาเข้างาน</p><p class="text-sm lg:text-base font-bold"><?php echo htmlspecialchars($checkin_time); ?></p></div>
+                        <div><p class="text-[12px] text-blue-200">เวลาเข้างาน</p><p class="text-sm lg:text-base font-bold"><?php echo htmlspecialchars($checkin_time); ?></p></div>
                     </div>
                     <div class="bg-white/10 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/15 flex items-center gap-3">
                         <div class="w-9 h-9 bg-rose-500 text-white rounded-xl flex items-center justify-center font-bold text-xs shadow-xs">OUT</div>
-                        <div><p class="text-[10px] text-blue-200">เวลาเลิกงาน</p><p class="text-sm lg:text-base font-bold"><?php echo htmlspecialchars($checkout_time); ?></p></div>
+                        <div><p class="text-[12px] text-blue-200">เวลาเลิกงาน</p><p class="text-sm lg:text-base font-bold"><?php echo htmlspecialchars($checkout_time); ?></p></div>
                     </div>
                 </div>
             </div>
@@ -343,8 +343,8 @@ try {
                         <img src="assets/images/LOGO-IST.jpg" class="w-full h-full object-contain rounded-md">
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-slate-800">Intershipping</p>
-                        <p class="text-[10px] text-slate-400">ระบบลงเวลาหลัก</p>
+                        <p class="text-[13px] font-bold text-slate-800">Intershipping</p>
+                        <p class="text-[12px] text-slate-500">ระบบลงเวลาหลัก</p>
                     </div>
                 </a>
 
@@ -354,8 +354,8 @@ try {
                         <img src="assets/images/building.png" class="w-full h-full object-contain">
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-slate-800">ข้อมูลบริษัท</p>
-                        <p class="text-[10px] text-slate-400">โครงสร้างและระเบียบ</p>
+                        <p class="text-[13px] font-bold text-slate-800">ข้อมูลบริษัท</p>
+                        <p class="text-[12px] text-slate-500">โครงสร้างและระเบียบ</p>
                     </div>
                 </a>
 
@@ -365,8 +365,8 @@ try {
                         <img src="assets/images/health-check.png" class="w-full h-full object-contain">
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-slate-800">สถานะการลา</p>
-                        <p class="text-[10px] text-slate-400">ยื่นและเช็กประวัติลา</p>
+                        <p class="text-[13px] font-bold text-slate-800">สถานะการลา</p>
+                        <p class="text-[12px] text-slate-500">ยื่นและเช็กประวัติลา</p>
                     </div>
                 </button>
 
@@ -376,8 +376,8 @@ try {
                         <img src="assets/images/payslip.png" class="w-full h-full object-contain">
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-slate-800">สลิปเงินเดือน</p>
-                        <p class="text-[10px] text-slate-400">ดาวน์โหลดไฟล์ PDF</p>
+                        <p class="text-[13px] font-bold text-slate-800">สลิปเงินเดือน</p>
+                        <p class="text-[12px] text-slate-500">ดาวน์โหลดไฟล์ PDF</p>
                     </div>
                 </button>
 
@@ -387,8 +387,8 @@ try {
                         <img src="assets/images/box.png" class="w-full h-full object-contain">
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-slate-800">Messenger Request</p>
-                        <p class="text-[10px] text-slate-400">บริการรับส่งเอกสาร</p>
+                        <p class="text-[13px] font-bold text-slate-800">Messenger Request</p>
+                        <p class="text-[12px] text-slate-500">บริการรับส่งเอกสาร</p>
                     </div>
                 </a>
                 
@@ -398,8 +398,8 @@ try {
                         <img src="assets/images/car.png" class="w-full h-full object-contain" onerror="this.src='assets/images/box.png'">
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-slate-800">Car Request</p>
-                        <p class="text-[10px] text-slate-400">จองใช้งานรถองค์กร</p>
+                        <p class="text-[13px] font-bold text-slate-800">Car Request</p>
+                        <p class="text-[12px] text-slate-500">จองใช้งานรถองค์กร</p>
                     </div>
                 </a>
 
@@ -409,8 +409,8 @@ try {
                         <img src="assets/images/italy.png" class="w-full h-full object-contain">
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-slate-800">IT Service</p>
-                        <p class="text-[10px] text-slate-400">แจ้งปัญหาไอที/อุปกรณ์</p>
+                        <p class="text-[13px] font-bold text-slate-800">IT Service</p>
+                        <p class="text-[12px] text-slate-500">แจ้งปัญหาไอที/อุปกรณ์</p>
                     </div>
                 </a>
 
@@ -421,8 +421,8 @@ try {
                         <img src="assets/images/key.png" class="w-full h-full object-contain">
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-purple-900">จัดการระบบ</p>
-                        <p class="text-[10px] text-purple-600">เมนูผู้ดูแลระบบ</p>
+                        <p class="text-[13px] font-bold text-purple-900">จัดการระบบ</p>
+                        <p class="text-[12px] text-purple-600">เมนูผู้ดูแลระบบ</p>
                     </div>
                 </a>
                 <?php endif; ?>
