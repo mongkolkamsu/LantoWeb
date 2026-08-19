@@ -6,35 +6,58 @@ $prefix = $prefix ?? (file_exists('config/db.php') ? '' : '../');
 $current_page = basename($_SERVER['PHP_SELF']);
 
 // ดึงข้อมูลผู้ใช้จาก Session
-$user_id       = $_SESSION['user_id'] ?? null;
-$fullname      = $_SESSION['fullname'] ?? 'ไม่ระบุชื่อ';
-$employee_code = $_SESSION['employee_code'] ?? '-';
-$profile_image = $_SESSION['profile_image'] ?? '';
-$avatar_url    = !empty($profile_image) 
-    ? $prefix . 'uploads/profiles/' . htmlspecialchars($profile_image, ENT_QUOTES, 'UTF-8') 
-    : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80';
+$header_user_id       = $_SESSION['user_id'] ?? null;
+$header_fullname      = $_SESSION['fullname'] ?? 'ไม่ระบุชื่อ';
+$header_employee_code = $_SESSION['employee_code'] ?? '-';
+$header_profile_image = $_SESSION['profile_image'] ?? '';
 
-// ดึงจำนวนการแจ้งเตือนยังไม่ได้อ่าน
 $unread_notifications_count = 0;
-if (isset($pdo) && $user_id) {
+
+// 🎯 ดึงรูปภาพและข้อมูลล่าสุดจากฐานข้อมูลโดยตรง เพื่อความถูกต้อง 100%
+if (isset($pdo) && $header_user_id) {
     try {
+        $stmt_user_hdr = $pdo->prepare("SELECT profile_image, first_name, last_name, employee_code FROM users WHERE id = :id LIMIT 1");
+        $stmt_user_hdr->execute(['id' => $header_user_id]);
+        $hdr_user = $stmt_user_hdr->fetch(PDO::FETCH_ASSOC);
+        
+        if ($hdr_user) {
+            if (!empty($hdr_user['profile_image'])) {
+                $header_profile_image = $hdr_user['profile_image'];
+                $_SESSION['profile_image'] = $header_profile_image;
+            }
+            if (!empty($hdr_user['employee_code'])) {
+                $header_employee_code = $hdr_user['employee_code'];
+            }
+            $db_name = trim(($hdr_user['first_name'] ?? '') . ' ' . ($hdr_user['last_name'] ?? ''));
+            if (!empty($db_name)) {
+                $header_fullname = $db_name;
+            }
+        }
+
+        // ดึงการแจ้งเตือน
         $stmt_notif = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = :user_id AND is_read = 0");
-        $stmt_notif->execute(['user_id' => $user_id]);
+        $stmt_notif->execute(['user_id' => $header_user_id]);
         $unread_notifications_count = (int)$stmt_notif->fetchColumn();
     } catch (PDOException $e) {}
+}
+
+// 🎯 สร้าง Path รูปโปรไฟล์ตรงๆ พร้อมป้องกัน Path ซ้อน
+$header_avatar_url = '';
+if (!empty($header_profile_image)) {
+    $clean_hdr_img = basename(trim($header_profile_image));
+    $header_avatar_url = $prefix . 'uploads/profiles/' . $clean_hdr_img . '?v=' . time();
 }
 
 // กำหนดหัวข้อหลัก, หัวข้อย่อย และปุ่มย้อนกลับ
 $page_title    = $page_title ?? 'Lanto Workspace';
 $page_subtitle = $page_subtitle ?? 'Enterprise Workforce System';
 $show_back     = $show_back ?? true;
-$is_mobile = (isset($_GET['view']) && $_GET['view'] === 'mobile') || 
-             (isset($_SERVER['HTTP_USER_AGENT']) && preg_match('/(android|iphone|ipod|mobile)/i', $_SERVER['HTTP_USER_AGENT']));
+$is_mobile     = (isset($_GET['view']) && $_GET['view'] === 'mobile') || 
+                 (isset($_SERVER['HTTP_USER_AGENT']) && preg_match('/(android|iphone|ipod|mobile)/i', $_SERVER['HTTP_USER_AGENT']));
 
 $default_index = $prefix . ($is_mobile ? 'index_mobile.php' : 'index_pc.php');
-
-$back_url     = $back_url ?? $default_index;
-$employee_url = $default_index;
+$back_url      = $back_url ?? $default_index;
+$employee_url  = $default_index;
 ?>
 
 <!-- 🔝 Header ด้านบน -->
@@ -71,15 +94,28 @@ $employee_url = $default_index;
             <!-- 👤 Profile Dropdown Container -->
             <div class="relative inline-block pl-3 border-l border-slate-200" id="profile-dropdown-container">
                 <button type="button" onclick="toggleProfileDropdown(event)" class="flex items-center gap-2.5 hover:bg-slate-50 p-1.5 rounded-2xl transition-all cursor-pointer">
-                    <img src="<?php echo $avatar_url; ?>" class="w-9 h-9 rounded-full object-cover border border-slate-200 shadow-2xs">
+                    
+                    <!-- 🖼️ กล่องแสดงรูปโปรไฟล์ (มี Fallback ตัวอักษรย่อเมื่อไม่มีรูปหรือโหลดไม่ติด) -->
+                    <div class="w-9 h-9 rounded-full bg-blue-100 border border-slate-200 shadow-2xs overflow-hidden flex items-center justify-center font-bold text-blue-600 shrink-0 text-sm">
+                        <?php if (!empty($header_avatar_url)): ?>
+                            <img src="<?php echo htmlspecialchars($header_avatar_url); ?>" 
+                                 class="w-full h-full object-cover" 
+                                 alt=""
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <span style="display:none;"><?php echo mb_substr($header_fullname, 0, 1, 'UTF-8'); ?></span>
+                        <?php else: ?>
+                            <span><?php echo mb_substr($header_fullname, 0, 1, 'UTF-8'); ?></span>
+                        <?php endif; ?>
+                    </div>
+
                     <div class="text-left hidden sm:block">
                         <p class="text-xs font-bold text-slate-800 leading-tight flex items-center gap-1">
-                            <?php echo htmlspecialchars($fullname); ?>
+                            <?php echo htmlspecialchars($header_fullname); ?>
                             <svg class="w-3 h-3 text-slate-400 transition-transform duration-200" id="profile-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </p>
-                        <p class="text-[10px] text-slate-400 font-medium">รหัส: <?php echo htmlspecialchars($employee_code); ?></p>
+                        <p class="text-[10px] text-slate-400 font-medium">รหัส: <?php echo htmlspecialchars($header_employee_code); ?></p>
                     </div>
                 </button>
 
@@ -95,13 +131,13 @@ $employee_url = $default_index;
                         <span>👤</span> ข้อมูลส่วนตัว / บัตร
                     </a>
 
-                    <!-- 🎯 เมนูประวัติการใช้งาน (แยกตามระบบรถยนต์ และ แมสเซนเจอร์) -->
+                    <!-- 🎯 เมนูประวัติการใช้งาน -->
                     <?php 
                         $is_car_system = in_array($current_page, ['car_index.php', 'car_history.php']);
                         $is_msg_system = in_array($current_page, ['jobs.php', 'msg_index.php', 'msg_history.php']);
 
                         if ($is_car_system || $is_msg_system):
-                            $history_link = $is_car_system ? 'car_history.php' : 'msg_history.php';
+                            $history_link  = $is_car_system ? 'car_history.php' : 'msg_history.php';
                             $history_label = $is_car_system ? 'ประวัติและตารางใช้รถ' : 'ประวัติงาน';
                     ?>
                         <a href="<?php echo $history_link; ?>" class="relative z-10 flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">
@@ -124,7 +160,7 @@ $employee_url = $default_index;
 <script>
 function toggleProfileDropdown(e) {
     e.stopPropagation();
-    const menu = document.getElementById('profile-menu');
+    const menu  = document.getElementById('profile-menu');
     const arrow = document.getElementById('profile-arrow');
     if (menu) {
         menu.classList.toggle('hidden');
@@ -134,8 +170,8 @@ function toggleProfileDropdown(e) {
 
 document.addEventListener('click', function(e) {
     const container = document.getElementById('profile-dropdown-container');
-    const menu = document.getElementById('profile-menu');
-    const arrow = document.getElementById('profile-arrow');
+    const menu      = document.getElementById('profile-menu');
+    const arrow     = document.getElementById('profile-arrow');
     if (container && menu && !container.contains(e.target)) {
         menu.classList.add('hidden');
         if (arrow) arrow.classList.remove('rotate-180');

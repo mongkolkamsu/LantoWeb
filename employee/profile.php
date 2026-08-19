@@ -1,8 +1,9 @@
 <?php
 session_start();
-require_once '../config/db.php'; // เชื่อมต่อฐานข้อมูลหลัก
+require_once '../config/db.php';
 require_once '../config/auth.php';
-// 1. ตรวจสอบสิทธิ์การเข้าใช้งาน (ต้องล็อกอินก่อน)
+
+// 1. ตรวจสอบสิทธิ์การเข้าใช้งาน
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../login.php");
     exit();
@@ -13,21 +14,21 @@ mb_internal_encoding("UTF-8");
 $user_id = $_SESSION['user_id'];
 
 // ประกาศตัวแปรเริ่มต้น
-$fullname = "";
+$fullname      = "";
 $employee_code = "";
 $profile_image = "";
-$dept_name = "ไม่ระบุแผนก";
-$email = "-";
-$phone = "-";
+$dept_name     = "ไม่ระบุแผนก";
+$email         = "-";
+$phone         = "-";
 
 $employee_type = "-";
-$work_shift = "-";
-$birth_date = "-";
-$start_date = "-";
-$address_list = array();
+$work_shift    = "-";
+$birth_date    = "-";
+$start_date    = "-";
+$address_list  = array();
 
 try {
-    // 🎯 ดึงข้อมูลพร้อม JOIN แปลง ID เป็นชื่อประเภทพนักงาน แผนก และกะงาน
+    // ดึงข้อมูลพนักงาน
     $stmt = $pdo->prepare("
         SELECT u.*, 
                d.name AS dept_name, 
@@ -45,13 +46,12 @@ try {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user) {
-        $fullname = ($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '');
-        $employee_code = $user['employee_code'];
-        $profile_image = $user['profile_image'];
-        $email = !empty($user['email']) ? $user['email'] : '-';
-        $phone = !empty($user['phone']) ? $user['phone'] : '-';
+        $fullname      = trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? ''));
+        $employee_code = $user['employee_code'] ?? '';
+        $profile_image = $user['profile_image'] ?? '';
+        $email         = !empty($user['email']) ? $user['email'] : '-';
+        $phone         = !empty($user['phone']) ? $user['phone'] : '-';
         
-        // แปลงค่า ID ให้แสดงเป็นชื่อจริง
         $dept_name     = !empty($user['dept_name']) ? $user['dept_name'] : (!empty($user['department']) ? $user['department'] : 'ไม่ระบุแผนก');
         $employee_type = !empty($user['type_name']) ? $user['type_name'] : (!empty($user['employee_type']) ? $user['employee_type'] : '-');
         $work_shift    = !empty($user['shift_name']) ? $user['shift_name'] : (!empty($user['work_shift']) ? $user['work_shift'] : '-');
@@ -67,7 +67,7 @@ try {
             $work_tenure = $diff->y . " ปี " . $diff->m . " เดือน " . $diff->d . " วัน";
         }
 
-        // ระบบจัดกลุ่มที่อยู่เป็นบรรทัด
+        // ระบบจัดกลุ่มที่อยู่
         $address_list = array();
 
         if (!empty($user['address_detail'])) {
@@ -88,11 +88,6 @@ try {
         if (trim($line3) !== '') $address_list[] = trim($line3);
     }
 } catch (PDOException $e) {}
-
-$profile_path = '../uploads/profiles/' . $user['profile_image'];
-$avatar_url = (!empty($user['profile_image']) && file_exists($profile_path)) 
-    ? $profile_path . '?v=' . filemtime($profile_path) 
-    : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=500&h=500&q=90';
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -116,7 +111,6 @@ $avatar_url = (!empty($user['profile_image']) && file_exists($profile_path))
         }
         .card-flipped { transform: rotateY(180deg); }
         
-        /* บังคับซ่อนหน้าหลังแบบ 100% สำหรับ iOS Safari */
         .card-front, .card-back { 
             position: absolute;
             inset: 0;
@@ -125,7 +119,7 @@ $avatar_url = (!empty($user['profile_image']) && file_exists($profile_path))
             -webkit-backface-visibility: hidden !important; 
             backface-visibility: hidden !important; 
             -webkit-transform-style: preserve-3d;
-            transform-style: preserve-3d;
+            transform-style: preserve-3d; 
         }
         .card-front { transform: rotateY(0deg); }
         .card-back { transform: rotateY(180deg); }
@@ -134,14 +128,14 @@ $avatar_url = (!empty($user['profile_image']) && file_exists($profile_path))
 </head>
 <body class="bg-[#f4f6fa] min-h-screen text-slate-800 antialiased flex">
 
-    <!-- 📁 ดึง Sidebar พนักงาน (แสดงเฉพาะบน PC) -->
+    <!-- Sidebar พนักงาน -->
     <?php include_once 'sidebar.php'; ?>
 
-    <!-- 🖥️ ส่วนเนื้อหาฝั่งขวา -->
+    <!-- ส่วนเนื้อหาฝั่งขวา -->
     <div class="flex-1 flex flex-col min-w-0 justify-between md:ml-64">
         <div class="w-full flex flex-col">
 
-            <!-- 🔝 ดึง Header ด้านบน -->
+            <!-- Header ด้านบน -->
             <?php 
             $page_title    = 'ข้อมูลส่วนตัว / บัตรพนักงาน';
             $page_subtitle = 'บัตรประจำตัวพนักงานดิจิทัล';
@@ -150,21 +144,32 @@ $avatar_url = (!empty($user['profile_image']) && file_exists($profile_path))
             include_once '../includes/header.php'; 
             ?>
 
-            <!-- 💻/📱 Main Container -->
+            <!-- Main Container -->
             <main class="p-4 md:p-8 max-w-lg mx-auto md:-translate-x-32 w-full space-y-4 pb-28 md:pb-12">
                 
                 <p class="text-xs text-center text-slate-400 font-semibold">💡 แตะที่ตัวบัตรเพื่อพลิกดูข้อมูลส่วนตัวของพนักงาน</p>
 
-                <!-- 💳 3D FLIP ID CARD (ขยายขนาดใหญ่ขึ้นและคมชัดบน PC: w-80 h-[500px] -> w-[340px] md:w-[380px] h-[540px] md:h-[600px]) -->
+                <!-- 💳 3D FLIP ID CARD -->
                 <div class="card-container w-[340px] md:w-[380px] h-[540px] md:h-[600px] mx-auto my-2 cursor-pointer" onclick="flipCard()">
                     <div id="id-card" class="card-inner w-full h-full relative shadow-2xl rounded-[36px]">
                         
                         <!-- ด้านหน้าบัตร -->
                         <div class="card-front bg-white rounded-[36px] overflow-hidden border border-slate-200/40 flex flex-col justify-end">
-                            <!-- ขยายขนาดรูปถ่ายให้ใหญ่และชัดขึ้น -->
-                            <img src="<?php echo $avatar_url; ?>" class="absolute top-[48px] md:top-[55px] left-1/2 -translate-x-1/2 w-[250px] md:w-[290px] h-[310px] md:h-[350px] object-cover rounded-2xl shadow-sm" alt="Employee Photo">
+                            
+                            <?php 
+                                $emp_photo = !empty($user['profile_image']) ? $user['profile_image'] : '';
+                                $card_avatar = !empty($emp_photo) ? '../uploads/profiles/' . $emp_photo : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=500&h=500&q=90';
+                            ?>
+
+                            <!-- 1. รูปถ่ายพนักงาน -->
+                            <img src="<?php echo htmlspecialchars($card_avatar); ?>" 
+                                class="absolute top-[48px] md:top-[55px] left-1/2 -translate-x-1/2 w-[250px] md:w-[290px] h-[310px] md:h-[350px] object-cover rounded-2xl shadow-sm bg-slate-100" 
+                                alt="Employee Photo">
+
+                            <!-- 2. ภาพกรอบบัตร bg.png -->
                             <img src="../assets/images/bg.png" class="absolute inset-0 w-full h-full object-cover pointer-events-none" alt="Card Background">
                             
+                            <!-- 3. ข้อความรายละเอียดพนักงาน -->
                             <div class="relative text-center w-full px-6 pb-6 space-y-1.5 z-10 bg-gradient-to-t from-white/95 via-white/80 to-transparent pt-8">
                                 <h3 class="text-xl md:text-2xl font-black text-slate-950 tracking-wide leading-tight">
                                     <?php echo htmlspecialchars($fullname); ?>
@@ -245,7 +250,7 @@ $avatar_url = (!empty($user['profile_image']) && file_exists($profile_path))
                     </div>
                 </div>
 
-                <!-- ✏️ ปุ่มแก้ไขข้อมูลส่วนตัว -->
+                <!-- ปุ่มแก้ไขข้อมูลส่วนตัว -->
                 <div class="w-full max-w-[340px] md:max-w-[380px] mx-auto pt-3">
                     <a href="edit_profile.php" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs md:text-sm font-bold transition-all shadow-md shadow-blue-500/20 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
                         <span>✏️</span> แก้ไขข้อมูลส่วนตัว
@@ -256,7 +261,7 @@ $avatar_url = (!empty($user['profile_image']) && file_exists($profile_path))
         </div>
     </div>
 
-    <!-- 📱 แถบเมนูด้านล่างแสดงเฉพาะบนมือถือ -->
+    <!-- แถบเมนูด้านล่างแสดงเฉพาะบนมือถือ -->
     <div class="md:hidden">
         <?php include '../includes/navbar.php'; ?>
     </div>
@@ -267,7 +272,6 @@ $avatar_url = (!empty($user['profile_image']) && file_exists($profile_path))
             card.classList.toggle('card-flipped');
         }
 
-        // ใช้ LantoAlert ระบบแจ้งเตือนหลักของเว็บ
         function confirmLogout(event) {
             event.preventDefault();
 
