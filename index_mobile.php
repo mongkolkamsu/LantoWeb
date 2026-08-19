@@ -254,7 +254,7 @@ try {
     <meta name="apple-mobile-web-app-title" content="Lanto Web">
     <style>
         html { 
-            font-size: 18px; /* ปรับเป็น 17px - 18px ตามความเหมาะสม */
+            font-size: 20px; /* ปรับเป็น 17px - 18px ตามความเหมาะสม */
         }
         body { font-family: 'Noto Sans Thai', sans-serif; -webkit-tap-highlight-color: transparent; }
         ::-webkit-scrollbar { display: none; }
