@@ -275,12 +275,19 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
     <div class="max-w-4xl mx-auto bg-white/60 backdrop-blur-xl border border-white/80 p-6 md:p-10 rounded-3xl shadow-2xl transition-all">
         
         <!-- Header -->
-        <div class="flex justify-between items-center mb-8 border-b border-slate-200/60 pb-4">
+        <div class="flex items-center justify-between gap-3 mb-8 border-b border-slate-200/60 pb-4">
             <div>
-                <h1 class="text-2xl font-bold text-slate-800 tracking-wide">แก้ไขข้อมูลส่วนตัว</h1>
+                <h1 class="text-xl md:text-2xl font-bold text-slate-800 tracking-wide">แก้ไขข้อมูลส่วนตัว</h1>
                 <p class="text-slate-500 text-xs mt-1">อัปเดตข้อมูลรูปภาพ ที่อยู่ และรหัสผ่านของคุณ</p>
             </div>
-            <a href="profile.php" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors cursor-pointer">กลับหน้าบัตรพนักงาน</a>
+            <!-- ปุ่มกลับ ปรับให้เด่นขึ้น มีไอคอนลูกศร และห้ามตัดบรรทัด (shrink-0 whitespace-nowrap) -->
+            <a href="profile.php" class="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-600 border border-slate-200 hover:border-blue-200 text-xs font-semibold rounded-xl shadow-xs transition-all cursor-pointer">
+                <svg class="w-4 h-4 text-slate-500 hover:text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"></path>
+                </svg>
+                <span class="hidden xs:inline">กลับหน้าบัตรพนักงาน</span>
+                <span class="xs:hidden">กลับหน้าบัตร</span>
+            </a>
         </div>
 
         <form id="editProfileForm" enctype="multipart/form-data" class="space-y-8">

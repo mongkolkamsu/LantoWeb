@@ -185,39 +185,55 @@ try {
     <main class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-6">
 
         <!-- 🔎 แถบตัวกรองข้อมูล (เพิ่มดร็อปดาวน์เลือกสถานะแล้ว) -->
-        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col md:flex-row justify-between items-center gap-3">
-            <form method="GET" action="jobs.php" class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+        <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+            <form method="GET" action="<?php echo basename($_SERVER['PHP_SELF']); ?>" class="flex flex-col md:flex-row flex-wrap items-center gap-2.5 sm:gap-3 w-full">
                 
-                <div class="w-full sm:w-60 relative">
+                <!-- 1. เลือกช่วงวันที่ (จอมือถือเต็มแถว / PC กว้าง 240px) -->
+                <div class="w-full md:w-56 lg:w-60 relative">
                     <span class="absolute left-3.5 top-3 text-slate-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                         </svg>
                     </span>
-                    <input type="text" name="date_range" value="<?php echo htmlspecialchars($date_range_raw); ?>" class="calendar-trigger w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 transition-colors h-10 cursor-pointer" placeholder="เลือกช่วงวันที่ต้องการวิ่งงาน">
+                    <input type="text" name="date_range" value="<?php echo htmlspecialchars($date_range_raw); ?>" 
+                        class="calendar-trigger w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 transition-colors h-10 cursor-pointer" 
+                        placeholder="เลือกช่วงวันที่">
                 </div>
 
-                <div class="w-full sm:w-80">
-                    <input type="text" name="search" value="<?php echo htmlspecialchars($search_query); ?>" placeholder="ค้นหาชื่อเรื่อง, สถานที่, ผู้ติดต่อ..." 
+                <!-- 2. ช่องพิมพ์ค้นหา (จอมือถือเต็มแถว / PC ยืดหยุ่น) -->
+                <div class="w-full md:flex-1 md:min-w-[200px]">
+                    <input type="text" name="search" value="<?php echo htmlspecialchars($search_query); ?>" 
+                        placeholder="ค้นหาชื่อเรื่อง, สถานที่, ผู้ติดต่อ..." 
                         class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2 text-xs font-medium focus:outline-none focus:border-blue-500 transition-colors h-10">
                 </div>
 
-                <!-- 🎯 ดร็อปดาวน์เลือกสถานะ -->
-                <div class="w-48 sm:w-52">
-                    <?php renderRoundedDropdown('status_select', 'status', $active_status_label, $status_opts, $status_filter, false); ?>
+                <!-- 3. แถวดรอปดาวน์สถานะ + ปุ่มกด (บนมือถือจะอยู่บรรทัดเดียวกันพอดีเป๊ะ ไม่ตกบรรทัด) -->
+                <div class="flex items-center gap-2 w-full md:w-auto">
+                    
+                    <!-- ดรอปดาวน์: บนมือถือยืดหดตามที่ว่าง (flex-1 min-w-0) / บน PC กว้าง 180px -->
+                    <div class="flex-1 min-w-0 md:w-44 lg:w-48">
+                        <?php renderRoundedDropdown('status_select', 'status', $active_status_label, $status_opts, $status_filter, false); ?>
+                    </div>
+
+                    <!-- กลุ่มปุ่มค้นหาและล้างค่า (shrink-0 ป้องกันการโดนบีบขนาด) -->
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <button type="submit" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-3.5 sm:px-4 py-2.5 rounded-xl transition-colors cursor-pointer active:scale-95 h-10 flex items-center gap-1 shadow-2xs whitespace-nowrap">
+                            <svg class="w-3.5 h-3.5 text-white shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path>
+                            </svg>
+                            <span>ค้นหา</span>
+                        </button>
+                        
+                        <a href="<?php echo basename($_SERVER['PHP_SELF']); ?>" class="bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold px-2.5 sm:px-3 py-2.5 rounded-xl transition-colors h-10 flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap">
+                            <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path>
+                            </svg>
+                            <span>ล้างค่า</span>
+                        </a>
+                    </div>
+
                 </div>
 
-                <div class="flex items-center gap-2 ml-auto">
-                    <button type="submit" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors cursor-pointer active:scale-95 h-10 flex items-center gap-1.5 shadow-2xs">
-                        <span>ค้นหา</span>
-                    </button>
-                    <a href="jobs.php" class="bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold px-3.5 py-2.5 rounded-xl transition-colors h-10 flex items-center justify-center gap-1.5 cursor-pointer">
-                        <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path>
-                        </svg>
-                        <span>ล้างค่า</span>
-                    </a>
-                </div>
             </form>
         </div>
 
