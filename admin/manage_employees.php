@@ -46,24 +46,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     if (!empty($ids)) {
         try {
             if ($edit_mode === 'single') {
-                $id         = $ids[0];
+                $id         = (int)$ids[0];
                 $emp_code   = trim($_POST['single_code'] ?? $_POST['employee_code'] ?? '');
                 $first_name = trim($_POST['single_first_name'] ?? $_POST['first_name'] ?? '');
                 $last_name  = trim($_POST['single_last_name'] ?? $_POST['last_name'] ?? ''); 
-                $fullname_post = trim($_POST['single_fullname'] ?? $_POST['fullname'] ?? '');
-
-                if (empty($first_name) && !empty($fullname_post)) {
-                    $parts = explode(' ', $fullname_post, 2);
-                    $first_name = $parts[0] ?? '';
-                    $last_name  = $parts[1] ?? '';
-                }
-                $fullname_combined = trim($first_name . ' ' . $last_name);
-
                 $email      = trim($_POST['single_email'] ?? $_POST['email'] ?? '');
                 $phone      = trim($_POST['single_phone'] ?? $_POST['phone'] ?? '');
                 $emp_role   = $_POST['role'] ?? $_POST['single_role'] ?? 'employee';
                 
-                // 🎯 แปลงวันที่ พ.ศ. เป็น ค.ศ. ก่อนลง DB ป้องกัน SQL พัง
+                // 🎯 แปลงวันที่ พ.ศ. เป็น ค.ศ. ก่อนบันทึก
                 $birth_date = parseThaiDateToAD($_POST['birth_date'] ?? $_POST['single_birth_date'] ?? '');
                 $start_date = parseThaiDateToAD($_POST['start_date'] ?? $_POST['single_start_date'] ?? '');
                 
@@ -86,7 +77,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     'code'      => $emp_code, 
                     'fname'     => $first_name, 
                     'lname'     => $last_name, 
-                    'fullname'  => $fullname_combined,
                     'email'     => $email, 
                     'phone'     => $phone,
                     'role'      => $emp_role,
@@ -134,12 +124,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     $params['pass'] = password_hash($_POST['password'], PASSWORD_DEFAULT);
                 }
 
+                // 🎯 บันทึกเฉพาะ first_name และ last_name ไม่มี fullname ในฐานข้อมูล
                 $stmt_update = $pdo->prepare("
                     UPDATE users SET 
                         employee_code = :code, 
                         first_name = :fname, 
                         last_name = :lname, 
-                        fullname = :fullname,
                         email = :email, 
                         phone = :phone, 
                         role = :role,
@@ -158,6 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $_SESSION['success_msg'] = 'อัปเดตข้อมูลพนักงานเรียบร้อยแล้ว';
 
             } else {
+                // โหมดแก้ไขพร้อมกันหลายคน (Bulk Edit)
                 $update_fields = [];
                 $params = [];
 
@@ -236,11 +227,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
                 $stmt_add = $pdo->prepare("
                     INSERT INTO users (
-                        employee_code, first_name, last_name, fullname, password, role, email, phone,
+                        employee_code, first_name, last_name, password, role, email, phone,
                         birth_date, address_detail, subdistrict, district, province, zipcode,
                         branch_id, employee_type, department, start_date, work_shift, is_active
                     ) VALUES (
-                        :code, :fname, :lname, :name, :pass, :role, :email, :phone,
+                        :code, :fname, :lname, :pass, :role, :email, :phone,
                         :birth, '', '', '', '', '',
                         :branch, :emp_type, :dept, :start_date, :shift, 1
                     )
@@ -249,7 +240,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     'code'       => $emp_code,
                     'fname'      => $first_name,
                     'lname'      => $last_name,
-                    'name'       => $fullname,
                     'pass'       => $hashed_password,
                     'role'       => $emp_role,
                     'email'      => $email,
@@ -302,9 +292,10 @@ try {
     $work_shifts    = $pdo->query("SELECT * FROM work_shifts ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
     $employee_types = $pdo->query("SELECT * FROM employee_types ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
 
+    // 🎯 รวม first_name และ last_name มาเป็นชื่อเรียก fullname สำหรับหน้า UI
     $sql = "
         SELECT u.*, 
-               CONCAT(u.first_name, ' ', u.last_name) AS fullname,
+               TRIM(CONCAT_WS(' ', u.first_name, u.last_name)) AS fullname,
                d.name AS dept_name, 
                w.name AS shift_name, 
                b.name AS branch_name,
@@ -330,7 +321,7 @@ try {
     }
 
     if ($search !== '') {
-        $sql .= " AND (CONCAT(u.first_name, ' ', u.last_name) LIKE :search1 OR u.employee_code LIKE :search2 OR u.email LIKE :search3)";
+        $sql .= " AND (CONCAT_WS(' ', u.first_name, u.last_name) LIKE :search1 OR u.employee_code LIKE :search2 OR u.email LIKE :search3)";
         $params['search1'] = "%{$search}%";
         $params['search2'] = "%{$search}%";
         $params['search3'] = "%{$search}%";
@@ -592,6 +583,7 @@ $page_subtitle = 'เพิ่ม แก้ไข และบริหารจ
                                 $avatar_src = !empty($emp['profile_image']) ? '../uploads/profiles/' . $emp['profile_image'] : '';
                                 $is_active = isset($emp['is_active']) ? ($emp['is_active'] == 1) : true;
                                 $status_attr_val = $is_active ? 'active' : 'inactive';
+                                $fullname_text = $emp['fullname'];
                             ?>
                             <tr onclick="openSingleRowEdit(this, event)" class="hover:bg-blue-50/50 transition-colors cursor-pointer active:scale-[0.995]">
                                 <td class="p-4 text-center">
@@ -601,7 +593,7 @@ $page_subtitle = 'เพิ่ม แก้ไข และบริหารจ
                                         data-code="<?php echo htmlspecialchars($emp['employee_code'] ?? ''); ?>"
                                         data-firstname="<?php echo htmlspecialchars($emp['first_name'] ?? ''); ?>"  
                                         data-lastname="<?php echo htmlspecialchars($emp['last_name'] ?? ''); ?>"
-                                        data-fullname="<?php echo htmlspecialchars($emp['fullname'] ?? ''); ?>"
+                                        data-fullname="<?php echo htmlspecialchars($fullname_text); ?>"
                                         data-email="<?php echo htmlspecialchars($emp['email'] ?? ''); ?>"
                                         data-phone="<?php echo htmlspecialchars($emp['phone'] ?? ''); ?>"
                                         data-role="<?php echo htmlspecialchars($emp['role'] ?? 'employee'); ?>"
@@ -623,11 +615,11 @@ $page_subtitle = 'เพิ่ม แก้ไข และบริหารจ
                                         <?php if (!empty($avatar_src)): ?>
                                             <img src="<?php echo htmlspecialchars($avatar_src); ?>" class="w-full h-full object-cover" onerror="this.remove();">
                                         <?php else: ?>
-                                            <?php echo mb_substr($emp['fullname'], 0, 1); ?>
+                                            <?php echo mb_substr($fullname_text, 0, 1); ?>
                                         <?php endif; ?>
                                     </div>
                                     <div>
-                                        <p class="font-bold text-slate-800 leading-tight"><?php echo htmlspecialchars($emp['fullname']); ?></p>
+                                        <p class="font-bold text-slate-800 leading-tight"><?php echo htmlspecialchars($fullname_text); ?></p>
                                         <p class="text-[10px] text-slate-400 mt-0.5">
                                             <?php echo htmlspecialchars($emp['email'] ?? '-'); ?>
                                         </p>
@@ -694,7 +686,6 @@ $page_subtitle = 'เพิ่ม แก้ไข และบริหารจ
             let lname = checkbox.getAttribute('data-lastname') || '';
             const fullname = checkbox.getAttribute('data-fullname') || '';
 
-            // ถ้าไม่มี first_name/last_name ให้แยกจาก fullname อัตโนมัติ
             if (!fname && fullname) {
                 const parts = fullname.trim().split(' ');
                 fname = parts[0] || '';
