@@ -286,44 +286,60 @@ foreach ($logs as $log) {
                                     </div>
 
                                     <!-- บอดี้การ์ด: แบ่งครึ่งซ้าย (เข้า) - ขวา (ออก) -->
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        
+                                    <div class="grid grid-cols-2 gap-2 sm:gap-3">
+    
                                         <!-- 📥 ฝั่งซ้าย: ข้อมูลเข้างาน (IN) -->
-                                        <div class="bg-white p-3.5 rounded-xl border border-slate-200/80 flex justify-between items-center shadow-2xs <?php echo $in ? 'cursor-pointer hover:border-blue-400 transition-all' : ''; ?>"
+                                        <div class="bg-white p-2.5 sm:p-3.5 rounded-xl border border-slate-200/80 flex flex-col justify-between shadow-2xs min-h-[78px] transition-all <?php echo $in ? 'cursor-pointer hover:border-blue-400 active:scale-[0.98]' : 'bg-slate-50/50 border-dashed'; ?>"
                                             <?php if ($in): ?>
                                                 onclick="openProofModal('check_in', '<?php echo $in['photo_log']; ?>', '<?php echo htmlspecialchars($in['clean_branch'], ENT_QUOTES); ?>', '<?php echo $in['status_title']; ?>', '<?php echo $in['status_color']; ?>', '<?php echo $day['date_display']; ?>', '<?php echo $in['time_display']; ?>')"
                                             <?php endif; ?>>
-                                            <div class="flex items-center gap-3">
-                                                <span class="text-xs font-bold bg-blue-600 text-white px-2.5 py-1 rounded-lg">เข้า (IN)</span>
-                                                <div>
-                                                    <p class="text-xs font-bold text-slate-800"><?php echo $in ? $in['clean_branch'] : 'ไม่มีข้อมูล'; ?></p>
-                                                    <?php if ($in): ?>
-                                                        <span class="inline-block text-[10px] px-2 py-0.5 rounded-md font-semibold border mt-1 <?php echo $in['status_color']; ?>">
+                                            
+                                            <!-- แถวบน: ป้ายบอกประเภท + เวลา -->
+                                            <div class="flex items-center justify-between gap-1">
+                                                <span class="text-[10px] sm:text-xs font-bold bg-blue-600 text-white px-2 py-0.5 rounded-md shrink-0">เข้า (IN)</span>
+                                                <span class="text-xs sm:text-sm font-black text-slate-800 tracking-tight"><?php echo $in ? $in['time_display'] : '-'; ?></span>
+                                            </div>
+
+                                            <!-- แถวล่าง: สถานที่ + สถานะ -->
+                                            <div class="mt-2 space-y-1">
+                                                <p class="text-[11px] sm:text-xs font-medium text-slate-600 truncate" title="<?php echo $in ? $in['clean_branch'] : 'ไม่มีข้อมูล'; ?>">
+                                                    <?php echo $in ? $in['clean_branch'] : 'ไม่มีข้อมูล'; ?>
+                                                </p>
+                                                <?php if ($in): ?>
+                                                    <div>
+                                                        <span class="inline-block text-[9px] sm:text-[10px] px-1.5 py-0.2 rounded font-bold border <?php echo $in['status_color']; ?>">
                                                             <?php echo $in['status_title']; ?>
                                                         </span>
-                                                    <?php endif; ?>
-                                                </div>
+                                                    </div>
+                                                <?php endif; ?>
                                             </div>
-                                            <span class="text-sm font-black text-slate-900 tracking-tight"><?php echo $in ? $in['time_display'] : '-'; ?></span>
                                         </div>
 
                                         <!-- 📤 ฝั่งขวา: ข้อมูลออกงาน (OUT) -->
-                                        <div class="bg-white p-3.5 rounded-xl border border-slate-200/80 flex justify-between items-center shadow-2xs <?php echo $out ? 'cursor-pointer hover:border-blue-400 transition-all' : ''; ?>"
+                                        <div class="bg-white p-2.5 sm:p-3.5 rounded-xl border border-slate-200/80 flex flex-col justify-between shadow-2xs min-h-[78px] transition-all <?php echo $out ? 'cursor-pointer hover:border-blue-400 active:scale-[0.98]' : 'bg-slate-50/50 border-dashed'; ?>"
                                             <?php if ($out): ?>
                                                 onclick="openProofModal('check_out', '<?php echo $out['photo_log']; ?>', '<?php echo htmlspecialchars($out['clean_branch'], ENT_QUOTES); ?>', '<?php echo $out['status_title']; ?>', '<?php echo $out['status_color']; ?>', '<?php echo $day['date_display']; ?>', '<?php echo $out['time_display']; ?>')"
                                             <?php endif; ?>>
-                                            <div class="flex items-center gap-3">
-                                                <span class="text-xs font-bold bg-slate-700 text-white px-2.5 py-1 rounded-lg">ออก (OUT)</span>
-                                                <div>
-                                                    <p class="text-xs font-bold text-slate-800"><?php echo $out ? $out['clean_branch'] : 'ไม่มีข้อมูล'; ?></p>
-                                                    <?php if ($out): ?>
-                                                        <span class="inline-block text-[10px] px-2 py-0.5 rounded-md font-semibold border mt-1 <?php echo $out['status_color']; ?>">
+                                            
+                                            <!-- แถวบน: ป้ายบอกประเภท + เวลา -->
+                                            <div class="flex items-center justify-between gap-1">
+                                                <span class="text-[10px] sm:text-xs font-bold bg-slate-700 text-white px-2 py-0.5 rounded-md shrink-0">ออก (OUT)</span>
+                                                <span class="text-xs sm:text-sm font-black text-slate-800 tracking-tight"><?php echo $out ? $out['time_display'] : '-'; ?></span>
+                                            </div>
+
+                                            <!-- แถวล่าง: สถานที่ + สถานะ -->
+                                            <div class="mt-2 space-y-1">
+                                                <p class="text-[11px] sm:text-xs font-medium text-slate-600 truncate" title="<?php echo $out ? $out['clean_branch'] : 'ไม่มีข้อมูล'; ?>">
+                                                    <?php echo $out ? $out['clean_branch'] : 'ไม่มีข้อมูล'; ?>
+                                                </p>
+                                                <?php if ($out): ?>
+                                                    <div>
+                                                        <span class="inline-block text-[9px] sm:text-[10px] px-1.5 py-0.2 rounded font-bold border <?php echo $out['status_color']; ?>">
                                                             <?php echo $out['status_title']; ?>
                                                         </span>
-                                                    <?php endif; ?>
-                                                </div>
+                                                    </div>
+                                                <?php endif; ?>
                                             </div>
-                                            <span class="text-sm font-black text-slate-900 tracking-tight"><?php echo $out ? $out['time_display'] : '-'; ?></span>
                                         </div>
 
                                     </div>
