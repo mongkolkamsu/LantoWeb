@@ -1,5 +1,11 @@
 <?php
 session_start();
+
+// 🎯 บังคับไม่ให้เบราว์เซอร์จำแคช ป้องกันปัญหารีเฟรชแล้วข้อมูลไม่เปลี่ยน
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+
 require_once 'config/db.php';
 
 // 🔑 1. ตรวจสอบสิทธิ์การเข้าใช้งาน
@@ -16,24 +22,30 @@ $page_subtitle = 'โครงสร้างบริษัท แผนกง�
 $show_back     = true;
 $back_url      = (isset($_GET['from']) && $_GET['from'] === 'mobile') ? 'index_mobile.php' : 'index_pc.php';
 
-// 🎯 ฟังก์ชันดึงค่าจาก system_settings
-function getSetting($pdo, $key, $default = '-') {
-    try {
-        $stmt = $pdo->prepare("SELECT setting_value FROM system_settings WHERE setting_key = :k");
-        $stmt->execute(['k' => $key]);
-        $val = $stmt->fetchColumn();
-        return ($val !== false && trim($val) !== '') ? $val : $default;
-    } catch (PDOException $e) {
-        return $default;
+// 🎯 ฟังก์ชันดึงค่าจาก system_settings (รองรับการสำรองค้นหาหลายคีย์ชื่อ)
+function getSetting($pdo, $keys, $default = '-') {
+    if (!is_array($keys)) $keys = [$keys];
+    foreach ($keys as $key) {
+        try {
+            $stmt = $pdo->prepare("SELECT setting_value FROM system_settings WHERE setting_key = :k LIMIT 1");
+            $stmt->execute(['k' => $key]);
+            $val = $stmt->fetchColumn();
+            if ($val !== false && trim($val) !== '') {
+                return $val;
+            }
+        } catch (PDOException $e) {
+            // ข้ามไปเช็คคีย์ถัดไป
+        }
     }
+    return $default;
 }
 
-// 🏢 2. ดึงข้อมูลบริษัทจากฐานข้อมูล
-$company_name    = getSetting($pdo, 'company_name', 'บริษัท แลนโต เทคโนโลยี จำกัด');
-$company_tax_id  = getSetting($pdo, 'company_tax_id', '0105550000000');
-$company_address = getSetting($pdo, 'company_address', '123/45 สำนักงานใหญ่ กรุงเทพมหานคร 10900');
-$company_phone   = getSetting($pdo, 'company_phone', '02-123-4567');
-$company_email   = getSetting($pdo, 'company_email', 'contact@lantoglobal.com');
+// 🏢 2. ดึงข้อมูลบริษัทจากฐานข้อมูล (รองรับทั้ง company_name และ site_name)
+$company_name    = getSetting($pdo, ['company_name', 'site_name'], 'บริษัท ลานโต จำกัด');
+$company_tax_id  = getSetting($pdo, ['company_tax_id', 'tax_id'], '0105550000000');
+$company_address = getSetting($pdo, ['company_address', 'address'], '123/45 สำนักงานใหญ่ กรุงเทพมหานคร 10900');
+$company_phone   = getSetting($pdo, ['company_phone', 'phone'], '02-123-4567');
+$company_email   = getSetting($pdo, ['company_email', 'email'], 'contact@lantoglobal.com');
 
 $sick_quota      = getSetting($pdo, 'sick_quota', '30');
 $business_quota  = getSetting($pdo, 'business_quota', '3');
@@ -95,6 +107,9 @@ try {
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+        html { 
+            font-size: 17px; /* แนะนำ 17px หรือ 18px */
+        }
     </style>
 </head>
 <body class="bg-[#f8fafc] min-h-screen text-slate-800 antialiased pb-12">
@@ -125,6 +140,7 @@ try {
                             🟢 สถานะสถานประกอบการ: ปกติ
                         </span>
                     </div>
+                    <!-- 🎯 แสดงชื่อบริษัทที่ดึงจากฐานข้อมูลแบบสดๆ -->
                     <h1 class="text-2xl sm:text-3xl font-black tracking-wide text-slate-900"><?php echo htmlspecialchars($company_name); ?></h1>
                     <p class="text-xs text-slate-600 font-medium flex items-center justify-center sm:justify-start gap-1.5">
                         <span class="text-blue-500">📍</span> <?php echo htmlspecialchars($company_address); ?>

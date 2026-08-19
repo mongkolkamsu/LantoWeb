@@ -72,11 +72,30 @@ if (!$can_view_all) {
     $params['user_id'] = $user_id;
 }
 
+// 🎯 จัดการเงื่อนไขการค้นหาคำ (ถ้ามีการพิมพ์คำค้นหา จะค้นหาจากทุกฟิลด์ทั่วระบบ)
 if (!empty($search_query)) {
-    $where_clauses[] = "(m.title LIKE :search OR m.pickup_location LIKE :search OR m.dropoff_location LIKE :search OR m.dropoff_contact LIKE :search)";
-    $params['search'] = "%{$search_query}%";
+    $where_clauses[] = "(m.title LIKE :s_title OR m.job_no LIKE :s_job OR m.pickup_location LIKE :s_pickup OR m.dropoff_location LIKE :s_drop OR m.pickup_contact LIKE :s_pcontact OR m.dropoff_contact LIKE :s_dcontact OR m.details LIKE :s_details)";
+    
+    $params['s_title']    = "%{$search_query}%";
+    $params['s_job']      = "%{$search_query}%";
+    $params['s_pickup']   = "%{$search_query}%";
+    $params['s_drop']     = "%{$search_query}%";
+    $params['s_pcontact'] = "%{$search_query}%";
+    $params['s_dcontact'] = "%{$search_query}%";
+    $params['s_details']  = "%{$search_query}%";
+} else {
+    // ถ้าไม่ได้พิมพ์ค้นหา ค่อยกรองตามช่วงวันที่ปกติ
+    if (!empty($date_start)) {
+        $where_clauses[] = "m.booking_date >= :date_start";
+        $params['date_start'] = $date_start;
+    }
+    if (!empty($date_end)) {
+        $where_clauses[] = "m.booking_date <= :date_end";
+        $params['date_end'] = $date_end;
+    }
 }
 
+// ตัวกรองสถานะ
 if ($status_filter !== 'all') {
     if ($status_filter === 'delivering') {
         $where_clauses[] = "m.status IN ('accepted', 'picking_up', 'delivering')";
@@ -84,15 +103,6 @@ if ($status_filter !== 'all') {
         $where_clauses[] = "m.status = :status";
         $params['status'] = $status_filter;
     }
-}
-
-if (!empty($date_start)) {
-    $where_clauses[] = "m.booking_date >= :date_start";
-    $params['date_start'] = $date_start;
-}
-if (!empty($date_end)) {
-    $where_clauses[] = "m.booking_date <= :date_end";
-    $params['date_end'] = $date_end;
 }
 
 $where_sql = implode(' AND ', $where_clauses);

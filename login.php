@@ -91,8 +91,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Lanto Web">
     <style>
+        html { 
+            font-size: 17px; /* แนะนำ 17px หรือ 18px */
+        }
         body { font-family: 'Prompt', sans-serif; -webkit-tap-highlight-color: transparent; }
         ::-webkit-scrollbar { display: none; }
+        
     </style>
 </head>
 <body class="bg-gradient-to-tr from-[#e2e8f0] via-[#f1f5f9] to-[#dbeafe] min-h-screen flex items-center justify-center p-4 sm:p-6 antialiased">

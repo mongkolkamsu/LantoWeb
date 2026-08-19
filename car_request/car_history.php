@@ -54,24 +54,34 @@ $dates_arr  = explode(' - ', $date_range_raw);
 $date_start = parseThaiDateToAD($dates_arr[0] ?? '');
 $date_end   = parseThaiDateToAD($dates_arr[1] ?? $dates_arr[0] ?? '');
 
-// 3. ดึงรายการการจองรถตามเงื่อนไข
+// 3. จัดการเงื่อนไข SQL และ Parameter ให้สัมพันธ์กันอย่างถูกต้องแม่นยำ
+// 3. จัดการเงื่อนไข SQL และ Parameter
 $where_clauses = ["1=1"];
 $params = [];
 
-if (!empty($date_start)) {
-    $where_clauses[] = "DATE(cr.start_datetime) >= :date_start";
-    $params['date_start'] = $date_start;
-}
-if (!empty($date_end)) {
-    $where_clauses[] = "DATE(cr.start_datetime) <= :date_end";
-    $params['date_end'] = $date_end;
-}
-
+// ถ้ามีการพิมพ์คำค้นหา
 if (!empty($search_query)) {
-    $where_clauses[] = "(c.brand_model LIKE :search OR c.license_plate LIKE :search OR cr.destination LIKE :search OR u.first_name LIKE :search OR cr.passengers_name LIKE :search)";
-    $params['search'] = "%{$search_query}%";
+    // 🎯 แยกชื่อพารามิเตอร์ให้ไม่ซ้ำกัน เพื่อป้องกันปัญหา Invalid parameter number ของ PDO
+    $where_clauses[] = "(c.brand_model LIKE :s_model OR c.license_plate LIKE :s_plate OR cr.destination LIKE :s_dest OR u.first_name LIKE :s_name OR cr.passengers_name LIKE :s_pass)";
+    
+    $params['s_model'] = "%{$search_query}%";
+    $params['s_plate'] = "%{$search_query}%";
+    $params['s_dest']  = "%{$search_query}%";
+    $params['s_name']  = "%{$search_query}%";
+    $params['s_pass']  = "%{$search_query}%";
+} else {
+    // ถ้าไม่ได้พิมพ์ค้นหา ค่อยกรองตามช่วงวันที่
+    if (!empty($date_start)) {
+        $where_clauses[] = "DATE(cr.start_datetime) >= :date_start";
+        $params['date_start'] = $date_start;
+    }
+    if (!empty($date_end)) {
+        $where_clauses[] = "DATE(cr.start_datetime) <= :date_end";
+        $params['date_end'] = $date_end;
+    }
 }
 
+// ตัวกรองสถานะการจองรถ
 if ($selected_status === 'driving') {
     $where_clauses[] = "cr.status = 'approved' AND cr.start_mileage > 0 AND cr.actual_end_datetime IS NULL";
 } elseif ($selected_status === 'completed') {
@@ -104,6 +114,8 @@ try {
     $stmt->execute($params);
     $requests_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
+    // แสดงรายละเอียด Error บนหน้าจอหากยังเกิดปัญหา
+    echo "<div style='background: red; color: white; padding: 10px;'>SQL Error: " . $e->getMessage() . "</div>";
     $requests_list = [];
 }
 
@@ -158,7 +170,7 @@ unset($_SESSION['success_msg'], $_SESSION['error_msg']);
 
     <main class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-6">
 
-        <!-- 🔎 แถบตัวกรอง (ดีไซน์เดียวกับระบบแมสเซนเจอร์) -->
+        <!-- 🔎 แถบตัวกรอง -->
         <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col md:flex-row justify-between items-center gap-3">
             <form method="GET" action="car_history.php" class="flex flex-wrap items-center gap-3 w-full md:w-auto">
 
@@ -331,6 +343,7 @@ unset($_SESSION['success_msg'], $_SESSION['error_msg']);
     <script src="../assets/js/alerts.js"></script>
 
     <script>
+        print_r(); // ล้างบรรทัดเก่าที่มีปัญหา
         document.addEventListener("DOMContentLoaded", function() {
             <?php if (!empty($success_msg)): ?>
                 if (typeof LantoAlert !== 'undefined') {

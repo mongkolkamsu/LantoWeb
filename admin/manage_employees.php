@@ -269,6 +269,11 @@ $branch_filter = $_GET['branch'] ?? '';
 $type_filter   = $_GET['emp_type'] ?? '';
 $sort_order    = $_GET['sort'] ?? '';
 
+// 🎯 กำหนดค่า limit ไว้ที่นี่จุดเดียวจบ
+$limit  = 10; 
+$page   = isset($_GET['page']) && is_numeric($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$offset = ($page - 1) * $limit;
+
 try {
     $current_month = date('m');
     $current_year  = date('Y');
@@ -350,8 +355,40 @@ try {
         $sql .= " ORDER BY u.id DESC";
     }
 
+    $count_sql = "SELECT COUNT(*) FROM users u WHERE u.role != 'admin'";
+    $count_params = $params;
+    
+    // เติมเงื่อนไขเดียวกันลงในคำสั่งนับจำนวน
+    if ($card_filter === 'new_hires') {
+        $count_sql .= " AND MONTH(u.start_date) = :m_hire AND YEAR(u.start_date) = :y_hire";
+    } elseif ($card_filter === 'birthdays') {
+        $count_sql .= " AND MONTH(u.birth_date) = :m_birth";
+    } elseif ($card_filter === 'inactive') {
+        $count_sql .= " AND u.is_active = 0";
+    }
+    if ($search !== '') {
+        $count_sql .= " AND (CONCAT_WS(' ', u.first_name, u.last_name) LIKE :search1 OR u.employee_code LIKE :search2 OR u.email LIKE :search3)";
+    }
+    if ($dept_filter !== '') { $count_sql .= " AND u.department = :dept"; }
+    if ($branch_filter !== '') { $count_sql .= " AND u.branch_id = :branch"; }
+    if ($type_filter !== '') { $count_sql .= " AND u.employee_type = :emp_type"; }
+
+    $stmt_cnt = $pdo->prepare($count_sql);
+    $stmt_cnt->execute($count_params);
+    $total_records = $stmt_cnt->fetchColumn() ?: 0;
+    $total_pages   = max(1, ceil($total_records / $limit));
+
+    // 2. เติม LIMIT และ OFFSET เข้าไปในคำสั่ง SQL หลัก
+    $sql .= " LIMIT :limit OFFSET :offset";
+
     $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
+    foreach ($params as $k => $v) {
+        $stmt->bindValue(":{$k}", $v);
+    }
+    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    
+    $stmt->execute();
     $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
@@ -419,7 +456,7 @@ $page_subtitle = 'เพิ่ม แก้ไข และบริหารจ
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-[#f4f6fa] text-slate-800 antialiased flex flex-col md:flex-row min-h-screen md:h-screen md:overflow-hidden">
+<body class="bg-[#f4f6fa] text-slate-800 antialiased flex flex-col md:flex-row min-h-screen">
 
     <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
 
@@ -427,13 +464,13 @@ $page_subtitle = 'เพิ่ม แก้ไข และบริหารจ
     <?php include '../includes/sidebar.php'; ?>
 
     <!-- 💻 WORKSPACE WRAPPER ฝั่งขวา -->
-    <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+    <div class="flex-1 flex flex-col min-w-0 min-h-screen">
 
         <!-- 🔝 HEADER ADMIN -->
         <?php include_once '../includes/header_admin.php'; ?>
 
     <!-- 💻 2. MAIN WORKSPACE -->
-    <main class="flex-1 p-4 sm:p-6 lg:p-8 w-full min-h-screen md:h-screen overflow-y-auto space-y-4 sm:space-y-6 pb-20 md:pb-8">
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 w-full min-h-screen space-y-4 sm:space-y-6 pb-20 md:pb-8">
 
         <!-- 📊 3. KPI CARDS -->
         <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-2xs">
@@ -543,7 +580,7 @@ $page_subtitle = 'เพิ่ม แก้ไข และบริหารจ
         </div>
 
         <!-- 📑 ตารางข้อมูลพนักงาน -->
-        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col">
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs border-collapse">
                     <thead>
@@ -651,8 +688,76 @@ $page_subtitle = 'เพิ่ม แก้ไข และบริหารจ
                     </tbody>
                 </table>
             </div>
-        </div>
+        
+            <!-- 📄 แถบ Pagination ด้านล่างตาราง (ปรับดีไซน์และจำนวนแสดงผลต่อหน้าให้ตรงกัน) -->
+            <?php 
+            // 🎯 กำหนดจำนวนแสดงผลต่อหน้าให้เท่ากับหน้าอื่น (เช่น 6 หรือ 12 รายการ)
+            $total_pages = max(1, ceil($total_records / $limit));
 
+            function buildEmployeePaginationUrl($filter_val, $search, $dept, $branch, $type, $sort, $target_page) {
+                $p = ['filter' => $filter_val];
+                if (!empty($search)) $p['search'] = $search;
+                if (!empty($dept)) $p['dept'] = $dept;
+                if (!empty($branch)) $p['branch'] = $branch;
+                if (!empty($type)) $p['emp_type'] = $type;
+                if (!empty($sort)) $p['sort'] = $sort;
+                if ($target_page > 1) $p['page'] = $target_page;
+                return 'manage_employees.php?' . http_build_query($p);
+            }
+            ?>
+            
+                <?php if ($total_records > 0): ?>
+                <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-semibold text-slate-500 rounded-b-2xl">
+                    <div>
+                        แสดงผล <span class="text-slate-800 font-bold"><?php echo min($offset + 1, $total_records); ?></span> 
+                        ถึง <span class="text-slate-800 font-bold"><?php echo min($offset + $limit, $total_records); ?></span> 
+                        จากทั้งหมด <span class="text-blue-600 font-extrabold"><?php echo $total_records; ?></span> รายการ
+                    </div>
+
+                    <div class="flex items-center gap-1.5">
+                        <?php if ($page > 1): ?>
+                            <a href="<?php echo buildEmployeePaginationUrl($card_filter, $search, $dept_filter, $branch_filter, $type_filter, $sort_order, $page - 1); ?>" 
+                            class="px-3 py-1.5 bg-white border border-slate-200 rounded-xl hover:bg-slate-100 hover:text-slate-800 transition-all shadow-2xs active:scale-95">
+                                ‹ ย้อนกลับ
+                            </a>
+                        <?php else: ?>
+                            <span class="px-3 py-1.5 bg-slate-100 border border-slate-200/60 text-slate-300 rounded-xl cursor-not-allowed select-none">
+                                ‹ ย้อนกลับ
+                            </span>
+                        <?php endif; ?>
+
+                        <div class="flex items-center gap-1">
+                            <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                                <?php if ($i == $page): ?>
+                                    <span class="w-8 h-8 rounded-xl bg-blue-600 text-white font-bold flex items-center justify-center shadow-md shadow-blue-500/20">
+                                        <?php echo $i; ?>
+                                    </span>
+                                <?php elseif ($i == 1 || $i == $total_pages || abs($i - $page) <= 1): ?>
+                                    <a href="<?php echo buildEmployeePaginationUrl($card_filter, $search, $dept_filter, $branch_filter, $type_filter, $sort_order, $i); ?>" 
+                                    class="w-8 h-8 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold flex items-center justify-center hover:bg-slate-100 transition-all shadow-2xs active:scale-95">
+                                        <?php echo $i; ?>
+                                    </a>
+                                <?php elseif (abs($i - $page) == 2): ?>
+                                    <span class="text-slate-400 px-1 select-none">...</span>
+                                <?php endif; ?>
+                            <?php endfor; ?>
+                        </div>
+
+                        <?php if ($page < $total_pages): ?>
+                            <a href="<?php echo buildEmployeePaginationUrl($card_filter, $search, $dept_filter, $branch_filter, $type_filter, $sort_order, $page + 1); ?>" 
+                            class="px-3 py-1.5 bg-white border border-slate-200 rounded-xl hover:bg-slate-100 hover:text-slate-800 transition-all shadow-2xs active:scale-95">
+                                ถัดไป ›
+                            </a>
+                        <?php else: ?>
+                            <span class="px-3 py-1.5 bg-slate-100 border border-slate-200/60 text-slate-300 rounded-xl cursor-not-allowed select-none">
+                                ถัดไป ›
+                            </span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>              
     </main>
 
     <!-- 📌 ดึงชุด Modal และ Floating Action Bar มาใช้งาน -->

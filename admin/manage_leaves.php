@@ -20,7 +20,7 @@ $request_date_input = trim($_GET['request_date'] ?? '');
 $leave_type_filter  = trim($_GET['leave_type'] ?? 'all');
 
 // 📄 ตั้งค่า Pagination (แสดงทีละ 7 รายการ)
-$limit = 6;
+$limit = 10;
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $offset = ($page - 1) * $limit;
 
@@ -204,7 +204,7 @@ $page_subtitle = 'พิจารณาคำขอลาและตรวจ�
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-[#f4f6fa] text-slate-800 antialiased flex flex-col md:flex-row min-h-screen md:h-screen md:overflow-hidden">
+<body class="bg-[#f4f6fa] text-slate-800 antialiased flex flex-col md:flex-row min-h-screen">
 
     <?php
     // 🎯 ดึงชื่อไฟล์ปัจจุบันมาเช็ก Active Menu อัตโนมัติ
@@ -215,13 +215,13 @@ $page_subtitle = 'พิจารณาคำขอลาและตรวจ�
     <?php include '../includes/sidebar.php'; ?>
     
     <!-- 💻 WORKSPACE WRAPPER ฝั่งขวา -->
-    <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+    <div class="flex-1 flex flex-col min-w-0 min-h-screen">
 
     <!-- 🔝 HEADER ADMIN -->
     <?php include_once '../includes/header_admin.php'; ?>
         
     <!-- 💻 2. MAIN WORKSPACE -->
-    <main class="flex-1 p-4 sm:p-6 lg:p-8 w-full overflow-y-auto space-y-4 sm:space-y-6 pb-20 md:pb-8">
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 w-full min-h-screen space-y-4 sm:space-y-6 pb-20 md:pb-8">
 
         <!-- 📊 3. KPI STAT CARDS (สไตล์ Clean Box แบบ system_settings.php) -->
         <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-2xs">

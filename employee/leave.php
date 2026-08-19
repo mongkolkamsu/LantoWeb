@@ -52,7 +52,7 @@ try {
         SELECT leave_type, SUM(DATEDIFF(end_date, start_date) + 1) AS days_used
         FROM leave_requests
         WHERE user_id = :user_id 
-          AND status = 'approved'
+          AND status IN ('approved', 'pending')
           AND YEAR(created_at) = YEAR(CURRENT_DATE)
         GROUP BY leave_type
     ");
@@ -91,8 +91,8 @@ if ($is_unlocked_vacation) {
 // 🎯 อาร์เรย์สำหรับรูปแบบเวลาการลา
 $duration_options = array(
     array('id' => 'full', 'name' => 'ลาเต็มวัน (Full Day)'),
-    array('id' => 'half', 'name' => 'ลาครึ่งวัน (Half Day)'),
-    array('id' => 'hourly', 'name' => 'ลารายชั่วโมง (Hourly)')
+    array('id' => 'half_morning', 'name' => 'ลาครึ่งวันเช้า'),
+    array('id' => 'half_afternoon', 'name' => 'ลาครึ่งวันบ่าย')
 );
 ?>
 <!DOCTYPE html>

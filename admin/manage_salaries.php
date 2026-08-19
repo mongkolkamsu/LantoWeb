@@ -1,8 +1,10 @@
 <?php
+ob_start();
 session_start();
 require_once '../config/db.php';
 require_once '../includes/rounded_dropdown.php';
 require_once '../config/auth.php';
+
 // 🔑 1. SECURITY LAYER
 if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['admin', 'hr'])) {
     header("Location: ../login.php");
@@ -24,6 +26,11 @@ $selected_year  = $_GET['year'] ?? date('Y');
 $search_emp     = trim($_GET['search'] ?? '');
 $sort_order     = $_GET['sort'] ?? '';
 
+// 📄 ตั้งค่า Pagination (กำหนดแสดงผล 10 รายการต่อหน้า)
+$limit  = 10; 
+$page   = isset($_GET['page']) && is_numeric($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$offset = ($page - 1) * $limit;
+
 // ตัวเลือกเดือนและปีสำหรับ Dropdown
 $months_options = [
     ['id' => '01', 'name' => 'มกราคม'], ['id' => '02', 'name' => 'กุมภาพันธ์'],
@@ -34,13 +41,13 @@ $months_options = [
     ['id' => '11', 'name' => 'พฤศจิกายน'], ['id' => '12', 'name' => 'ธันวาคม']
 ];
 
-// 🎯 ตัวเลือกปี แสดงเฉพาะ พ.ศ. (เช่น 2569)
+// 🎯 ตัวเลือกปี แสดงเฉพาะ พ.ศ.
 $current_y = (int)date('Y');
 $years_options = [];
 for ($y = $current_y; $y >= $current_y - 3; $y--) {
     $years_options[] = [
         'id'   => (string)$y, 
-        'name' => (string)($y + 543) // แสดงเฉพาะ พ.ศ.
+        'name' => (string)($y + 543)
     ];
 }
 
@@ -48,7 +55,7 @@ $active_month_label = 'กรกฎาคม';
 foreach ($months_options as $m) {
     if ($m['id'] === sprintf("%02d", $selected_month)) { $active_month_label = $m['name']; break; }
 }
-$active_year_label = (string)($selected_year + 543); // แสดงเฉพาะ พ.ศ.
+$active_year_label = (string)($selected_year + 543);
 
 // 💾 2. PROCESS POST ACTIONS
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
@@ -82,13 +89,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 throw new Exception('กรุณาแนบไฟล์สลิปเงินเดือน PDF');
             }
 
-            // ตรวจสอบว่ามีสลิปของพนักงานคนนี้ในงวดเดือน/ปีดังกล่าวหรือยัง
             $chk_stmt = $pdo->prepare("SELECT id FROM salaries WHERE employee_id = :emp_id AND month = :m AND year = :y");
             $chk_stmt->execute(['emp_id' => $emp_id, 'm' => $pay_month, 'y' => $pay_year]);
             $existing_slip = $chk_stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($existing_slip) {
-                // อัปเดตข้อมูลเดิม
                 $stmt_up = $pdo->prepare("
                     UPDATE salaries SET net_pay = :net_pay, pdf_file = :pdf_file, is_published = 0 
                     WHERE id = :id
@@ -99,7 +104,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     'id'       => $existing_slip['id']
                 ]);
             } else {
-                // บันทึกใหม่
                 $stmt_ins = $pdo->prepare("
                     INSERT INTO salaries (employee_id, month, year, net_pay, pdf_file, is_published)
                     VALUES (:emp_id, :month, :year, :net_pay, :pdf_file, 0)
@@ -114,8 +118,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             }
 
             $_SESSION['success_msg'] = 'บันทึกสลิปเงินเดือนและอัปโหลดไฟล์เรียบร้อยแล้ว';
-            
-            // Redirect ไปที่งวดเดือน/ปีที่เพิ่งบันทึก
             header("Location: manage_salaries.php?month=$pay_month&year=$pay_year");
             exit();
         }
@@ -138,9 +140,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     exit();
 }
 
-// 🔍 3. FETCH USERS & SALARY LIST
-$employees_list = [];
+// 📊 3. CALCULATE ACCURATE KPI SUMMARY STATS (คำนวณภาพรวมทั้งหมดในระบบ ไม่จำกัดเฉพาะหน้าปัจจุบัน)
 try {
+    $m_sql_kpi = sprintf("%02d", $selected_month);
+    $y_sql_kpi = (string)$selected_year;
+
+    // ยอดทำจ่ายรวมสุทธิ
+    $stmt_kpi_sum = $pdo->prepare("SELECT SUM(net_pay) FROM salaries WHERE month = :m AND year = :y");
+    $stmt_kpi_sum->execute(['m' => $m_sql_kpi, 'y' => $y_sql_kpi]);
+    $total_sum = $stmt_kpi_sum->fetchColumn() ?: 0;
+
+    // ปล่อยเข้าแอปแล้ว
+    $stmt_kpi_pub = $pdo->prepare("SELECT COUNT(*) FROM salaries WHERE month = :m AND year = :y AND is_published = 1");
+    $stmt_kpi_pub->execute(['m' => $m_sql_kpi, 'y' => $y_sql_kpi]);
+    $published_count = $stmt_kpi_pub->fetchColumn() ?: 0;
+
+    // พนักงานทั้งหมด (ยกเว้น admin)
+    $stmt_tot_emp = $pdo->query("SELECT COUNT(*) FROM users WHERE role != 'admin'");
+    $total_employees_count = $stmt_tot_emp->fetchColumn() ?: 0;
+
+    // สลิปที่สร้างแล้วในงวดนี้
+    $stmt_sal_created = $pdo->prepare("SELECT COUNT(*) FROM salaries WHERE month = :m AND year = :y");
+    $stmt_sal_created->execute(['m' => $m_sql_kpi, 'y' => $y_sql_kpi]);
+    $salaries_created_count = $stmt_sal_created->fetchColumn() ?: 0;
+
+    $missing_count = max(0, $total_employees_count - $salaries_created_count);
+    $avg_salary = $total_employees_count > 0 ? $total_sum / $total_employees_count : 0;
+
+} catch (PDOException $e) {
+    $total_sum = 0; $missing_count = 0; $published_count = 0; $total_employees_count = 0; $avg_salary = 0;
+}
+
+// 🔍 4. FETCH USERS & SALARY LIST WITH PAGINATION
+$employees_list = [];
+$total_records = 0;
+try {
+    // นับจำนวนทั้งหมดตามเงื่อนไขค้นหา
+    $count_sql = "
+        SELECT COUNT(*) 
+        FROM users u
+        LEFT JOIN departments d ON u.department = d.id
+        LEFT JOIN branches b ON u.branch_id = b.id
+        LEFT JOIN salaries s ON u.id = s.employee_id AND s.month = :m_sql AND s.year = :y_sql
+        WHERE u.role != 'admin'
+    ";
+    $count_params = [
+        'm_sql' => sprintf("%02d", $selected_month),
+        'y_sql' => (string)$selected_year
+    ];
+
+    if ($search_emp !== '') {
+        $count_sql .= " AND (CONCAT(u.first_name, ' ', u.last_name) LIKE :s1 OR u.employee_code LIKE :s2)";
+        $count_params['s1'] = "%{$search_emp}%";
+        $count_params['s2'] = "%{$search_emp}%";
+    }
+
+    $stmt_cnt = $pdo->prepare($count_sql);
+    $stmt_cnt->execute($count_params);
+    $total_records = $stmt_cnt->fetchColumn() ?: 0;
+    $total_pages   = max(1, ceil($total_records / $limit));
+
+    // ดึงข้อมูลรายชื่อพนักงานแบบจำกัดหน้า (LIMIT & OFFSET)
     $sql = "
         SELECT u.id, u.employee_code, CONCAT(u.first_name, ' ', u.last_name) AS fullname, u.email, u.profile_image, 
                d.name AS dept_name, b.name AS branch_name,
@@ -157,7 +217,7 @@ try {
     ];
 
     if ($search_emp !== '') {
-        $sql .= " AND (CONCAT(u.first_name, ' ', u.last_name) AS fullname LIKE :s1 OR u.employee_code LIKE :s2)";
+        $sql .= " AND (CONCAT(u.first_name, ' ', u.last_name) LIKE :s1 OR u.employee_code LIKE :s2)";
         $params['s1'] = "%{$search_emp}%";
         $params['s2'] = "%{$search_emp}%";
     }
@@ -170,8 +230,15 @@ try {
         $sql .= " ORDER BY u.id DESC";
     }
 
+    $sql .= " LIMIT :limit OFFSET :offset";
+
     $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
+    foreach ($params as $k => $v) {
+        $stmt->bindValue(":{$k}", $v);
+    }
+    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->execute();
     $employees_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
@@ -182,6 +249,15 @@ $next_sort = ($sort_order === 'asc') ? 'desc' : 'asc';
 $sort_link_params = $_GET;
 $sort_link_params['sort'] = $next_sort;
 $sort_url = 'manage_salaries.php?' . http_build_query($sort_link_params);
+
+// ฟังก์ชันสร้าง URL สำหรับ Pagination
+function buildSalaryPaginationUrl($month, $year, $search, $sort, $target_page) {
+    $p = ['month' => $month, 'year' => $year];
+    if (!empty($search)) $p['search'] = $search;
+    if (!empty($sort)) $p['sort'] = $sort;
+    if ($target_page > 1) $p['page'] = $target_page;
+    return 'manage_salaries.php?' . http_build_query($p);
+}
 
 $page_title    = 'บริหารสลิปเงินเดือน (Payroll & Payslips)';
 $page_subtitle = 'คำนวณ ออกสลิปเงินเดือนประจำงวด และปล่อยสลิปเข้าแอปพลิเคชันพนักงาน';
@@ -203,26 +279,23 @@ $page_subtitle = 'คำนวณ ออกสลิปเงินเดือ�
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-[#f4f6fa] text-slate-800 antialiased flex flex-col md:flex-row min-h-screen md:h-screen md:overflow-hidden">
+<body class="bg-[#f4f6fa] text-slate-800 antialiased flex flex-col md:flex-row min-h-screen">
 
-    <?php
-    // 🎯 ดึงชื่อไฟล์ปัจจุบันมาเช็ก Active Menu อัตโนมัติ
-    $current_page = basename($_SERVER['PHP_SELF']);
-    ?>
+    <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
 
-    <!-- 👤 SIDEBAR NAVIGATION (Light & Clean Theme) -->
+    <!-- 👤 SIDEBAR NAVIGATION -->
     <?php include '../includes/sidebar.php'; ?>
 
     <!-- 💻 WORKSPACE WRAPPER ฝั่งขวา -->
-    <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+    <div class="flex-1 flex flex-col min-w-0 min-h-screen">
 
         <!-- 🔝 HEADER ADMIN -->
         <?php include_once '../includes/header_admin.php'; ?>
 
     <!-- 💻 2. MAIN WORKSPACE -->
-    <main class="flex-1 p-4 sm:p-6 lg:p-8 w-full min-h-screen md:h-screen overflow-y-auto space-y-4 sm:space-y-6 pb-20 md:pb-8">
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 w-full min-h-screen space-y-4 sm:space-y-6 pb-20 md:pb-8">
 
-        <!-- 📊 3. KPI SUMMARY CARDS (สไตล์ Clean Box แบบ system_settings.php) -->
+        <!-- 📊 3. KPI SUMMARY CARDS -->
         <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-2xs">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                 
@@ -236,11 +309,7 @@ $page_subtitle = 'คำนวณ ออกสลิปเงินเดือ�
                         </div>
                     </div>
                     <span class="text-xl font-black tracking-tight text-emerald-700">
-                        <?php 
-                            $total_sum = 0;
-                            foreach($employees_list as $e) { if(!empty($e['net_pay'])) $total_sum += $e['net_pay']; }
-                            echo '฿ ' . number_format($total_sum, 2);
-                        ?>
+                        <?php echo '฿ ' . number_format($total_sum, 2); ?>
                     </span>
                 </div>
 
@@ -254,11 +323,7 @@ $page_subtitle = 'คำนวณ ออกสลิปเงินเดือ�
                         </div>
                     </div>
                     <span class="text-2xl font-black tracking-tight text-rose-600">
-                        <?php 
-                            $missing_count = 0;
-                            foreach($employees_list as $e) { if(empty($e['salary_id'])) $missing_count++; }
-                            echo $missing_count . ' คน';
-                        ?>
+                        <?php echo $missing_count . ' คน'; ?>
                     </span>
                 </div>
 
@@ -272,11 +337,7 @@ $page_subtitle = 'คำนวณ ออกสลิปเงินเดือ�
                         </div>
                     </div>
                     <span class="text-2xl font-black tracking-tight text-blue-600">
-                        <?php 
-                            $published_count = 0;
-                            foreach($employees_list as $e) { if(!empty($e['is_published']) && $e['is_published'] == 1) $published_count++; }
-                            echo $published_count . ' / ' . count($employees_list);
-                        ?>
+                        <?php echo $published_count . ' / ' . $total_employees_count; ?>
                     </span>
                 </div>
 
@@ -290,18 +351,14 @@ $page_subtitle = 'คำนวณ ออกสลิปเงินเดือ�
                         </div>
                     </div>
                     <span class="text-xl font-black tracking-tight text-slate-800">
-                        <?php 
-                            $cnt = count($employees_list);
-                            $avg = $cnt > 0 ? $total_sum / $cnt : 0;
-                            echo '฿ ' . number_format($avg, 2);
-                        ?>
+                        <?php echo '฿ ' . number_format($avg_salary, 2); ?>
                     </span>
                 </div>
 
             </div>
         </div>
 
-        <!-- 🔎 4. FILTER & SEARCH BAR (ตัวกรองแบบ Rounded Dropdown และ พ.ศ.) -->
+        <!-- 🔎 4. FILTER & SEARCH BAR + ปุ่มดำเนินการ -->
         <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col md:flex-row justify-between items-center gap-3">
             <form method="GET" action="manage_salaries.php" class="flex flex-wrap items-center gap-3 w-full md:w-auto text-xs">
                 
@@ -315,7 +372,7 @@ $page_subtitle = 'คำนวณ ออกสลิปเงินเดือ�
                     <?php renderRoundedDropdown('year_select', 'year', $active_year_label, $years_options, (string)$selected_year); ?>
                 </div>
 
-                <div class="w-full sm:w-100">
+                <div class="w-full sm:w-80">
                     <input type="text" name="search" value="<?php echo htmlspecialchars($search_emp); ?>" placeholder="ค้นหาชื่อ หรือ รหัสพนักงาน..." 
                         class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2 font-medium focus:outline-none focus:border-blue-500 transition-colors h-10">
                 </div>
@@ -340,16 +397,14 @@ $page_subtitle = 'คำนวณ ออกสลิปเงินเดือ�
                 <button type="button" onclick="publishSelectedPayslips()" class="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold px-4 py-2.5 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5 shadow-3xs">
                     <span>📲</span> ปล่อยสลิปเข้าแอป (Publish)
                 </button>
-            </div>
-        </div>
-            <div class="flex items-center gap-2">
                 <button type="button" onclick="openCreatePayslipModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-md shadow-blue-500/20 active:scale-95 cursor-pointer flex items-center gap-1.5">
                     <span>➕</span> สร้างสลิปประจำงวด
                 </button>
             </div>
+        </div>
 
-        <!-- 📑 5. PAYSLIP DATA TABLE -->
-        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+        <!-- 📑 5. PAYSLIP DATA TABLE WITH PAGINATION -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col">
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs border-collapse">
                     <thead>
@@ -434,11 +489,63 @@ $page_subtitle = 'คำนวณ ออกสลิปเงินเดือ�
                     </tbody>
                 </table>
             </div>
+
+            <!-- 📄 แถบ Pagination ด้านล่างตาราง -->
+            <?php if ($total_records > 0): ?>
+            <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-semibold text-slate-500 rounded-b-2xl">
+                <div>
+                    แสดงผล <span class="text-slate-800 font-bold"><?php echo min($offset + 1, $total_records); ?></span> 
+                    ถึง <span class="text-slate-800 font-bold"><?php echo min($offset + $limit, $total_records); ?></span> 
+                    จากทั้งหมด <span class="text-blue-600 font-extrabold"><?php echo $total_records; ?></span> รายการ
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                    <?php if ($page > 1): ?>
+                        <a href="<?php echo buildSalaryPaginationUrl($selected_month, $selected_year, $search_emp, $sort_order, $page - 1); ?>" 
+                        class="px-3 py-1.5 bg-white border border-slate-200 rounded-xl hover:bg-slate-100 hover:text-slate-800 transition-all shadow-2xs active:scale-95">
+                            ‹ ย้อนกลับ
+                        </a>
+                    <?php else: ?>
+                        <span class="px-3 py-1.5 bg-slate-100 border border-slate-200/60 text-slate-300 rounded-xl cursor-not-allowed select-none">
+                            ‹ ย้อนกลับ
+                        </span>
+                    <?php endif; ?>
+
+                    <div class="flex items-center gap-1">
+                        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                            <?php if ($i == $page): ?>
+                                <span class="w-8 h-8 rounded-xl bg-blue-600 text-white font-bold flex items-center justify-center shadow-md shadow-blue-500/20">
+                                    <?php echo $i; ?>
+                                </span>
+                            <?php elseif ($i == 1 || $i == $total_pages || abs($i - $page) <= 1): ?>
+                                <a href="<?php echo buildSalaryPaginationUrl($selected_month, $selected_year, $search_emp, $sort_order, $i); ?>" 
+                                class="w-8 h-8 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold flex items-center justify-center hover:bg-slate-100 transition-all shadow-2xs active:scale-95">
+                                    <?php echo $i; ?>
+                                </a>
+                            <?php elseif (abs($i - $page) == 2): ?>
+                                <span class="text-slate-400 px-1 select-none">...</span>
+                            <?php endif; ?>
+                        <?php endfor; ?>
+                    </div>
+
+                    <?php if ($page < $total_pages): ?>
+                        <a href="<?php echo buildSalaryPaginationUrl($selected_month, $selected_year, $search_emp, $sort_order, $page + 1); ?>" 
+                        class="px-3 py-1.5 bg-white border border-slate-200 rounded-xl hover:bg-slate-100 hover:text-slate-800 transition-all shadow-2xs active:scale-95">
+                            ถัดไป ›
+                        </a>
+                    <?php else: ?>
+                        <span class="px-3 py-1.5 bg-slate-100 border border-slate-200/60 text-slate-300 rounded-xl cursor-not-allowed select-none">
+                            ถัดไป ›
+                        </span>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
 
     </main>
 
-    <!-- 📌 MODAL: อัปโหลดสลิปเงินเดือนประจำงวด (ปรับใช้ Rounded Dropdown สไตล์เดียวกัน) -->
+    <!-- 📌 MODAL: อัปโหลดสลิปเงินเดือนประจำงวด -->
     <div id="createPayslipModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4 overflow-visible my-auto">
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
@@ -568,28 +675,34 @@ $page_subtitle = 'คำนวณ ออกสลิปเงินเดือ�
                 return;
             }
 
-            if (confirm(`คุณต้องการปล่อยสลิปเงินเดือนให้พนักงานที่เลือกจำนวน ${checkedBoxes.length} คน เข้าสู่แอปมือถือใช่หรือไม่?`)) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = 'manage_salaries.php';
-                
-                const inputAction = document.createElement('input');
-                inputAction.type = 'hidden';
-                inputAction.name = 'action';
-                inputAction.value = 'publish_payslips';
-                form.appendChild(inputAction);
+            LantoAlert.confirm(
+                'ยืนยันการปล่อยสลิป',
+                `คุณต้องการปล่อยสลิปเงินเดือนให้พนักงานที่เลือกจำนวน ${checkedBoxes.length} คน เข้าสู่แอปมือถือใช่หรือไม่?`,
+                function() {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = 'manage_salaries.php';
+                    
+                    const inputAction = document.createElement('input');
+                    inputAction.type = 'hidden';
+                    inputAction.name = 'action';
+                    inputAction.value = 'publish_payslips';
+                    form.appendChild(inputAction);
 
-                checkedBoxes.forEach(cb => {
-                    const inputId = document.createElement('input');
-                    inputId.type = 'hidden';
-                    inputId.name = 'employee_ids[]';
-                    inputId.value = cb.value;
-                    form.appendChild(inputId);
-                });
+                    checkedBoxes.forEach(cb => {
+                        const inputId = document.createElement('input');
+                        inputId.type = 'hidden';
+                        inputId.name = 'employee_ids[]';
+                        inputId.value = cb.value;
+                        form.appendChild(inputId);
+                    });
 
-                document.body.appendChild(form);
-                form.submit();
-            }
+                    document.body.appendChild(form);
+                    form.submit();
+                },
+                null,
+                'approve'
+            );
         }
 
         function toggleSearchableDropdown(id) {
@@ -645,7 +758,7 @@ $page_subtitle = 'คำนวณ ออกสลิปเงินเดือ�
                 }
             }
         });
-        // 🎯 ฟังก์ชันเปลี่ยนสไตล์กล่องเมื่อเลือก/ไม่ได้เลือกไฟล์ PDF
+
         function handlePayslipFileChange(input) {
             const container = document.getElementById('dropzone-container');
             const iconDisplay = document.getElementById('file-icon-display');
@@ -656,7 +769,6 @@ $page_subtitle = 'คำนวณ ออกสลิปเงินเดือ�
                 const file = input.files[0];
                 const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
                 
-                // ✨ สถานะเมื่อเลือกไฟล์สำเร็จ (กรอบเขียวเส้นทึบ + BG เขียวอ่อน + ไอคอน ✅)
                 container.className = "border-2 border-solid border-emerald-500 rounded-2xl p-4 text-center bg-emerald-50/80 transition-all relative shadow-xs";
                 iconDisplay.textContent = "✅";
                 iconDisplay.className = "text-2xl scale-110 inline-block";
@@ -667,7 +779,6 @@ $page_subtitle = 'คำนวณ ออกสลิปเงินเดือ�
                 subDisplay.textContent = `แนบไฟล์เรียบร้อย (${fileSizeMB} MB) • คลิกหากต้องการเปลี่ยนไฟล์`;
                 subDisplay.className = "text-[10px] text-emerald-600 font-bold";
             } else {
-                // 🔄 รีเซ็ตกลับเป็นสถานะยังไม่ได้เลือกไฟล์ (กรอบเทาเส้นประ)
                 container.className = "border-2 border-dashed border-slate-200 hover:border-blue-500 rounded-2xl p-4 text-center bg-slate-50 transition-all relative";
                 iconDisplay.textContent = "📄";
                 iconDisplay.className = "text-2xl inline-block";
@@ -680,7 +791,6 @@ $page_subtitle = 'คำนวณ ออกสลิปเงินเดือ�
             }
         }
 
-        // 🎯 ล้างค่าไฟล์เมื่อปิด Modal
         function closeCreatePayslipModal() {
             document.getElementById('createPayslipModal').classList.add('hidden');
             const fileInput = document.getElementById('payslip_pdf_input');

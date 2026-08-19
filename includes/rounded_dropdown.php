@@ -46,7 +46,7 @@ function renderRoundedDropdown($id, $input_name, $placeholder, $options_array, $
 
         <!-- Dropdown Outer Container -->
         <div id="list-<?php echo $id; ?>" 
-             class="hidden absolute top-full left-0 right-0 mt-2.5 z-50">
+             class="hidden absolute top-full left-0 right-0 mt-1 z-50">
             
             <!-- ติ่งลูกศรชี้ขึ้น -->
             <div class="absolute -top-[6px] right-6 w-3 h-3 bg-white border-t border-l border-slate-200/90 rotate-45 z-20"></div>
@@ -98,12 +98,11 @@ if (typeof dropdownScriptsLoaded === 'undefined') {
         });
 
         const rect = input.getBoundingClientRect();
-        list.style.position = 'fixed';
+        list.style.position = 'absolute';
         list.style.zIndex = '999999';
         list.style.width = Math.max(rect.width, 200) + 'px';
-        list.style.left = rect.left + 'px';
-        list.style.bottom = 'auto';
-        list.style.top = (rect.bottom + 4) + 'px';
+        list.style.left = '0px'; 
+        list.style.top = (input.offsetHeight + 2) + 'px';
 
         list.classList.remove('hidden');
         if (arrow) arrow.classList.add('rotate-180');
