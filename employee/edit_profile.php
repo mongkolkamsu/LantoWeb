@@ -311,7 +311,7 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                         <div class="flex justify-between items-center w-full mb-3">
                             <label class="block text-xs font-medium text-slate-600">2. รูปถ่ายบัตรประชาชน</label>
                             <?php if (!$can_edit_restricted): ?>
-                                <span class="text-[10px] font-normal text-amber-600 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-lg flex items-center gap-1">🔒 ติดต่อ HR เพื่อเปลี่ยน</span>
+                                <span class="text-[10px] font-normal text-amber-600 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-lg flex items-center gap-1">🔒 ติดต่อ HR</span>
                             <?php endif; ?>
                         </div>
 
@@ -361,7 +361,7 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-sm font-semibold text-blue-700 flex items-center gap-2">👤 ส่วนที่ 3: ข้อมูลส่วนตัวและที่อยู่</h3>
                     <?php if (!$can_edit_restricted): ?>
-                        <span class="text-[11px] font-normal text-amber-600 bg-amber-50 border border-amber-200/80 px-2.5 py-0.5 rounded-lg flex items-center gap-1">🔒 ต้องการแก้ไขข้อมูลติดต่อ HR</span>
+                        <span class="text-[11px] font-normal text-amber-600 bg-amber-50 border border-amber-200/80 px-2.5 py-0.5 rounded-lg flex items-center gap-1">🔒 ติดต่อ HR</span>
                     <?php endif; ?>
                 </div>
 
@@ -487,7 +487,7 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-sm font-semibold text-blue-700 flex items-center gap-2">💼 ส่วนที่ 4: ข้อมูลการทำงาน</h3>
                     <?php if (!$can_edit_restricted): ?>
-                        <span class="text-[11px] font-normal text-amber-600 bg-amber-50 border border-amber-200/80 px-2.5 py-0.5 rounded-lg flex items-center gap-1">🔒 ต้องการแก้ไขข้อมูลติดต่อ HR</span>
+                        <span class="text-[11px] font-normal text-amber-600 bg-amber-50 border border-amber-200/80 px-2.5 py-0.5 rounded-lg flex items-center gap-1">🔒 ติดต่อ HR</span>
                     <?php endif; ?>
                 </div>
 
