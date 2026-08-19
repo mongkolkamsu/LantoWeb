@@ -361,7 +361,7 @@ if (empty($default_branch) && count($branches) > 0) {
 
             const group = [];
 
-            // 1. ปักหมุดและวาดรัศมีสาขา
+            // 🏢 1. ปักหมุดสาขา (ดีไซน์เข็มหมุดชี้พิกัดตรงจุด 100%)
             if (bLat !== null && bLng !== null && !isNaN(bLat) && !isNaN(bLng)) {
                 if (branchMarker) scanMapInstance.removeLayer(branchMarker);
                 if (branchCircle) scanMapInstance.removeLayer(branchCircle);
@@ -369,11 +369,26 @@ if (empty($default_branch) && count($branches) > 0) {
                 const circleColor = isInside ? '#10b981' : '#f43f5e';
                 const fillColor   = isInside ? '#34d399' : '#fb7185';
 
+                // ดึงชื่อสาขาที่กำลังเลือก
+                const branchInput = document.getElementById('branch_select');
+                const branchText = branchInput ? (document.querySelector(`#list-branch_select [data-value="${branchInput.value}"]`)?.textContent.trim() || 'จุดเช็คอินสาขา') : 'จุดเช็คอินสาขา';
+
                 const branchIcon = L.divIcon({
-                    className: 'custom-branch-icon',
-                    html: '<div style="background-color:#1e3a8a; color:white; border-radius:12px; padding:3px 8px; font-weight:bold; font-size:10px; box-shadow:0 3px 6px rgba(0,0,0,0.25); border:2px solid white; display:inline-flex; align-items:center; gap:2px; white-space:nowrap;">🏢 สาขาที่เลือก</div>',
-                    iconSize: [80, 26],
-                    iconAnchor: [40, 13]
+                    className: 'custom-branch-pin',
+                    html: `
+                        <div style="position: relative; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%); pointer-events: auto;">
+                            <!-- ป้ายชื่อสาขา -->
+                            <div style="background: #0f172a; color: #ffffff; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 1.5px solid #ffffff; white-space: nowrap; display: flex; align-items: center; gap: 3px;">
+                                <span>🏢</span> <span>${branchText}</span>
+                            </div>
+                            <!-- ติ่งชี้ลง -->
+                            <div style="width: 8px; height: 8px; background: #0f172a; transform: rotate(45deg); margin-top: -4px; border-right: 1.5px solid #ffffff; border-bottom: 1.5px solid #ffffff;"></div>
+                            <!-- จุดปลายเข็มหมุดสัมผัสพิกัดจริง -->
+                            <div style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%; border: 2px solid #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.4); margin-top: -2px;"></div>
+                        </div>
+                    `,
+                    iconSize: [0, 0],
+                    iconAnchor: [0, 0]
                 });
 
                 branchMarker = L.marker([bLat, bLng], { icon: branchIcon }).addTo(scanMapInstance);
@@ -389,15 +404,22 @@ if (empty($default_branch) && count($branches) > 0) {
                 group.push(branchCircle);
             }
 
-            // 2. ปักหมุดตำแหน่งผู้ใช้
+            // 📍 2. ปักหมุดตำแหน่งคุณ (ดีไซน์ Blue Radar Dot สไตล์ Google Maps ปักกลางพิกัด GPS แม่นยำ)
             if (userLat !== null && userLng !== null) {
                 if (userMarker) scanMapInstance.removeLayer(userMarker);
 
                 const userIcon = L.divIcon({
-                    className: 'custom-user-icon',
-                    html: '<div style="background-color:#2563eb; color:white; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 12px rgba(37,99,235,0.7); border:2.5px solid white; font-size:13px;">📍</div>',
-                    iconSize: [28, 28],
-                    iconAnchor: [14, 14]
+                    className: 'custom-user-radar',
+                    html: `
+                        <div style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transform: translate(-50%, -50%);">
+                            <!-- คลื่นเรดาร์กระเพื่อม -->
+                            <div class="user-radar-ring" style="position: absolute; width: 100%; height: 100%; border-radius: 50%; background: #3b82f6;"></div>
+                            <!-- จุดตำแหน่งสีน้ำเงินตรงกลาง -->
+                            <div style="position: relative; width: 14px; height: 14px; background: #2563eb; border-radius: 50%; border: 2.5px solid #ffffff; box-shadow: 0 2px 8px rgba(37,99,235,0.6);"></div>
+                        </div>
+                    `,
+                    iconSize: [0, 0],
+                    iconAnchor: [0, 0]
                 });
 
                 userMarker = L.marker([userLat, userLng], { icon: userIcon }).addTo(scanMapInstance)
@@ -406,11 +428,16 @@ if (empty($default_branch) && count($branches) > 0) {
                 group.push(userMarker);
             }
 
+            // 📐 ปรับระยะมุมมองแผนที่ (มี Padding ป้องกันหมุดหลุด/ตกขอบล่าง)
             if (group.length > 1) {
                 const featureGroup = L.featureGroup(group);
-                scanMapInstance.fitBounds(featureGroup.getBounds().pad(0.35));
+                scanMapInstance.fitBounds(featureGroup.getBounds(), {
+                    paddingTopLeft: [30, 30],
+                    paddingBottomRight: [30, 45],
+                    maxZoom: 16
+                });
             } else if (bLat && bLng) {
-                scanMapInstance.setView([bLat, bLng], 16);
+                scanMapInstance.setView([bLat, bLng], 15);
             }
         }
 
