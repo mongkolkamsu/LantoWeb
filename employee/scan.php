@@ -72,7 +72,6 @@ try {
     $u_row = $stmt_u_branch->fetch(PDO::FETCH_ASSOC);
     $assigned_branch_id = $u_row['branch_id'] ?? null;
 
-    // 1. ดึงเฉพาะสาขาที่ถูกผูกกับพนักงาน (users.branch_id หรือตาราง user_branches)
     try {
         $stmt_b = $pdo->prepare("
             SELECT DISTINCT b.id, b.name, b.latitude, b.longitude, b.radius 
@@ -88,7 +87,6 @@ try {
         ]);
         $branches = $stmt_b->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
-        // หากไม่มีตาราง user_branches ให้ดึงเฉพาะ users.branch_id
         if (!empty($assigned_branch_id)) {
             $stmt_b = $pdo->prepare("
                 SELECT id, name, latitude, longitude, radius 
@@ -100,7 +98,6 @@ try {
         }
     }
 
-    // 2. ถ้าพนักงานยังไม่เคยถูกกำหนดสาขาเลย ให้ดึงสาขาหลักที่เปิดใช้งานอยู่
     if (empty($branches)) {
         $stmt_fallback = $pdo->query("SELECT id, name, latitude, longitude, radius FROM branches WHERE is_active = 1 OR is_active IS NULL ORDER BY id ASC");
         $branches = $stmt_fallback->fetchAll(PDO::FETCH_ASSOC);
@@ -154,13 +151,11 @@ if (empty($default_branch) && count($branches) > 0) {
         .leaflet-container img { max-width: none !important; max-height: none !important; }
         #scanMap { min-height: 200px !important; z-index: 10; }
 
-        /* 📍 ลบกรอบสี่เหลี่ยมพื้นหลังสีขาวของหมุด Leaflet */
         .leaflet-div-icon {
             background: transparent !important;
             border: none !important;
         }
 
-        /* 📡 แอนิเมชันคลื่นเรดาร์สีน้ำเงินกระเพื่อม (สำหรับหมุดตำแหน่งผู้ใช้) */
         @keyframes pulse-ring {
             0% { transform: scale(0.6); opacity: 0.9; }
             80%, 100% { transform: scale(2.2); opacity: 0; }
@@ -172,21 +167,17 @@ if (empty($default_branch) && count($branches) > 0) {
 </head>
 <body class="bg-[#f4f6fa] min-h-screen text-slate-800 antialiased flex">
 
-    <!-- 📁 ดึง Sidebar พนักงาน -->
     <?php include_once 'sidebar.php'; ?>
 
-    <!-- 🖥️ ส่วนเนื้อหาฝั่งขวา -->
     <div class="flex-1 flex flex-col min-w-0 justify-between md:ml-64">
         <div class="w-full flex flex-col">
             
-            <!-- 🔝 Header ด้านบน -->
             <?php 
             $page_title = $type_text;
             $page_subtitle = 'ระบบยืนยันตัวตนบันทึกเวลาสแกนเข้า-ออกงาน';
             include_once '../includes/header.php'; 
             ?>
 
-            <!-- 💻/📱 Main Centered Container -->
             <main class="p-4 sm:p-6 lg:p-8 max-w-xl mx-auto w-full pb-28 md:pb-10">
                 <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/80 shadow-xl space-y-6">
                     
@@ -246,11 +237,12 @@ if (empty($default_branch) && count($branches) > 0) {
                             </div>
                         </div>
 
-                        <!-- 📍 กล่องเลือกสถานที่ / สาขา พร้อมแผนที่แสดงรัศมี -->
-                        <?php if ($type === 'check_in'): ?>
+                        <!-- 📍 กล่องเลือกสถานที่ / สาขา พร้อมแผนที่ (แสดงทั้ง Check-In และ Check-Out 100%) -->
                         <div id="branch-section" class="bg-slate-50 border border-slate-200/80 p-4 rounded-2xl shadow-2xs space-y-3">
                             <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5 pl-0.5">📍 เลือกสถานที่ / สาขาปฏิบัติงาน</label>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5 pl-0.5">
+                                    📍 สถานที่ / สาขา<?php echo ($type === 'check_out') ? 'ที่สแกนออกงาน' : 'ปฏิบัติงาน'; ?>
+                                </label>
                                 <?php 
                                 include_once '../includes/rounded_dropdown.php';
                                 $branch_opts = [];
@@ -274,7 +266,7 @@ if (empty($default_branch) && count($branches) > 0) {
                                 </div>
                                 <div class="flex justify-between items-center gap-2 pt-1.5 border-t border-slate-100">
                                     <span class="text-slate-400 font-medium text-[11px] sm:text-xs shrink-0">สถานะพื้นที่:</span>
-                                    <span id="gps-status-badge" class="px-2 py-0.5 rounded-lg font-bold bg-slate-200 text-slate-500 text-[10px] sm:text-[11px] shrink-0 whitespace-nowrap">Waiting...</span>
+                                    <span id="gps-status-badge" class="px-2 py-0.5 rounded-lg font-bold bg-slate-200 text-slate-500 text-[10px] sm:text-[11px] shrink-0 whitespace-nowrap">Waiting GPS...</span>
                                 </div>
                             </div>
 
@@ -293,57 +285,17 @@ if (empty($default_branch) && count($branches) > 0) {
                             </div>
                         </div>
 
-                        <!-- 📤 2. กรณีสแกนออกงาน (Check-Out): แสดงการ์ดสรุปเวลาออกงาน + พิกัด GPS สวยงาม -->
-                        <?php else: ?>
-                        <div class="bg-slate-50 border border-slate-200/80 p-4 rounded-2xl shadow-2xs space-y-3">
-                            <div class="flex items-center justify-between border-b border-slate-200/60 pb-2.5">
-                                <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                                    <span>🏢</span> ข้อมูลการเลิกงาน
-                                </span>
-                                <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-lg bg-rose-50 text-rose-600 border border-rose-200">
-                                    Check-Out Mode
-                                </span>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-2 text-xs">
-                                <div class="bg-white p-3 rounded-xl border border-slate-200/60 shadow-3xs">
-                                    <p class="text-[10px] text-slate-400 font-medium">กะเวลาทำงาน</p>
-                                    <p class="text-slate-800 font-bold mt-0.5 truncate"><?php echo htmlspecialchars($shift_display_name); ?></p>
-                                </div>
-                                <div class="bg-white p-3 rounded-xl border border-slate-200/60 shadow-3xs">
-                                    <p class="text-[10px] text-slate-400 font-medium">เวลาสิ้นสุดกะงาน</p>
-                                    <p class="text-slate-800 font-bold mt-0.5"><?php echo substr($shift_end, 0, 5); ?> น.</p>
-                                </div>
-                            </div>
-
-                            <div class="bg-white p-3 rounded-xl border border-slate-200/60 flex items-center justify-between shadow-3xs text-xs">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-base">📍</span>
-                                    <div>
-                                        <p class="text-[10px] text-slate-400 font-medium">พิกัดสถานที่ปัจจุบัน</p>
-                                        <p id="checkout-gps-text" class="text-slate-800 font-bold text-[11px]">กำลังระบุพิกัด GPS...</p>
-                                    </div>
-                                </div>
-                                <span id="checkout-gps-badge" class="px-2 py-0.5 rounded-md font-bold bg-slate-100 text-slate-500 text-[10px]">Checking</span>
-                            </div>
-                        </div>
-                        <?php endif; ?>
-
-                        <!-- 🔘 ปุ่มควบคุมการบันทึก (แสดงให้กดสแกนถ่ายรูปได้เลย) -->
+                        <!-- 🔘 ปุ่มควบคุมการบันทึก -->
                         <div class="space-y-2 pt-2">
-                            <button type="button" id="btnManualCapture" onclick="freezeCapturePhoto()" class="w-full bg-gradient-to-r <?php echo $type_color; ?> hover:opacity-95 text-white font-bold py-3.5 rounded-2xl shadow-md text-xs tracking-wide transition-all transform active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2">
-                                <span>📸</span>
-                                <span>ถ่ายรูปและบันทึกเวลา<?php echo ($type === 'check_out') ? 'ออกงาน' : 'เข้างาน'; ?></span>
-                            </button>
-
                             <button id="btnRetake" class="w-full hidden bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold py-3 rounded-2xl text-xs tracking-wide transition-all active:scale-[0.98] cursor-pointer items-center justify-center gap-2 shadow-xs">
-                                🔄 ยกเลิกและถ่ายใหม่อีกครั้ง
+                                🔄 ยกเลิกและสแกนใหม่อีกครั้ง
                             </button>
 
                             <button id="btnCapture" class="hidden w-full bg-gradient-to-r <?php echo $type_color; ?> text-white font-bold py-3.5 rounded-2xl shadow-md text-xs tracking-wide transition-all transform active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2">
                                 <span id="btn-text">ยืนยันและส่งข้อมูลบันทึกเวลา</span>
                             </button>
                         </div>
+
                     <?php endif; ?>
 
                 </div>
@@ -362,6 +314,7 @@ if (empty($default_branch) && count($branches) > 0) {
         let userLat = null;
         let userLng = null;
         let isCaptured = false;
+        let isWithinGeofence = false; // 🔒 ตัวแปรตรวจสอบว่าอยู่ในรัศมีหรือไม่
         
         const challenges = [
             { id: 'blink', icon: '😉', text: 'กรุณากระพริบตาเพื่อยืนยัน' },
@@ -378,7 +331,7 @@ if (empty($default_branch) && count($branches) > 0) {
         let qualityCanvas = null;
         let qualityCtx = null;
 
-        // 🗺️ ตัวแปรสำหรับ Leaflet Map
+        // 🗺️ ตัวแปร Leaflet Map
         let scanMapInstance = null;
         let branchMarker = null;
         let branchCircle = null;
@@ -417,7 +370,6 @@ if (empty($default_branch) && count($branches) > 0) {
 
             const group = [];
 
-            // 🏢 1. ปักหมุดสาขา (ดีไซน์เข็มหมุดชี้พิกัดตรงจุด 100%)
             if (bLat !== null && bLng !== null && !isNaN(bLat) && !isNaN(bLng)) {
                 if (branchMarker) scanMapInstance.removeLayer(branchMarker);
                 if (branchCircle) scanMapInstance.removeLayer(branchCircle);
@@ -425,7 +377,6 @@ if (empty($default_branch) && count($branches) > 0) {
                 const circleColor = isInside ? '#10b981' : '#f43f5e';
                 const fillColor   = isInside ? '#34d399' : '#fb7185';
 
-                // ดึงชื่อสาขาที่กำลังเลือก
                 const branchInput = document.getElementById('branch_select');
                 const branchText = branchInput ? (document.querySelector(`#list-branch_select [data-value="${branchInput.value}"]`)?.textContent.trim() || 'จุดเช็คอินสาขา') : 'จุดเช็คอินสาขา';
 
@@ -433,13 +384,10 @@ if (empty($default_branch) && count($branches) > 0) {
                     className: 'custom-branch-pin',
                     html: `
                         <div style="position: relative; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%); pointer-events: auto;">
-                            <!-- ป้ายชื่อสาขา -->
                             <div style="background: #0f172a; color: #ffffff; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 1.5px solid #ffffff; white-space: nowrap; display: flex; align-items: center; gap: 3px;">
                                 <span>🏢</span> <span>${branchText}</span>
                             </div>
-                            <!-- ติ่งชี้ลง -->
                             <div style="width: 8px; height: 8px; background: #0f172a; transform: rotate(45deg); margin-top: -4px; border-right: 1.5px solid #ffffff; border-bottom: 1.5px solid #ffffff;"></div>
-                            <!-- จุดปลายเข็มหมุดสัมผัสพิกัดจริง -->
                             <div style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%; border: 2px solid #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.4); margin-top: -2px;"></div>
                         </div>
                     `,
@@ -460,7 +408,6 @@ if (empty($default_branch) && count($branches) > 0) {
                 group.push(branchCircle);
             }
 
-            // 📍 2. ปักหมุดตำแหน่งคุณ (ดีไซน์ Blue Radar Dot สไตล์ Google Maps ปักกลางพิกัด GPS แม่นยำ)
             if (userLat !== null && userLng !== null) {
                 if (userMarker) scanMapInstance.removeLayer(userMarker);
 
@@ -468,9 +415,7 @@ if (empty($default_branch) && count($branches) > 0) {
                     className: 'custom-user-radar',
                     html: `
                         <div style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transform: translate(-50%, -50%);">
-                            <!-- คลื่นเรดาร์กระเพื่อม -->
                             <div class="user-radar-ring" style="position: absolute; width: 100%; height: 100%; border-radius: 50%; background: #3b82f6;"></div>
-                            <!-- จุดตำแหน่งสีน้ำเงินตรงกลาง -->
                             <div style="position: relative; width: 14px; height: 14px; background: #2563eb; border-radius: 50%; border: 2.5px solid #ffffff; box-shadow: 0 2px 8px rgba(37,99,235,0.6);"></div>
                         </div>
                     `,
@@ -484,7 +429,6 @@ if (empty($default_branch) && count($branches) > 0) {
                 group.push(userMarker);
             }
 
-            // 📐 ปรับระยะมุมมองแผนที่ (มี Padding ป้องกันหมุดหลุด/ตกขอบล่าง)
             if (group.length > 1) {
                 const featureGroup = L.featureGroup(group);
                 scanMapInstance.fitBounds(featureGroup.getBounds(), {
@@ -547,29 +491,16 @@ if (empty($default_branch) && count($branches) > 0) {
                         userLat = position.coords.latitude;
                         userLng = position.coords.longitude;
                         checkBranchDistance();
-
-                        // 🎯 เพิ่มการอัปเดตพิกัดสำหรับหน้า Check-Out
-                        const outGpsText = document.getElementById('checkout-gps-text');
-                        const outGpsBadge = document.getElementById('checkout-gps-badge');
-                        if (outGpsText) {
-                            outGpsText.innerText = `${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
-                        }
-                        if (outGpsBadge) {
-                            outGpsBadge.innerText = 'GPS พร้อมใช้งาน';
-                            outGpsBadge.className = 'px-2 py-0.5 rounded-md font-bold bg-emerald-100 text-emerald-700 text-[10px]';
-                        }
                     },
                     (error) => {
                         const distText = document.getElementById('distance-text');
                         if (distText) distText.innerText = "โปรดเปิดสิทธิ์เข้าถึง GPS";
-                        
-                        const outGpsText = document.getElementById('checkout-gps-text');
-                        const outGpsBadge = document.getElementById('checkout-gps-badge');
-                        if (outGpsText) outGpsText.innerText = "ไม่สามารถระบุพิกัดได้";
-                        if (outGpsBadge) {
-                            outGpsBadge.innerText = 'GPS ปิดอยู่';
-                            outGpsBadge.className = 'px-2 py-0.5 rounded-md font-bold bg-rose-100 text-rose-700 text-[10px]';
+                        const badge = document.getElementById('gps-status-badge');
+                        if (badge) {
+                            badge.innerText = "GPS ปิดอยู่";
+                            badge.className = "px-2 py-0.5 rounded-lg font-bold bg-rose-100 text-rose-700 text-[10px] sm:text-[11px] shrink-0 whitespace-nowrap";
                         }
+                        isWithinGeofence = false;
                     },
                     { enableHighAccuracy: true }
                 );
@@ -594,14 +525,11 @@ if (empty($default_branch) && count($branches) > 0) {
             if (!branchId) {
                 if (distanceText) distanceText.innerText = "กรุณาเลือกสาขาก่อน";
                 if (badge) {
-                    if (isInside) {
-                        badge.innerText = `อยู่ในรัศมี (${branchRadius}ม.)`;
-                        badge.className = "px-2 py-0.5 rounded-lg font-bold bg-emerald-100 text-emerald-700 text-[10px] sm:text-[11px] shrink-0 whitespace-nowrap";
-                    } else {
-                        badge.innerText = `อยู่นอกรัศมี (${branchRadius}ม.)`;
-                        badge.className = "px-2 py-0.5 rounded-lg font-bold bg-rose-100 text-rose-700 text-[10px] sm:text-[11px] shrink-0 whitespace-nowrap";
-                    }
+                    badge.innerText = "โปรดเลือกสาขา";
+                    badge.className = "px-2 py-0.5 rounded-lg font-bold bg-slate-200 text-slate-500 text-[10px] sm:text-[11px] shrink-0 whitespace-nowrap";
                 }
+                isWithinGeofence = false;
+                return;
             }
 
             const selectedItem = document.querySelector(`#list-branch_select [data-value="${branchId}"]`);
@@ -615,38 +543,39 @@ if (empty($default_branch) && count($branches) > 0) {
                 if (distanceText) distanceText.innerText = "ได้รับข้อยกเว้นพื้นที่ (WFH/นอกสถานที่)";
                 if (badge) {
                     badge.innerText = "นอกสถานที่อนุมัติ (ผ่าน)";
-                    badge.className = "px-2.5 py-0.5 rounded-md font-bold bg-blue-100 text-blue-700 text-[11px]";
+                    badge.className = "px-2 py-0.5 rounded-lg font-bold bg-blue-100 text-blue-700 text-[10px] sm:text-[11px] shrink-0 whitespace-nowrap";
                 }
+                isWithinGeofence = true;
                 updateScanMapVisuals(null, null, branchRadius, true);
                 return;
             }
 
-            // ถ้าพิกัด GPS ยังค้นหาไม่เสร็จ ให้ปักหมุดสาขารอไว้ก่อน
             if (userLat === null || userLng === null) {
                 if (distanceText) distanceText.innerText = "กำลังค้นหาพิกัด GPS ของคุณ...";
                 if (badge) {
                     badge.innerText = "กำลังหาพิกัด GPS...";
-                    badge.className = "px-2.5 py-0.5 rounded-md font-bold bg-amber-100 text-amber-700 text-[11px]";
+                    badge.className = "px-2 py-0.5 rounded-lg font-bold bg-amber-100 text-amber-700 text-[10px] sm:text-[11px] shrink-0 whitespace-nowrap";
                 }
+                isWithinGeofence = false;
                 updateScanMapVisuals(branchLat, branchLng, branchRadius, false);
                 return;
             }
 
-            // คำนวณระยะทางเมื่อได้ครบทั้ง 2 ฝั่ง
             const distance = calculateHaversine(userLat, userLng, branchLat, branchLng);
             if (distanceText) {
                 distanceText.innerText = distance >= 1000 ? (distance / 1000).toFixed(2) + " กิโลเมตร" : distance.toFixed(0) + " เมตร";
             }
 
             const isInside = (distance <= branchRadius);
+            isWithinGeofence = isInside;
 
             if (badge) {
                 if (isInside) {
-                    badge.innerText = `อยู่ในพิกัดเข้างาน (รัศมี ${branchRadius}ม.)`;
-                    badge.className = "px-2.5 py-0.5 rounded-md font-bold bg-emerald-100 text-emerald-700 text-[11px]";
+                    badge.innerText = `อยู่ในรัศมี (${branchRadius}ม.)`;
+                    badge.className = "px-2 py-0.5 rounded-lg font-bold bg-emerald-100 text-emerald-700 text-[10px] sm:text-[11px] shrink-0 whitespace-nowrap";
                 } else {
-                    badge.innerText = `อยู่นอกรัศมีควบคุม (รัศมี ${branchRadius}ม.)`;
-                    badge.className = "px-2.5 py-0.5 rounded-md font-bold bg-rose-100 text-rose-700 text-[11px]";
+                    badge.innerText = `อยู่นอกรัศมี (${branchRadius}ม.)`;
+                    badge.className = "px-2 py-0.5 rounded-lg font-bold bg-rose-100 text-rose-700 text-[10px] sm:text-[11px] shrink-0 whitespace-nowrap";
                 }
             }
 
@@ -737,6 +666,15 @@ if (empty($default_branch) && count($branches) > 0) {
 
                 faceMesh.onResults((results) => {
                     if (isCaptured || isLivenessPassed) return;
+
+                    // 🔒 1. ตรวจสอบเงื่อนไขรัศมี GPS ก่อน (ถ้าอยู่นอกพื้นที่ จะล็อกไม่ให้สแกนหน้า)
+                    if (!isWithinGeofence) {
+                        actionIcon.innerText = "🚫";
+                        actionText.innerText = "อยู่นอกรัศมี ไม่สามารถสแกนได้";
+                        actionBadge.className = "absolute top-8 z-30 bg-rose-500/90 text-white text-[10px] font-bold px-3 py-0.5 rounded-full border border-rose-300 flex items-center gap-1 shadow-xs max-w-[85%] truncate";
+                        targetBorder.className = "w-56 h-56 rounded-full border-2 border-dashed border-rose-400 flex items-center justify-center relative transition-colors duration-300";
+                        return;
+                    }
 
                     if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                         const landmarks = results.multiFaceLandmarks[0];
@@ -891,11 +829,21 @@ if (empty($default_branch) && count($branches) > 0) {
                 const branchSelectEl = document.getElementById('branch_select');
                 const branchId = branchSelectEl ? branchSelectEl.value : '';
 
-                if (shiftType === 'check_in' && !branchId) {
+                if (!branchId) {
                     if (typeof LantoAlert !== 'undefined') {
                         LantoAlert.warning('ข้อมูลไม่ครบถ้วน', 'โปรดคลิกเลือกสถานที่/สาขาปฏิบัติงานก่อนกดยืนยันครับ');
                     } else {
                         alert('โปรดเลือกสาขาก่อนกดยืนยันครับ');
+                    }
+                    return;
+                }
+
+                // 🔒 ตรวจสอบว่าอยู่ในรัศมีจริงก่อนส่งข้อมูล
+                if (!isWithinGeofence) {
+                    if (typeof LantoAlert !== 'undefined') {
+                        LantoAlert.error('อยู่นอกพื้นที่', 'คุณอยู่นอกรัศมีที่กำหนดของสาขานี้ ไม่สามารถบันทึกเวลาได้');
+                    } else {
+                        alert('คุณอยู่นอกรัศมีที่กำหนดของสาขานี้ ไม่สามารถบันทึกเวลาได้');
                     }
                     return;
                 }
@@ -955,7 +903,6 @@ if (empty($default_branch) && count($branches) > 0) {
             trackUserLocation();
             initFaceMeshLiveness();
 
-            // ตรวจสอบและแสดงผลแผนที่ของสาขาเริ่มต้นทันทีเมื่อเปิดหน้า
             setTimeout(() => {
                 checkBranchDistance();
             }, 400);
