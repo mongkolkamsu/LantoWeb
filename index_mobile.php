@@ -38,7 +38,9 @@ try {
     $news_list = [];
 }
 $clean_img = !empty($profile_image) ? basename(trim($profile_image)) : '';
-$avatar_url = !empty($clean_img) ? 'uploads/profiles/' . $clean_img . '?v=' . time() : '';
+$mobile_file_path = 'uploads/profiles/' . $clean_img;
+$mobile_v = (!empty($clean_img) && file_exists($mobile_file_path)) ? filemtime($mobile_file_path) : '1';
+$avatar_url = !empty($clean_img) ? $mobile_file_path . '?v=' . $mobile_v : '';
 
 // 🎯 1. ตรรกะดึงข้อมูลบันทึกเวลาจริงประจำวันของพนักงานคนนี้
 $today          = date('Y-m-d');

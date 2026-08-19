@@ -45,7 +45,9 @@ if (isset($pdo) && $header_user_id) {
 $header_avatar_url = '';
 if (!empty($header_profile_image)) {
     $clean_hdr_img = basename(trim($header_profile_image));
-    $header_avatar_url = $prefix . 'uploads/profiles/' . $clean_hdr_img . '?v=' . time();
+    $header_file_path = $prefix . 'uploads/profiles/' . $clean_hdr_img;
+    $header_v = file_exists($header_file_path) ? filemtime($header_file_path) : '1';
+    $header_avatar_url = $header_file_path . '?v=' . $header_v;
 }
 
 // กำหนดหัวข้อหลัก, หัวข้อย่อย และปุ่มย้อนกลับ

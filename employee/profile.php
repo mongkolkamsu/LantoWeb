@@ -157,8 +157,10 @@ try {
                         <div class="card-front bg-white rounded-[36px] overflow-hidden border border-slate-200/40 flex flex-col justify-end">
                             
                             <?php 
-                                $emp_photo = !empty($user['profile_image']) ? $user['profile_image'] : '';
-                                $card_avatar = !empty($emp_photo) ? '../uploads/profiles/' . $emp_photo : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=500&h=500&q=90';
+                                $emp_photo = !empty($user['profile_image']) ? basename(trim($user['profile_image'])) : '';
+                                $card_file_path = '../uploads/profiles/' . $emp_photo;
+                                $card_v = (!empty($emp_photo) && file_exists($card_file_path)) ? filemtime($card_file_path) : '1';
+                                $card_avatar = !empty($emp_photo) ? $card_file_path . '?v=' . $card_v : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=500&h=500&q=90';
                             ?>
 
                             <!-- 1. รูปถ่ายพนักงาน -->
