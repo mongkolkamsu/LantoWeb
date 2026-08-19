@@ -1,23 +1,24 @@
 <?php
 session_start();
-require_once '../config/db.php'; // เชื่อมต่อฐานข้อมูลหลัก
+require_once '../config/db.php';
 require_once '../config/auth.php';
-// 1. ตรวจสอบสิทธิ์การเข้าใช้งาน (ต้องล็อกอินก่อน)
+
+// 1. ตรวจสอบสิทธิ์การเข้าใช้งาน
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../login.php");
     exit();
 }
 
-$user_id = $_SESSION['user_id'];
-$fullname = $_SESSION['fullname'];
-$employee_code = $_SESSION['employee_code'];
-$profile_image = $_SESSION['profile_image'];
+$user_id       = $_SESSION['user_id'];
+$fullname      = $_SESSION['fullname'] ?? '';
+$employee_code = $_SESSION['employee_code'] ?? '';
+$profile_image = $_SESSION['profile_image'] ?? '';
 
 $avatar_url = !empty($profile_image) ? '../uploads/profiles/' . $profile_image : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80';
 
 // ระบบคำนวณสถานะอัตโนมัติ (Smart Auto-Detect)
 $today = date('Y-m-d');
-$has_check_in = false;
+$has_check_in  = false;
 $has_check_out = false;
 
 try {
@@ -39,7 +40,7 @@ $type_text = ($type === 'check_out') ? 'สแกนออกงาน (Check-Ou
 $type_color = ($type === 'check_out') ? 'from-rose-600 to-orange-500 shadow-rose-500/20' : 'from-blue-700 to-blue-600 shadow-blue-500/20';
 
 $shift_start = "08:30:00"; 
-$shift_end = "17:30:00";
+$shift_end   = "17:30:00";
 $shift_display_name = "กะปกติ (Normal Shift)";
 
 try {
@@ -54,7 +55,7 @@ try {
         $clean_name = explode(' ', $s['name'])[0]; 
         if (strpos($user_shift_string, $clean_name) !== false) {
             $shift_start = $s['start_time'];
-            $shift_end = $s['end_time'];
+            $shift_end   = $s['end_time'];
             $shift_display_name = $s['name'];
             break;
         }
@@ -93,6 +94,10 @@ try {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- 🗺️ Leaflet Map CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
 
@@ -101,6 +106,8 @@ try {
         @keyframes scan { 0% { top: 15%; } 50% { top: 85%; } 100% { top: 15%; } }
         .scanner-line { animation: scan 3s linear infinite; }
         ::-webkit-scrollbar { display: none; }
+        .leaflet-container img { max-width: none !important; max-height: none !important; }
+        #scanMap { min-height: 180px !important; z-index: 10; }
     </style>
 </head>
 <body class="bg-[#f4f6fa] min-h-screen text-slate-800 antialiased flex">
@@ -112,15 +119,15 @@ try {
     <div class="flex-1 flex flex-col min-w-0 justify-between md:ml-64">
         <div class="w-full flex flex-col">
             
-            <!-- 🔝 ดึง Header ด้านบน (พร้อม Profile Dropdown) -->
+            <!-- 🔝 Header ด้านบน -->
             <?php 
             $page_title = $type_text;
             $page_subtitle = 'ระบบยืนยันตัวตนบันทึกเวลาสแกนเข้า-ออกงาน';
             include_once '../includes/header.php'; 
             ?>
 
-            <!-- 💻/📱 Main Centered Container -->
-            <main class="p-6 lg:p-10 max-w-xl mx-auto md:-translate-x-32 w-full pb-28 md:pb-10">
+            <!-- 💻/📱 Main Centered Container (ลบ md:-translate-x-32 เพื่อแก้บัคดรอปดาวน์ลอย) -->
+            <main class="p-4 sm:p-6 lg:p-8 max-w-xl mx-auto w-full pb-28 md:pb-10">
                 <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/80 shadow-xl space-y-6">
                     
                     <?php if ($is_completed_today): ?>
@@ -179,8 +186,8 @@ try {
                             </div>
                         </div>
 
-                        <!-- 📍 กล่องเลือกสถานที่ / สาขา -->
-                        <div id="branch-section" class="<?php echo ($type === 'check_in') ? '' : 'hidden'; ?> bg-slate-50 border border-slate-200/80 p-4 rounded-2xl shadow-2xs space-y-2">
+                        <!-- 📍 กล่องเลือกสถานที่ / สาขา พร้อมแผนที่แสดงรัศมี -->
+                        <div id="branch-section" class="<?php echo ($type === 'check_in') ? '' : 'hidden'; ?> bg-slate-50 border border-slate-200/80 p-4 rounded-2xl shadow-2xs space-y-3">
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5 pl-0.5">📍 เลือกสถานที่ / สาขาปฏิบัติงาน</label>
                                 <?php 
@@ -201,14 +208,29 @@ try {
                                 ?>
                             </div>
                             
-                            <div class="bg-white p-3 rounded-xl border border-slate-200/60 flex flex-col gap-1 text-xs">
-                                <div class="flex justify-between">
-                                    <span class="text-slate-400">ระยะห่างของคุณจากสาขา:</span>
-                                    <span id="distance-text" class="font-bold text-slate-700">กำลังคำนวณพิกัด GPS...</span>
+                            <!-- แผงแสดงระยะห่างและสถานะ -->
+                            <div class="bg-white p-3 rounded-xl border border-slate-200/60 flex flex-col gap-1.5 text-xs">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-400 font-medium">ระยะห่างของคุณจากสาขา:</span>
+                                    <span id="distance-text" class="font-bold text-slate-800">กำลังคำนวณพิกัด GPS...</span>
                                 </div>
-                                <div class="flex justify-between items-center pt-1 border-t border-slate-100">
-                                    <span class="text-slate-400">ตรวจสอบสถานะพื้นที่:</span>
-                                    <span id="gps-status-badge" class="px-2.5 py-0.5 rounded-md font-bold bg-slate-200 text-slate-500">Waiting...</span>
+                                <div class="flex justify-between items-center pt-1.5 border-t border-slate-100">
+                                    <span class="text-slate-400 font-medium">ตรวจสอบสถานะพื้นที่:</span>
+                                    <span id="gps-status-badge" class="px-2.5 py-0.5 rounded-md font-bold bg-slate-200 text-slate-500 text-[11px]">Waiting...</span>
+                                </div>
+                            </div>
+
+                            <!-- 🗺️ แผนที่ Leaflet ตรวจสอบตำแหน่งและรัศมีสาขา -->
+                            <div class="space-y-1 pt-1">
+                                <div class="flex justify-between items-center px-0.5">
+                                    <span class="text-[11px] font-bold text-slate-600">แผนผังตรวจสอบตำแหน่งและรัศมีเช็คอิน</span>
+                                    <span class="text-[10px] text-slate-400 font-medium">🏢 สาขา | 📍 คุณ</span>
+                                </div>
+                                <div class="w-full h-48 rounded-2xl overflow-hidden border border-slate-200 shadow-inner relative bg-slate-100">
+                                    <div id="scanMap" class="w-full h-full"></div>
+                                    <div id="map-loading" class="absolute inset-0 bg-slate-100/90 flex items-center justify-center text-slate-400 text-xs font-bold z-20">
+                                        กำลังโหลดแผนที่ดาวเทียม...
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -253,10 +275,100 @@ try {
 
         const shiftType = '<?php echo $type; ?>'; 
         const shiftStartStr = '<?php echo $shift_start; ?>'; 
-        const shiftEndStr = '<?php echo $shift_end; ?>'; 
+        const shiftEndStr   = '<?php echo $shift_end; ?>'; 
 
         let qualityCanvas = null;
         let qualityCtx = null;
+
+        // 🗺️ ตัวแปรสำหรับ Leaflet Map
+        let scanMapInstance = null;
+        let branchMarker = null;
+        let branchCircle = null;
+        let userMarker = null;
+
+        // Fix Leaflet Marker Icon Path
+        if (typeof L !== 'undefined' && L.Icon && L.Icon.Default) {
+            delete L.Icon.Default.prototype._getIconUrl;
+            L.Icon.Default.mergeOptions({
+                iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+                iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+            });
+        }
+
+        function initScanMap(lat, lng) {
+            const mapContainer = document.getElementById('scanMap');
+            if (!mapContainer || typeof L === 'undefined') return;
+
+            if (scanMapInstance !== null) {
+                scanMapInstance.remove();
+                scanMapInstance = null;
+            }
+
+            scanMapInstance = L.map('scanMap', { zoomControl: true }).setView([lat || 13.7563, lng || 100.5018], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(scanMapInstance);
+
+            const mapLoading = document.getElementById('map-loading');
+            if (mapLoading) mapLoading.classList.add('hidden');
+
+            setTimeout(() => {
+                if (scanMapInstance) scanMapInstance.invalidateSize();
+            }, 250);
+        }
+
+        function updateScanMapVisuals(bLat, bLng, bRadius, isInside) {
+            if (!scanMapInstance) {
+                initScanMap(bLat || userLat, bLng || userLng);
+            }
+            if (!scanMapInstance) return;
+
+            const group = [];
+
+            // 1. หมุดและรัศมีสาขา
+            if (!isNaN(bLat) && !isNaN(bLng)) {
+                if (branchMarker) scanMapInstance.removeLayer(branchMarker);
+                if (branchCircle) scanMapInstance.removeLayer(branchCircle);
+
+                const circleColor = isInside ? '#10b981' : '#f43f5e';
+                const fillColor   = isInside ? '#34d399' : '#fb7185';
+
+                branchMarker = L.marker([bLat, bLng]).addTo(scanMapInstance)
+                    .bindPopup('<b>🏢 จุดเช็คอินสาขา</b>');
+                
+                branchCircle = L.circle([bLat, bLng], {
+                    color: circleColor,
+                    fillColor: fillColor,
+                    fillOpacity: 0.2,
+                    radius: bRadius || 100
+                }).addTo(scanMapInstance);
+
+                group.push(branchMarker);
+                group.push(branchCircle);
+            }
+
+            // 2. หมุดตำแหน่งผู้ใช้
+            if (userLat !== null && userLng !== null) {
+                if (userMarker) scanMapInstance.removeLayer(userMarker);
+
+                userMarker = L.circleMarker([userLat, userLng], {
+                    radius: 8,
+                    color: '#2563eb',
+                    fillColor: '#60a5fa',
+                    fillOpacity: 0.9,
+                    weight: 3
+                }).addTo(scanMapInstance).bindPopup('<b>📍 ตำแหน่งของคุณ</b>');
+
+                group.push(userMarker);
+            }
+
+            if (group.length > 0) {
+                const featureGroup = L.featureGroup(group);
+                scanMapInstance.fitBounds(featureGroup.getBounds().pad(0.25));
+            }
+        }
 
         function startLiveClock() {
             const timeElement = document.getElementById('live-time');
@@ -265,8 +377,8 @@ try {
 
             function update() {
                 const now = new Date();
-                timeElement.innerText = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-                dateElement.innerText = now.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                if (timeElement) timeElement.innerText = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+                if (dateElement) dateElement.innerText = now.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
                 const curHours = now.getHours();
                 const curMinutes = now.getMinutes();
@@ -310,7 +422,8 @@ try {
                         checkBranchDistance();
                     },
                     (error) => {
-                        document.getElementById('distance-text').innerText = "โปรดเปิดสิทธิ์เข้าถึง GPS";
+                        const distText = document.getElementById('distance-text');
+                        if (distText) distText.innerText = "โปรดเปิดสิทธิ์เข้าถึง GPS";
                     },
                     { enableHighAccuracy: true }
                 );
@@ -326,9 +439,12 @@ try {
         }
 
         function checkBranchDistance() {
-            const branchId = document.getElementById('branch_select').value;
+            const branchInput = document.getElementById('branch_select');
+            const branchId = branchInput ? branchInput.value : '';
+            
             if (!branchId) {
-                document.getElementById('distance-text').innerText = "กรุณาเลือกสาขาก่อน";
+                const distText = document.getElementById('distance-text');
+                if (distText) distText.innerText = "กรุณาเลือกสาขาก่อน";
                 return;
             }
             if (userLat === null || userLng === null) return;
@@ -338,28 +454,39 @@ try {
 
             const branchLat = parseFloat(selectedItem.getAttribute('data-lat'));
             const branchLng = parseFloat(selectedItem.getAttribute('data-lng'));
-            const branchRadius = parseInt(selectedItem.getAttribute('data-radius'));
+            const branchRadius = parseInt(selectedItem.getAttribute('data-radius')) || 100;
 
             const distanceText = document.getElementById('distance-text');
             const badge = document.getElementById('gps-status-badge');
 
             if (isNaN(branchLat) || isNaN(branchLng)) {
-                distanceText.innerText = "ได้รับข้อยกเว้นพื้นที่";
-                badge.innerText = "นอกสถานที่อนุมัติ (ผ่าน)";
-                badge.className = "px-2.5 py-0.5 rounded-md font-bold bg-blue-100 text-blue-700";
+                if (distanceText) distanceText.innerText = "ได้รับข้อยกเว้นพื้นที่";
+                if (badge) {
+                    badge.innerText = "นอกสถานที่อนุมัติ (ผ่าน)";
+                    badge.className = "px-2.5 py-0.5 rounded-md font-bold bg-blue-100 text-blue-700 text-[11px]";
+                }
+                updateScanMapVisuals(null, null, branchRadius, true);
                 return;
             }
 
             const distance = calculateHaversine(userLat, userLng, branchLat, branchLng);
-            distanceText.innerText = distance >= 1000 ? (distance / 1000).toFixed(2) + " กิโลเมตร" : distance.toFixed(0) + " เมตร";
-
-            if (distance <= branchRadius) {
-                badge.innerText = `อยู่ในพิกัดเข้างาน (รัศมี ${branchRadius}ม.)`;
-                badge.className = "px-2.5 py-0.5 rounded-md font-bold bg-emerald-100 text-emerald-700";
-            } else {
-                badge.innerText = `อยู่นอกรัศมีควบคุม (รัศมี ${branchRadius}ม.)`;
-                badge.className = "px-2.5 py-0.5 rounded-md font-bold bg-rose-100 text-rose-700";
+            if (distanceText) {
+                distanceText.innerText = distance >= 1000 ? (distance / 1000).toFixed(2) + " กิโลเมตร" : distance.toFixed(0) + " เมตร";
             }
+
+            const isInside = (distance <= branchRadius);
+
+            if (badge) {
+                if (isInside) {
+                    badge.innerText = `อยู่ในพิกัดเข้างาน (รัศมี ${branchRadius}ม.)`;
+                    badge.className = "px-2.5 py-0.5 rounded-md font-bold bg-emerald-100 text-emerald-700 text-[11px]";
+                } else {
+                    badge.innerText = `อยู่นอกรัศมีควบคุม (รัศมี ${branchRadius}ม.)`;
+                    badge.className = "px-2.5 py-0.5 rounded-md font-bold bg-rose-100 text-rose-700 text-[11px]";
+                }
+            }
+
+            updateScanMapVisuals(branchLat, branchLng, branchRadius, isInside);
         }
 
         function getDistance(p1, p2) {
@@ -428,6 +555,7 @@ try {
         let cameraUtils = null;
 
         async function initFaceMeshLiveness() {
+            if (!actionIcon || !actionText) return;
             actionIcon.innerText = currentChallenge.icon;
             actionText.innerText = currentChallenge.text;
 
@@ -661,10 +789,11 @@ try {
             startLiveClock();
             trackUserLocation();
             initFaceMeshLiveness();
+            initScanMap();
         });
 
         document.addEventListener('click', function(e) {
-            if (e.target.closest('#list-branch_select .dropdown-item')) {
+            if (e.target.closest('#list-branch_select .dropdown-item') || e.target.closest('[id^="custom-dropdown-branch_select"]')) {
                 setTimeout(() => { checkBranchDistance(); }, 150);
             }
         });

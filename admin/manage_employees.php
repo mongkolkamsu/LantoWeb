@@ -1,8 +1,10 @@
 <?php
+ob_start();
 session_start();
 require_once '../config/db.php';
 require_once '../includes/rounded_dropdown.php';
 require_once '../config/auth.php';
+
 // 🔑 1. SECURITY LAYER
 if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['admin', 'it_support', 'hr'])) {
     header("Location: ../login.php");
@@ -18,36 +20,73 @@ $success_msg = $_SESSION['success_msg'] ?? '';
 $error_msg   = $_SESSION['error_msg'] ?? '';
 unset($_SESSION['success_msg'], $_SESSION['error_msg']);
 
+// 🛠️ ฟังก์ชันแปลงวันที่ พ.ศ. (วว/ดด/ปปปป) หรือ ค.ศ. ให้เป็น YYYY-MM-DD สำหรับบันทึกลง Database
+function parseThaiDateToAD($dateStr) {
+    if (empty($dateStr)) return null;
+    $dateStr = trim($dateStr);
+    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateStr)) {
+        return $dateStr;
+    }
+    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dateStr, $matches)) {
+        $d = sprintf('%02d', $matches[1]);
+        $m = sprintf('%02d', $matches[2]);
+        $y = (int)$matches[3];
+        if ($y > 2400) { $y -= 543; }
+        return sprintf('%04d-%02d-%02d', $y, $m, $d);
+    }
+    return null;
+}
+
 // ✏️ 2. บันทึกการแก้ไขข้อมูลพนักงาน (update_employee)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_employee') {
     $edit_mode = $_POST['edit_mode'] ?? 'single';
-    $target_ids_raw = $_POST['target_ids'] ?? '';
-    $ids = array_filter(array_map('trim', explode(',', $target_ids_raw)));
+    $target_ids_raw = $_POST['target_ids'] ?? $_POST['employee_id'] ?? $_POST['id'] ?? '';
+    $ids = array_filter(array_map('trim', explode(',', (string)$target_ids_raw)));
 
     if (!empty($ids)) {
         try {
             if ($edit_mode === 'single') {
                 $id         = $ids[0];
-                $emp_code   = trim($_POST['single_code'] ?? '');
-                $first_name = trim($_POST['single_first_name'] ?? '');
-                $last_name  = trim($_POST['single_last_name'] ?? ''); 
-                $email      = trim($_POST['single_email'] ?? '');
-                $phone      = trim($_POST['single_phone'] ?? '');
-                $emp_role   = $_POST['role'] ?? 'employee';
-                $birth_date = !empty($_POST['birth_date']) ? $_POST['birth_date'] : null;
-                $start_date = !empty($_POST['start_date']) ? $_POST['start_date'] : null;
-                $dept_id    = (!empty($_POST['department']) && $_POST['department'] !== '0') ? $_POST['department'] : null;
-                $branch_id  = (!empty($_POST['branch_id']) && $_POST['branch_id'] !== '0') ? $_POST['branch_id'] : null;
-                $work_shift = (!empty($_POST['work_shift']) && $_POST['work_shift'] !== '0') ? $_POST['work_shift'] : null;
-                $emp_type   = (!empty($_POST['employee_type']) && $_POST['employee_type'] !== '0') ? $_POST['employee_type'] : null;
+                $emp_code   = trim($_POST['single_code'] ?? $_POST['employee_code'] ?? '');
+                $first_name = trim($_POST['single_first_name'] ?? $_POST['first_name'] ?? '');
+                $last_name  = trim($_POST['single_last_name'] ?? $_POST['last_name'] ?? ''); 
+                $fullname_post = trim($_POST['single_fullname'] ?? $_POST['fullname'] ?? '');
+
+                if (empty($first_name) && !empty($fullname_post)) {
+                    $parts = explode(' ', $fullname_post, 2);
+                    $first_name = $parts[0] ?? '';
+                    $last_name  = $parts[1] ?? '';
+                }
+                $fullname_combined = trim($first_name . ' ' . $last_name);
+
+                $email      = trim($_POST['single_email'] ?? $_POST['email'] ?? '');
+                $phone      = trim($_POST['single_phone'] ?? $_POST['phone'] ?? '');
+                $emp_role   = $_POST['role'] ?? $_POST['single_role'] ?? 'employee';
                 
-                $status_raw = $_POST['status'] ?? 'active';
-                $is_active_val = ($status_raw === 'active' || $status_raw === '1') ? 1 : 0;
+                // 🎯 แปลงวันที่ พ.ศ. เป็น ค.ศ. ก่อนลง DB ป้องกัน SQL พัง
+                $birth_date = parseThaiDateToAD($_POST['birth_date'] ?? $_POST['single_birth_date'] ?? '');
+                $start_date = parseThaiDateToAD($_POST['start_date'] ?? $_POST['single_start_date'] ?? '');
+                
+                $dept_val   = $_POST['department'] ?? $_POST['single_department'] ?? '';
+                $dept_id    = (!empty($dept_val) && $dept_val !== '0') ? $dept_val : null;
+
+                $branch_val = $_POST['branch_id'] ?? $_POST['single_branch_id'] ?? '';
+                $branch_id  = (!empty($branch_val) && $branch_val !== '0') ? $branch_val : null;
+
+                $shift_val  = $_POST['work_shift'] ?? $_POST['single_work_shift'] ?? '';
+                $work_shift = (!empty($shift_val) && $shift_val !== '0') ? $shift_val : null;
+
+                $type_val   = $_POST['employee_type'] ?? $_POST['single_employee_type'] ?? '';
+                $emp_type   = (!empty($type_val) && $type_val !== '0') ? $type_val : null;
+                
+                $status_raw = $_POST['status'] ?? $_POST['single_status'] ?? 'active';
+                $is_active_val = ($status_raw === 'active' || $status_raw === '1' || $status_raw === 1) ? 1 : 0;
 
                 $params = [
                     'code'      => $emp_code, 
                     'fname'     => $first_name, 
                     'lname'     => $last_name, 
+                    'fullname'  => $fullname_combined,
                     'email'     => $email, 
                     'phone'     => $phone,
                     'role'      => $emp_role,
@@ -97,10 +136,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
                 $stmt_update = $pdo->prepare("
                     UPDATE users SET 
-                        employee_code = :code, first_name = :fname, last_name = :lname, email = :email, phone = :phone, role = :role,
-                        birth_date = :birth, start_date = :start, department = :dept,
-                        branch_id = :branch, employee_type = :emp_type, work_shift = :shift,
-                        is_active = :is_active $img_sql $pass_sql
+                        employee_code = :code, 
+                        first_name = :fname, 
+                        last_name = :lname, 
+                        fullname = :fullname,
+                        email = :email, 
+                        phone = :phone, 
+                        role = :role,
+                        birth_date = :birth, 
+                        start_date = :start, 
+                        department = :dept,
+                        branch_id = :branch, 
+                        employee_type = :emp_type, 
+                        work_shift = :shift,
+                        is_active = :is_active 
+                        $img_sql 
+                        $pass_sql
                     WHERE id = :id
                 ");
                 $stmt_update->execute($params);
@@ -110,10 +161,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $update_fields = [];
                 $params = [];
 
-                if (!empty($_POST['department'])) { $update_fields[] = "department = :dept"; $params['dept'] = $_POST['department']; }
-                if (!empty($_POST['branch_id'])) { $update_fields[] = "branch_id = :branch"; $params['branch'] = $_POST['branch_id']; }
-                if (!empty($_POST['employee_type'])) { $update_fields[] = "employee_type = :emp_type"; $params['emp_type'] = $_POST['employee_type']; }
-                if (!empty($_POST['work_shift'])) { $update_fields[] = "work_shift = :shift"; $params['shift'] = $_POST['work_shift']; }
+                if (!empty($_POST['department']) && $_POST['department'] !== '0') { $update_fields[] = "department = :dept"; $params['dept'] = $_POST['department']; }
+                if (!empty($_POST['branch_id']) && $_POST['branch_id'] !== '0') { $update_fields[] = "branch_id = :branch"; $params['branch'] = $_POST['branch_id']; }
+                if (!empty($_POST['employee_type']) && $_POST['employee_type'] !== '0') { $update_fields[] = "employee_type = :emp_type"; $params['emp_type'] = $_POST['employee_type']; }
+                if (!empty($_POST['work_shift']) && $_POST['work_shift'] !== '0') { $update_fields[] = "work_shift = :shift"; $params['shift'] = $_POST['work_shift']; }
                 if (!empty($_POST['status'])) { 
                     $update_fields[] = "is_active = :is_active"; 
                     $params['is_active'] = ($_POST['status'] === 'active' || $_POST['status'] === '1') ? 1 : 0; 
@@ -130,6 +181,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         } catch (PDOException $e) {
             $_SESSION['error_msg'] = 'เกิดข้อผิดพลาด: ' . $e->getMessage();
         }
+    } else {
+        $_SESSION['error_msg'] = 'ไม่พบรหัสพนักงานที่ต้องการแก้ไข';
     }
     header("Location: manage_employees.php");
     exit();
@@ -164,8 +217,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $branch_id  = !empty($_POST['branch_id']) ? $_POST['branch_id'] : null;
     $work_shift = !empty($_POST['work_shift']) ? $_POST['work_shift'] : null;
     $emp_type   = !empty($_POST['employee_type']) ? $_POST['employee_type'] : null;
-    $start_date = !empty($_POST['start_date']) ? $_POST['start_date'] : date('Y-m-d');
-    $birth_date = !empty($_POST['birth_date']) ? $_POST['birth_date'] : '2000-01-01';
+    $start_date = parseThaiDateToAD($_POST['start_date'] ?? '') ?? date('Y-m-d');
+    $birth_date = parseThaiDateToAD($_POST['birth_date'] ?? '') ?? '2000-01-01';
+
+    $parts = explode(' ', $fullname, 2);
+    $first_name = $parts[0] ?? '';
+    $last_name  = $parts[1] ?? '';
 
     if (empty($emp_code) || empty($fullname)) {
         $_SESSION['error_msg'] = 'กรุณากรอกรหัสพนักงาน และชื่อ-นามสกุลให้ครบถ้วน';
@@ -179,20 +236,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
                 $stmt_add = $pdo->prepare("
                     INSERT INTO users (
-                        employee_code, password, role, fullname, email, phone,
+                        employee_code, first_name, last_name, fullname, password, role, email, phone,
                         birth_date, address_detail, subdistrict, district, province, zipcode,
                         branch_id, employee_type, department, start_date, work_shift, is_active
                     ) VALUES (
-                        :code, :pass, :role, :name, :email, :phone,
+                        :code, :fname, :lname, :name, :pass, :role, :email, :phone,
                         :birth, '', '', '', '', '',
                         :branch, :emp_type, :dept, :start_date, :shift, 1
                     )
                 ");
                 $stmt_add->execute([
                     'code'       => $emp_code,
+                    'fname'      => $first_name,
+                    'lname'      => $last_name,
+                    'name'       => $fullname,
                     'pass'       => $hashed_password,
                     'role'       => $emp_role,
-                    'name'       => $fullname,
                     'email'      => $email,
                     'phone'      => $phone,
                     'birth'      => $birth_date,
@@ -213,7 +272,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 
 // 🔍 5. ดึงข้อมูลพนักงาน & ตัวกรองการ์ด
-$card_filter   = $_GET['filter'] ?? 'all'; // 'all', 'new_hires', 'birthdays', 'inactive'
+$card_filter   = $_GET['filter'] ?? 'all';
 $search        = trim($_GET['search'] ?? '');
 $dept_filter   = $_GET['dept'] ?? '';
 $branch_filter = $_GET['branch'] ?? '';
@@ -221,25 +280,20 @@ $type_filter   = $_GET['emp_type'] ?? '';
 $sort_order    = $_GET['sort'] ?? '';
 
 try {
-    // 📊 คิวรี่นับสถิติ 4 การ์ดหลักสำหรับงาน HR
     $current_month = date('m');
     $current_year  = date('Y');
 
-    // 1. พนักงานทั้งหมด
     $stmt_emp = $pdo->query("SELECT COUNT(*) FROM users WHERE role != 'admin'");
     $total_employees = $stmt_emp->fetchColumn() ?: 0;
 
-    // 2. พนักงานใหม่เดือนนี้
     $stmt_new_hires = $pdo->prepare("SELECT COUNT(*) FROM users WHERE role != 'admin' AND MONTH(start_date) = :m AND YEAR(start_date) = :y");
     $stmt_new_hires->execute(['m' => $current_month, 'y' => $current_year]);
     $new_hires_count = $stmt_new_hires->fetchColumn() ?: 0;
 
-    // 3. วันเกิดเดือนนี้
     $stmt_birthdays = $pdo->prepare("SELECT COUNT(*) FROM users WHERE role != 'admin' AND MONTH(birth_date) = :m");
     $stmt_birthdays->execute(['m' => $current_month]);
     $birthdays_count = $stmt_birthdays->fetchColumn() ?: 0;
 
-    // 4. บัญชีที่ปิดใช้งาน (is_active = 0)
     $stmt_inactive = $pdo->query("SELECT COUNT(*) FROM users WHERE role != 'admin' AND is_active = 0");
     $inactive_count = $stmt_inactive->fetchColumn() ?: 0;
 
@@ -248,10 +302,9 @@ try {
     $work_shifts    = $pdo->query("SELECT * FROM work_shifts ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
     $employee_types = $pdo->query("SELECT * FROM employee_types ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
 
-    // SQL หลักในการดึงข้อมูล
     $sql = "
         SELECT u.*, 
-                CONCAT(u.first_name, ' ', u.last_name) AS fullname,
+               CONCAT(u.first_name, ' ', u.last_name) AS fullname,
                d.name AS dept_name, 
                w.name AS shift_name, 
                b.name AS branch_name,
@@ -265,7 +318,6 @@ try {
     ";
     $params = [];
 
-    // 🎯 เงื่อนไขจาก Filter Cards
     if ($card_filter === 'new_hires') {
         $sql .= " AND MONTH(u.start_date) = :m_hire AND YEAR(u.start_date) = :y_hire";
         $params['m_hire'] = $current_month;
@@ -342,7 +394,6 @@ foreach ($employee_types as $t) {
     }
 }
 
-// ฟังก์ชันสร้าง URL สำหรับการ์ด
 function buildCardUrl($filter_val, $search, $dept, $branch, $sort) {
     $p = ['filter' => $filter_val];
     if (!empty($search)) $p['search'] = $search;
@@ -379,12 +430,9 @@ $page_subtitle = 'เพิ่ม แก้ไข และบริหารจ
 </head>
 <body class="bg-[#f4f6fa] text-slate-800 antialiased flex flex-col md:flex-row min-h-screen md:h-screen md:overflow-hidden">
 
-    <?php
-    // 🎯 ดึงชื่อไฟล์ปัจจุบันมาเช็ก Active Menu อัตโนมัติ
-    $current_page = basename($_SERVER['PHP_SELF']);
-    ?>
+    <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
 
-    <!-- 👤 SIDEBAR NAVIGATION (Light & Clean Theme) -->
+    <!-- 👤 SIDEBAR NAVIGATION -->
     <?php include '../includes/sidebar.php'; ?>
 
     <!-- 💻 WORKSPACE WRAPPER ฝั่งขวา -->
@@ -396,7 +444,7 @@ $page_subtitle = 'เพิ่ม แก้ไข และบริหารจ
     <!-- 💻 2. MAIN WORKSPACE -->
     <main class="flex-1 p-4 sm:p-6 lg:p-8 w-full min-h-screen md:h-screen overflow-y-auto space-y-4 sm:space-y-6 pb-20 md:pb-8">
 
-        <!-- 📊 3. KPI CARDS (สไตล์ Clean Box แบบ system_settings.php) -->
+        <!-- 📊 3. KPI CARDS -->
         <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-2xs">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                 
@@ -465,12 +513,12 @@ $page_subtitle = 'เพิ่ม แก้ไข และบริหารจ
                 <input type="hidden" name="filter" value="<?php echo htmlspecialchars($card_filter); ?>">
                 <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort_order); ?>">
 
-                <div class="w-full sm:w-100">
+                <div class="w-full sm:w-80">
                     <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="ค้นหาชื่อ, รหัสพนักงาน, อีเมล..." 
                         class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2 text-xs font-medium focus:outline-none focus:border-blue-500 transition-colors h-10">
                 </div>
 
-                <div class="w-48 sm:w-120">
+                <div class="w-48 sm:w-60">
                     <?php renderRoundedDropdown('dept_select', 'dept', $active_dept_label, $dept_opts, $dept_filter); ?>
                 </div>
 
@@ -478,7 +526,7 @@ $page_subtitle = 'เพิ่ม แก้ไข และบริหารจ
                     <?php renderRoundedDropdown('branch_select', 'branch', $active_branch_label, $branch_opts, $branch_filter); ?>
                 </div>
                 
-                <div class="w-full sm:w-60">
+                <div class="w-full sm:w-56">
                     <?php renderRoundedDropdown('type_select', 'emp_type', $active_type_label, $type_opts, $type_filter); ?>
                 </div>
                     
@@ -498,10 +546,10 @@ $page_subtitle = 'เพิ่ม แก้ไข และบริหารจ
                 </div>
             </form>
             
-        </div>
             <button type="button" onclick="openAddEmployeeModal()" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 shrink-0">
                 <span>➕</span> เพิ่มพนักงานใหม่
             </button>
+        </div>
 
         <!-- 📑 ตารางข้อมูลพนักงาน -->
         <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
@@ -545,7 +593,6 @@ $page_subtitle = 'เพิ่ม แก้ไข และบริหารจ
                                 $is_active = isset($emp['is_active']) ? ($emp['is_active'] == 1) : true;
                                 $status_attr_val = $is_active ? 'active' : 'inactive';
                             ?>
-                            <!-- 🎯 จุดที่ 1: เพิ่ม onclick และ cursor-pointer บนแถว <tr> เพื่อให้กดเปิดหน้าแก้ไขได้ทันที -->
                             <tr onclick="openSingleRowEdit(this, event)" class="hover:bg-blue-50/50 transition-colors cursor-pointer active:scale-[0.995]">
                                 <td class="p-4 text-center">
                                     <input type="checkbox" 
@@ -622,10 +669,8 @@ $page_subtitle = 'เพิ่ม แก้ไข และบริหารจ
     <?php include '../includes/modal_delete_employee.php'; ?>
     <?php include '../includes/floating_bulk_bar.php'; ?>
 
-    <!-- 🔔 ดึงไฟล์ระบบแจ้งเตือน alerts.js -->
     <script src="../assets/js/alerts.js"></script>
 
-    <!-- 🎯 สคริปต์สั่งเปิด Modal แก้ไขโดยตรงจากการกดแถวตาราง -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             <?php if (!empty($success_msg)): ?>
@@ -637,9 +682,7 @@ $page_subtitle = 'เพิ่ม แก้ไข และบริหารจ
             <?php endif; ?>
         });
 
-        // 🎯 จุดที่ 2: ฟังก์ชันเมื่อกดคลิกที่แถวพนักงานเพื่อเปิด Modal แก้ไขทันที
         function openSingleRowEdit(trElement, event) {
-            // ถ้าคลิกโดนช่อง Checkbox โดยตรง ไม่ต้องเด้ง Modal แก้ไข เพื่อให้ติ๊กเลือกได้ปกติ
             if (event.target && event.target.tagName === 'INPUT' && event.target.type === 'checkbox') {
                 return;
             }
@@ -647,13 +690,23 @@ $page_subtitle = 'เพิ่ม แก้ไข และบริหารจ
             const checkbox = trElement.querySelector('.emp-checkbox');
             if (!checkbox) return;
 
-            // ดึงข้อมูลพนักงานจาก data attribute ของ checkbox
+            let fname = checkbox.getAttribute('data-firstname') || '';
+            let lname = checkbox.getAttribute('data-lastname') || '';
+            const fullname = checkbox.getAttribute('data-fullname') || '';
+
+            // ถ้าไม่มี first_name/last_name ให้แยกจาก fullname อัตโนมัติ
+            if (!fname && fullname) {
+                const parts = fullname.trim().split(' ');
+                fname = parts[0] || '';
+                lname = parts.slice(1).join(' ') || '';
+            }
+
             const empData = {
                 id: checkbox.value,
                 code: checkbox.getAttribute('data-code') || '',
-                firstname: checkbox.getAttribute('data-firstname') || '',
-                lastname: checkbox.getAttribute('data-lastname') || '',
-                fullname: checkbox.getAttribute('data-fullname') || '',
+                firstname: fname,
+                lastname: lname,
+                fullname: fullname || (fname + ' ' + lname).trim(),
                 email: checkbox.getAttribute('data-email') || '',
                 phone: checkbox.getAttribute('data-phone') || '',
                 role: checkbox.getAttribute('data-role') || 'employee',
@@ -668,7 +721,6 @@ $page_subtitle = 'เพิ่ม แก้ไข และบริหารจ
                 status: checkbox.getAttribute('data-status') || 'active'
             };
 
-            // ส่งข้อมูลพนักงานคนเดียวเข้าสู่ระบบ modal_edit_employee.php
             if (typeof selectedEmployees !== 'undefined') {
                 selectedEmployees = [empData];
                 currentIndex = 0;

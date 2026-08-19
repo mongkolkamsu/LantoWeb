@@ -137,14 +137,11 @@ $urgent_options = [
                 <!-- 1. ฝั่งซ้าย: วันที่ปัจจุบัน & นาฬิกา -->
                 <div class="space-y-1 text-center lg:text-left">
                     <h2 class="text-base sm:text-xl font-black text-slate-800 flex items-center justify-center lg:justify-start gap-2">
-                        <span class="text-blue-600">🗓️</span> <?php echo $current_date_text; ?>
+                        <span class="text-blue-600"></span> <?php echo $current_date_text; ?>
                     </h2>
                     <div class="flex flex-wrap items-center justify-center lg:justify-start gap-2 text-xs font-bold">
                         <span class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-1 rounded-xl border border-blue-200/80 shadow-3xs">
                             ⏰ เวลา <span id="live_clock_display" class="text-sm tracking-wide font-black"><?php echo date('H:i:s'); ?></span> น.
-                        </span>
-                        <span class="text-[11px] font-bold text-slate-400 sm:hidden">
-                            👈 เลื่อนซ้าย-ขวาเพื่อดูตารางปฏิทิน
                         </span>
                     </div>
                 </div>
@@ -305,27 +302,39 @@ $urgent_options = [
 
     </main>
 
-    <!-- 📱 แถบเมนูด้านล่างสุดสำหรับมือถือ (ปรับขนาดปุ่มให้เท่ากัน นิ่ง ไม่ขยาย) -->
-    <div class="sm:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 py-1.5 z-40 shadow-lg grid grid-cols-3 gap-1">
-        
-        <!-- ปุ่มที่ 1: ตารางปฏิทิน -->
-        <a href="msg_index.php" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-2xl text-[10px] transition-all <?php echo (basename($_SERVER['PHP_SELF']) == 'index.php') ? 'bg-blue-50 text-blue-600 border border-blue-200/80 font-black' : 'text-slate-500 hover:bg-slate-50 border border-transparent font-bold'; ?>">
-            <span class="text-base leading-none">📅</span>
-            <span class="mt-0.5">ตารางปฏิทิน</span>
-        </a>
+    <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
 
-        <!-- ปุ่มที่ 2: ประวัติงาน -->
-        <a href="msg_history.php" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-2xl text-[10px] transition-all <?php echo (basename($_SERVER['PHP_SELF']) == 'history.php') ? 'bg-blue-50 text-blue-600 border border-blue-200/80 font-black' : 'text-slate-500 hover:bg-slate-50 border border-transparent font-bold'; ?>">
-            <span class="text-base leading-none">📋</span>
-            <span class="mt-0.5">ประวัติงาน</span>
-        </a>
+    <!-- 📱 แถบเมนูด้านล่างทรงมนสไตล์ navbar.php (แบบปกติเรียง 3 ปุ่ม) -->
+    <div class="md:hidden fixed bottom-4 left-4 right-4 max-w-md mx-auto h-16 bg-white/95 backdrop-blur-xl border border-slate-200/60 rounded-2xl shadow-xl z-50 flex items-center justify-between px-2">
+        <div class="w-full grid grid-cols-3 text-center items-center relative h-full">
+            
+            <!-- เมนู 1: ตารางปฏิทิน -->
+            <a href="msg_index.php" class="flex flex-col items-center active:scale-90 transition-transform <?php echo ($current_page == 'msg_index.php') ? 'text-blue-700 font-bold' : 'text-slate-400 hover:text-slate-600 font-medium'; ?>">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                <span class="text-[9px] mt-0.5">ตารางปฏิทิน</span>
+            </a>
 
-        <!-- ปุ่มที่ 3: กระดานแมส -->
-        <a href="jobs.php" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-2xl text-[10px] transition-all <?php echo (basename($_SERVER['PHP_SELF']) == 'jobs.php') ? 'bg-blue-50 text-blue-600 border border-blue-200/80 font-black' : 'text-slate-500 hover:bg-slate-50 border border-transparent font-bold'; ?>">
-            <span class="text-base leading-none">🛵</span>
-            <span class="mt-0.5">กระดานแมส</span>
-        </a>
+            <!-- เมนู 2: ประวัติงาน -->
+            <a href="msg_history.php" class="flex flex-col items-center active:scale-90 transition-transform <?php echo ($current_page == 'msg_history.php') ? 'text-blue-700 font-bold' : 'text-slate-400 hover:text-slate-600 font-medium'; ?>">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                    <path d="M3 3v5h5" />
+                    <path d="M12 7v5l3.5 2" />
+                </svg>
+                <span class="text-[9px] mt-0.5">ประวัติงาน</span>
+            </a>
 
+            <!-- เมนู 3: กระดานแมส -->
+            <a href="jobs.php" class="flex flex-col items-center active:scale-90 transition-transform <?php echo ($current_page == 'jobs.php') ? 'text-blue-700 font-bold' : 'text-slate-400 hover:text-slate-600 font-medium'; ?>">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                </svg>
+                <span class="text-[9px] mt-0.5">กระดานแมส</span>
+            </a>
+
+        </div>
     </div>
 
     <!-- 🎯 ดึงไฟล์ Modal ฟอร์มจอง + Modal รายละเอียดงานกลางมาใช้งาน -->

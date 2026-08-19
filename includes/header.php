@@ -2,6 +2,9 @@
 // 🛠️ Auto Detect Path Prefix
 $prefix = $prefix ?? (file_exists('config/db.php') ? '' : '../');
 
+// 🎯 กำหนดตัวแปรชื่อไฟล์ปัจจุบันเพื่อป้องกัน Warning
+$current_page = basename($_SERVER['PHP_SELF']);
+
 // ดึงข้อมูลผู้ใช้จาก Session
 $user_id       = $_SESSION['user_id'] ?? null;
 $fullname      = $_SESSION['fullname'] ?? 'ไม่ระบุชื่อ';

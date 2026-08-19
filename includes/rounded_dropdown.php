@@ -1,36 +1,58 @@
 <?php
 /**
- * 🎨 ฟังก์ชันกลางสำหรับเสกกล่อง Dropdown ขอบมนพรีเมียม (เวอร์ชันมีติ่งลูกศร + ช่องพิมพ์ค้นหา)
+ * 🎨 ฟังก์ชัน Dropdown ขอบมนพรีเมียม (พิมพ์ค้นหาในช่องหลักได้โดยตรง + ไม่เด้งปิดตอนเลื่อนลูกกลิ้ง)
  */
 function renderRoundedDropdown($id, $input_name, $placeholder, $options_array, $value = '', $enable_search = true) {
+    // หาชื่อเริ่มต้นที่จะนำมาแสดงในช่องพิมพ์
+    $initial_display = '';
+    if ($value !== '') {
+        foreach ($options_array as $opt) {
+            if ((string)$opt['id'] === (string)$value) {
+                $initial_display = $opt['name'];
+                break;
+            }
+        }
+    }
+    if ($initial_display === '' && !empty($placeholder)) {
+        $initial_display = $placeholder;
+    }
     ?>
     <div class="relative w-full text-left text-xs font-medium mb-1" id="custom-dropdown-<?php echo $id; ?>">
+        <!-- ค่า value จริงสำหรับส่ง Form -->
         <input type="hidden" id="<?php echo $id; ?>" name="<?php echo $input_name; ?>" value="<?php echo htmlspecialchars($value); ?>">
 
-        <button type="button" onclick="toggleDropdown('<?php echo $id; ?>')" id="trigger-<?php echo $id; ?>"
-            class="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-slate-700 flex justify-between items-center shadow-sm hover:border-slate-300 transition-all cursor-pointer">
-            <span id="label-<?php echo $id; ?>" class="<?php echo ($value !== '') ? 'text-slate-800 font-medium' : 'text-slate-500'; ?>"><?php echo $placeholder; ?></span>
-            <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" id="arrow-<?php echo $id; ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-        </button>
+        <!-- ช่องหลัก: พิมพ์ค้นหาได้โดยตรง หรือคลิกเพื่อเปิดดูรายการ -->
+        <div class="relative w-full">
+            <input type="text"
+                   id="input-display-<?php echo $id; ?>"
+                   autocomplete="off"
+                   value="<?php echo htmlspecialchars($initial_display); ?>"
+                   placeholder="<?php echo htmlspecialchars($placeholder); ?>"
+                   onfocus="openDropdown('<?php echo $id; ?>')"
+                   onclick="openDropdown('<?php echo $id; ?>')"
+                   oninput="handleDropdownInput('<?php echo $id; ?>', this.value)"
+                   class="w-full bg-white border border-slate-200 rounded-2xl pl-4 pr-10 py-3 text-slate-800 font-bold placeholder-slate-400 shadow-sm hover:border-slate-300 focus:outline-none focus:border-blue-500 transition-all cursor-pointer">
+            
+            <button type="button" 
+                    onclick="toggleDropdown('<?php echo $id; ?>')" 
+                    id="trigger-btn-<?php echo $id; ?>"
+                    tabindex="-1"
+                    class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
+                <svg class="w-4 h-4 transition-transform duration-200" id="arrow-<?php echo $id; ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+        </div>
 
         <!-- Dropdown Outer Container -->
         <div id="list-<?php echo $id; ?>" 
-            class="hidden absolute top-full left-0 right-0 mt-2.5 z-50">
+             class="hidden absolute top-full left-0 right-0 mt-2.5 z-50">
             
-            <!-- 🎯 ติ่งลูกศรชี้ขึ้น (Popover Arrow / Caret) -->
+            <!-- ติ่งลูกศรชี้ขึ้น -->
             <div class="absolute -top-[6px] right-6 w-3 h-3 bg-white border-t border-l border-slate-200/90 rotate-45 z-20"></div>
 
-            <!-- Inner Scrollable Box -->
+            <!-- กล่องรายการตัวเลือกแบบเลื่อนได้ -->
             <div class="bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-xl max-h-56 overflow-y-auto p-2 relative z-10">
-                
-                <!-- 🔎 ช่องพิมพ์ค้นหารายชื่อ/ตัวเลือก -->
-                <?php if ($enable_search): ?>
-                    <div class="p-1 sticky top-0 bg-white/95 z-10 border-b border-slate-100 mb-1" onclick="event.stopPropagation()">
-                        <input type="text" placeholder="🔍 พิมพ์เพื่อค้นหาชื่อ/รหัส..." oninput="filterDropdownOptions('<?php echo $id; ?>', this.value)"
-                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500 font-bold">
-                    </div>
-                <?php endif; ?>
-
                 <div id="items-container-<?php echo $id; ?>">
                     <?php if (empty($options_array)): ?>
                         <div class="px-4 py-2.5 text-slate-400 text-center">ไม่มีข้อมูลในระบบ</div>
@@ -38,7 +60,7 @@ function renderRoundedDropdown($id, $input_name, $placeholder, $options_array, $
                         <?php foreach ($options_array as $opt): 
                             $data_attrs = $opt['data_attributes'] ?? '';
                         ?>
-                            <div onclick="selectDropdownOption('<?php echo $id; ?>', '<?php echo $opt['id']; ?>', '<?php echo htmlspecialchars($opt['name']); ?>')"
+                            <div onclick="selectDropdownOption('<?php echo $id; ?>', '<?php echo $opt['id']; ?>', '<?php echo htmlspecialchars($opt['name'], ENT_QUOTES); ?>')"
                                  data-value="<?php echo $opt['id']; ?>"
                                  class="dropdown-item px-3 py-2.5 rounded-xl text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors cursor-pointer flex items-center justify-between"
                                  <?php echo $data_attrs; ?>>
@@ -47,7 +69,6 @@ function renderRoundedDropdown($id, $input_name, $placeholder, $options_array, $
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </div>
-
             </div>
         </div>
     </div>
@@ -59,12 +80,13 @@ function renderRoundedDropdown($id, $input_name, $placeholder, $options_array, $
 if (typeof dropdownScriptsLoaded === 'undefined') {
     var dropdownScriptsLoaded = true;
 
-    function toggleDropdown(id) {
+    function openDropdown(id) {
         const list = document.getElementById('list-' + id);
         const arrow = document.getElementById('arrow-' + id);
-        const trigger = document.getElementById('trigger-' + id);
-        
-        // ปิดดร็อปดาวน์ตัวอื่นที่เปิดอยู่
+        const input = document.getElementById('input-display-' + id);
+        if (!list || !input) return;
+
+        // ปิดตัวอื่นที่เปิดค้างอยู่
         document.querySelectorAll('[id^="list-"]').forEach(el => {
             if (el.id !== 'list-' + id) {
                 el.classList.add('hidden');
@@ -75,37 +97,43 @@ if (typeof dropdownScriptsLoaded === 'undefined') {
             if (el.id !== 'arrow-' + id) el.classList.remove('rotate-180');
         });
 
-        const isHidden = list.classList.contains('hidden');
-        
-        if (isHidden) {
-            const rect = trigger.getBoundingClientRect();
-            list.style.position = 'fixed';
-            list.style.zIndex = '999999';
-            list.style.width = Math.max(rect.width, 200) + 'px';
-            list.style.left = rect.left + 'px';
-            
-            // 🎯 บังคับเปิดลงด้านล่างเสมอ ไม่ดีดขึ้นบน
-            list.style.bottom = 'auto';
-            list.style.top = (rect.bottom + 4) + 'px';
+        const rect = input.getBoundingClientRect();
+        list.style.position = 'fixed';
+        list.style.zIndex = '999999';
+        list.style.width = Math.max(rect.width, 200) + 'px';
+        list.style.left = rect.left + 'px';
+        list.style.bottom = 'auto';
+        list.style.top = (rect.bottom + 4) + 'px';
 
-            // เปิดแสดงผลทันที
-            list.classList.remove('hidden');
-            arrow.classList.add('rotate-180');
+        list.classList.remove('hidden');
+        if (arrow) arrow.classList.add('rotate-180');
+    }
+
+    function toggleDropdown(id) {
+        const list = document.getElementById('list-' + id);
+        if (!list) return;
+        if (list.classList.contains('hidden')) {
+            openDropdown(id);
         } else {
             list.classList.add('hidden');
-            arrow.classList.remove('rotate-180');
-            list.style.position = 'absolute';
+            const arrow = document.getElementById('arrow-' + id);
+            if (arrow) arrow.classList.remove('rotate-180');
         }
+    }
+
+    // เมื่อพิมพ์ในช่องหลัก ให้เปิดเมนูพร้อมกรองตัวเลือกทันที
+    function handleDropdownInput(id, query) {
+        openDropdown(id);
+        filterDropdownOptions(id, query);
     }
 
     function selectDropdownOption(id, value, label) {
         const hiddenInput = document.getElementById(id);
         if (hiddenInput) hiddenInput.value = value;
         
-        const labelSpan = document.getElementById('label-' + id);
-        if (labelSpan) {
-            labelSpan.textContent = label;
-            labelSpan.className = "truncate text-slate-800 font-bold";
+        const inputDisplay = document.getElementById('input-display-' + id);
+        if (inputDisplay) {
+            inputDisplay.value = label;
         }
         
         const list = document.getElementById('list-' + id);
@@ -113,6 +141,9 @@ if (typeof dropdownScriptsLoaded === 'undefined') {
         
         const arrow = document.getElementById('arrow-' + id);
         if (arrow) arrow.classList.remove('rotate-180');
+
+        // คืนค่ารายการทั้งหมดให้พร้อมแสดงในครั้งต่อไป
+        filterDropdownOptions(id, '');
 
         if (id.startsWith('perm_role_') && typeof changeUserRoleDirectly === 'function') {
             const userId = id.replace('perm_role_', '');
@@ -141,15 +172,19 @@ if (typeof dropdownScriptsLoaded === 'undefined') {
         });
     }
 
+    // ปิดเมื่อคลิกนอกพื้นที่ Dropdown
     document.addEventListener('click', function(e) {
-        if (!e.target.closest('[id^="custom-dropdown-"]')) {
+        if (!e.target.closest('[id^="custom-dropdown-"]') && !e.target.closest('[id^="list-"]')) {
             document.querySelectorAll('[id^="list-"]').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('[id^="arrow-"]').forEach(el => el.classList.remove('rotate-180'));
         }
     });
-}
-    // 🎯 สั่งปิดดร็อปดาวน์อัตโนมัติเมื่อมีการเลื่อนหน้าจอ เพื่อไม่ให้มันลอยตามจอ
-    window.addEventListener('scroll', function() {
+
+    // 🎯 แก้บัคเลื่อนลูกกลิ้ง: ถ้าเลื่อนภายในเมนู Dropdown จะไม่เด้งปิด
+    window.addEventListener('scroll', function(e) {
+        if (e.target && e.target.closest && e.target.closest('[id^="list-"]')) {
+            return;
+        }
         document.querySelectorAll('[id^="list-"]').forEach(el => {
             el.classList.add('hidden');
             el.style.position = 'absolute';
@@ -158,4 +193,5 @@ if (typeof dropdownScriptsLoaded === 'undefined') {
             el.classList.remove('rotate-180');
         });
     }, true);
+}
 </script>

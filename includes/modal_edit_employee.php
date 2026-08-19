@@ -480,21 +480,34 @@
     function setDropdownValue(dropdownId, val, defaultPlaceholder) {
         const hiddenInput = document.getElementById(dropdownId);
         const labelSpan = document.getElementById('label-' + dropdownId);
-        if (!hiddenInput || !labelSpan) return;
+        const inputDisplay = document.getElementById('input-display-' + dropdownId);
+        
+        if (!hiddenInput) return;
 
         if (val !== null && val !== undefined && val !== '' && val !== '0') {
             hiddenInput.value = val;
             const optionItem = document.querySelector(`#list-${dropdownId} [data-value="${val}"]`);
             if (optionItem) {
-                labelSpan.textContent = optionItem.textContent.trim();
-                labelSpan.className = "text-slate-800 font-medium";
+                const textVal = optionItem.textContent.trim();
+                if (labelSpan) {
+                    labelSpan.textContent = textVal;
+                    labelSpan.className = "text-slate-800 font-medium";
+                }
+                if (inputDisplay) {
+                    inputDisplay.value = textVal;
+                }
                 return;
             }
         }
 
         hiddenInput.value = '';
-        labelSpan.textContent = defaultPlaceholder;
-        labelSpan.className = "text-slate-500";
+        if (labelSpan) {
+            labelSpan.textContent = defaultPlaceholder;
+            labelSpan.className = "text-slate-500";
+        }
+        if (inputDisplay) {
+            inputDisplay.value = defaultPlaceholder;
+        }
     }
 
     function previewEditImage(input, viewId, wrapId) {

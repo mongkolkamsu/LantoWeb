@@ -439,9 +439,9 @@ if (isset($pdo)) {
         }
     });
 
-    document.getElementById('bookingModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeBookingModal();
-        }
-    });
+    //document.getElementById('bookingModal').addEventListener('click', function(e) {
+       // if (e.target === this) {
+            //closeBookingModal();
+        //}
+    //});
 </script>

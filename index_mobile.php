@@ -416,20 +416,20 @@ try {
                             <span class="text-slate-600 text-[10px] font-medium tracking-tight">Messenger Request</span>
                         </a>
 
-                        <!-- 6. แจ้งปัญหาไอที -->
-                        <a href="#" class="flex flex-col items-center group active:scale-95 transition-transform">
-                            <div class="w-11 h-11 bg-slate-50 border border-slate-200/60 rounded-2xl flex items-center justify-center shadow-2xs mb-1.5 p-2">
-                                <img src="assets/images/italy.png" alt="IT Support" class="w-full h-full object-contain">
-                            </div>
-                            <span class="text-slate-600 text-[10px] font-medium tracking-tight">IT Service</span>
-                        </a>
-
-                        <!-- 7. จองรถองค์กร (แทนที่จองยืมของไอทีเดิม) -->
+                        <!-- 6. จองรถองค์กร (แทนที่จองยืมของไอทีเดิม) -->
                         <a href="car_request/car_index.php" class="flex flex-col items-center group active:scale-95 transition-transform">
                             <div class="w-11 h-11 bg-slate-50 border border-slate-200/60 rounded-2xl flex items-center justify-center shadow-2xs mb-1.5 p-2">
                                 <img src="assets/images/car.png" alt="Car Booking" class="w-full h-full object-contain" onerror="this.src='assets/images/box.png'">
                             </div>
                             <span class="text-slate-600 text-[10px] font-medium tracking-tight leading-tight">Car Request</span>
+                        </a>
+
+                        <!-- 7. แจ้งปัญหาไอที -->
+                        <a href="#" class="flex flex-col items-center group active:scale-95 transition-transform">
+                            <div class="w-11 h-11 bg-slate-50 border border-slate-200/60 rounded-2xl flex items-center justify-center shadow-2xs mb-1.5 p-2">
+                                <img src="assets/images/italy.png" alt="IT Support" class="w-full h-full object-contain">
+                            </div>
+                            <span class="text-slate-600 text-[10px] font-medium tracking-tight">IT Service</span>
                         </a>
 
                         <!-- 8. จัดการระบบ -->
@@ -448,11 +448,15 @@ try {
                 <!-- 📢 การ์ดแสดงข่าวสารองค์กร (ดีไซน์รองรับมือถือ พร้อมสไลด์และคลิกดูรายละเอียด) -->
                 <div class="bg-white rounded-3xl p-5 shadow-2xs border border-slate-200/80 flex flex-col justify-between relative overflow-hidden">
                     <div>
-                        <div class="flex justify-between items-center mb-3">
-                            <div class="w-9 h-9 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center font-bold text-base">📢</div>
-                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                        <div class="flex items-center justify-center gap-2 mb-3.5 pb-2.5 border-b border-slate-100">
+                            <div class="w-7 h-7 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center shrink-0">
+                                <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-sm sm:text-base font-black text-slate-800 tracking-wide">
                                 ข่าวสารองค์กร
-                            </span>
+                            </h3>
                         </div>
                         
                         <?php if (empty($news_list)): ?>
@@ -470,9 +474,16 @@ try {
                                             $news_json_single = htmlspecialchars(json_encode($news, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
                                     ?>
                                     <div class="w-full shrink-0 px-0.5 space-y-2.5 news-slide cursor-pointer group" onclick='openNewsDetailModal(<?php echo $news_json_single; ?>, <?php echo $news_json_all; ?>)'>
-                                        <?php if (!empty($news['image'])): ?>
+                                        <?php 
+                                            $cover_img = '';
+                                            if (!empty($news['image'])) {
+                                                $decoded = json_decode($news['image'], true);
+                                                $cover_img = is_array($decoded) ? ($decoded[0] ?? '') : $news['image'];
+                                            }
+                                            if (!empty($cover_img)): 
+                                        ?>
                                         <div class="w-full h-36 rounded-2xl overflow-hidden bg-slate-900/5 border border-slate-200 shadow-xs relative group-hover:border-blue-400 transition-all flex items-center justify-center">
-                                            <img src="uploads/news/<?php echo htmlspecialchars($news['image']); ?>" alt="News Image" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
+                                            <img src="uploads/news/<?php echo htmlspecialchars($cover_img); ?>" alt="News Image" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
                                         </div>
                                         <?php endif; ?>
 
