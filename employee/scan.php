@@ -153,6 +153,21 @@ if (empty($default_branch) && count($branches) > 0) {
         ::-webkit-scrollbar { display: none; }
         .leaflet-container img { max-width: none !important; max-height: none !important; }
         #scanMap { min-height: 200px !important; z-index: 10; }
+
+        /* 📍 ลบกรอบสี่เหลี่ยมพื้นหลังสีขาวของหมุด Leaflet */
+        .leaflet-div-icon {
+            background: transparent !important;
+            border: none !important;
+        }
+
+        /* 📡 แอนิเมชันคลื่นเรดาร์สีน้ำเงินกระเพื่อม (สำหรับหมุดตำแหน่งผู้ใช้) */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.6); opacity: 0.9; }
+            80%, 100% { transform: scale(2.2); opacity: 0; }
+        }
+        .user-radar-ring {
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
     </style>
 </head>
 <body class="bg-[#f4f6fa] min-h-screen text-slate-800 antialiased flex">
