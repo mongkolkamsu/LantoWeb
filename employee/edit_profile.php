@@ -3,6 +3,7 @@ ob_start(); // เปิดการจัดการ Output Buffer บนส�
 session_start();
 require_once '../config/db.php';
 require_once '../config/auth.php';
+
 // 🔑 1. ตรวจสอบสิทธิ์การเข้าใช้งาน
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
@@ -28,10 +29,27 @@ try {
 $user_role = $_SESSION['role'] ?? $user_data['role'] ?? 'employee';
 $can_edit_restricted = in_array(strtolower($user_role), ['admin', 'hr', 'it_support']);
 
+// 🛠️ ฟังก์ชันแปลงวันที่ พ.ศ. (วว/ดด/ปปปป) หรือ ค.ศ. ให้เป็น YYYY-MM-DD
+function parseThaiDateToAD($dateStr) {
+    if (empty($dateStr)) return null;
+    $dateStr = trim($dateStr);
+    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateStr)) {
+        return $dateStr;
+    }
+    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dateStr, $matches)) {
+        $d = sprintf('%02d', $matches[1]);
+        $m = sprintf('%02d', $matches[2]);
+        $y = (int)$matches[3];
+        if ($y > 2400) { $y -= 543; }
+        return sprintf('%04d-%02d-%02d', $y, $m, $d);
+    }
+    return null;
+}
+
 // 💾 2. ประมวลผลเมื่อกดบันทึกการแก้ไข (POST Request)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (ob_get_length()) ob_clean(); // ล้าง Output Buffer ก่อนพ่น JSON
-    header('Content-Type: application/json');
+    header('Content-Type: application/json; charset=utf-8');
 
     $password     = $_POST['password'] ?? '';
     $confirm_pass = $_POST['confirm_password'] ?? '';
@@ -41,80 +59,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    // 🎯 1. ส่วนข้อมูลประจำตัวและข้อมูลการทำงาน (แก้ได้เฉพาะ Admin / HR / IT)
+    // 🎯 1. ส่วนข้อมูลประจำตัวและข้อมูลการทำงาน
     if ($can_edit_restricted) {
-        $first_name = trim(htmlspecialchars($_POST['first_name'] ?? $user_data['first_name']));
-        $last_name  = trim(htmlspecialchars($_POST['last_name'] ?? $user_data['last_name']));
-        $birth_date   = $_POST['birth_date'] ?? $user_data['birth_date'];
-        $start_date   = $_POST['start_date'] ?? $user_data['start_date'];
-        $email        = trim(htmlspecialchars($_POST['email'] ?? $user_data['email']));
-        $phone        = trim(htmlspecialchars($_POST['phone'] ?? $user_data['phone']));
+        $first_name    = trim($_POST['first_name'] ?? $user_data['first_name'] ?? '');
+        $last_name     = trim($_POST['last_name'] ?? $user_data['last_name'] ?? '');
+        $birth_date    = parseThaiDateToAD($_POST['birth_date'] ?? '') ?? $user_data['birth_date'];
+        $start_date    = parseThaiDateToAD($_POST['start_date'] ?? '') ?? $user_data['start_date'];
+        $email         = trim($_POST['email'] ?? $user_data['email'] ?? '');
+        $phone         = trim($_POST['phone'] ?? $user_data['phone'] ?? '');
         
-        $branch_id     = $_POST['branch_id'] ?? $user_data['branch_id'];
-        $employee_type = $_POST['employee_type'] ?? $user_data['employee_type'];
-        $department    = $_POST['department'] ?? $user_data['department'];
-        $work_shift    = $_POST['work_shift'] ?? $user_data['work_shift'];
+        $branch_val    = $_POST['branch_id'] ?? '';
+        $branch_id     = (!empty($branch_val) && $branch_val !== '0') ? $branch_val : $user_data['branch_id'];
 
-        // แปลงวันเกิด (พ.ศ. ➔ ค.ศ.)
-        if (!empty($birth_date) && strpos($birth_date, '/') !== false) {
-            $parts = explode('/', $birth_date);
-            if (count($parts) === 3) {
-                $birth_date = ((int)$parts[2] - 543) . '-' . str_pad($parts[1], 2, '0', STR_PAD_LEFT) . '-' . str_pad($parts[0], 2, '0', STR_PAD_LEFT);
-            }
-        }
+        $type_val      = $_POST['employee_type'] ?? '';
+        $employee_type = (!empty($type_val) && $type_val !== '0') ? $type_val : $user_data['employee_type'];
 
-        // แปลงวันเริ่มบรรจุงาน (พ.ศ. ➔ ค.ศ.)
-        if (!empty($start_date) && strpos($start_date, '/') !== false) {
-            $parts = explode('/', $start_date);
-            if (count($parts) === 3) {
-                $start_date = ((int)$parts[2] - 543) . '-' . str_pad($parts[1], 2, '0', STR_PAD_LEFT) . '-' . str_pad($parts[0], 2, '0', STR_PAD_LEFT);
-            }
-        }
+        $dept_val      = $_POST['department'] ?? '';
+        $department    = (!empty($dept_val) && $dept_val !== '0') ? $dept_val : $user_data['department'];
+
+        $shift_val     = $_POST['work_shift'] ?? '';
+        $work_shift    = (!empty($shift_val) && $shift_val !== '0') ? $shift_val : $user_data['work_shift'];
     } else {
-        // พนักงานทั่วไป: ล็อกข้อมูลประจำตัวและข้อมูลการทำงาน ให้ใช้ค่าเดิมใน DB
-        $fullname      = $user_data['fullname'];
-        $birth_date    = $user_data['birth_date'];
-        $start_date    = $user_data['start_date'];
-        $email         = $user_data['email'];
-        $phone         = $user_data['phone'];
-        $branch_id     = $user_data['branch_id'];
-        $employee_type = $user_data['employee_type'];
-        $department    = $user_data['department'];
-        $work_shift    = $user_data['work_shift'];
+        // พนักงานทั่วไป: ล็อกข้อมูลประจำตัวและข้อมูลการทำงาน ให้ใช้ค่าเดิมใน DB ปลอดภัย 100%
+        $first_name    = $user_data['first_name'] ?? '';
+        $last_name     = $user_data['last_name'] ?? '';
+        $birth_date    = $user_data['birth_date'] ?? null;
+        $start_date    = $user_data['start_date'] ?? null;
+        $email         = $user_data['email'] ?? '';
+        $phone         = $user_data['phone'] ?? '';
+        $branch_id     = $user_data['branch_id'] ?? null;
+        $employee_type = $user_data['employee_type'] ?? null;
+        $department    = $user_data['department'] ?? null;
+        $work_shift    = $user_data['work_shift'] ?? null;
     }
 
-    // 🎯 2. ส่วนรายละเอียดที่อยู่อาศัย (ข้อ 9) -> ปลดล็อก! พนักงานทุกคนสามารถแก้ไขได้เองเสมอ
-    $house_no     = trim(htmlspecialchars($_POST['house_no'] ?? ''));
-    $village      = trim(htmlspecialchars($_POST['village'] ?? ''));
-    $alley        = trim(htmlspecialchars($_POST['alley'] ?? ''));
-    $street       = trim(htmlspecialchars($_POST['street'] ?? ''));
+    // 🎯 2. ส่วนรายละเอียดที่อยู่อาศัย (ข้อ 9) -> พนักงานทุกคนสามารถแก้ไขได้เองเสมอ
+    $house_no     = trim($_POST['house_no'] ?? '');
+    $village      = trim($_POST['village'] ?? '');
+    $alley        = trim($_POST['alley'] ?? '');
+    $street       = trim($_POST['street'] ?? '');
     
-    $subdistrict  = trim(htmlspecialchars($_POST['subdistrict'] ?? $user_data['subdistrict']));
-    $district     = trim(htmlspecialchars($_POST['district'] ?? $user_data['district']));
-    $province     = trim(htmlspecialchars($_POST['province'] ?? $user_data['province']));
-    $zipcode      = trim(htmlspecialchars($_POST['zipcode'] ?? $user_data['zipcode']));
+    $subdistrict  = trim($_POST['subdistrict'] ?? $user_data['subdistrict'] ?? '');
+    $district     = trim($_POST['district'] ?? $user_data['district'] ?? '');
+    $province     = trim($_POST['province'] ?? $user_data['province'] ?? '');
+    $zipcode      = trim($_POST['zipcode'] ?? $user_data['zipcode'] ?? '');
 
     $full_address_detail = "บ้านเลขที่ $house_no | หมู่บ้าน/อาคาร $village | ซอย $alley | ถนน $street";
 
     try {
-        // 🎯 กำหนดค่าเริ่มต้นให้ใช้รูปเดิมก่อน
-        $profile_name = $user_data['profile_image'];
-        $id_card_name = $user_data['id_card_image'];
+        $profile_name = $user_data['profile_image'] ?? '';
+        $id_card_name = $user_data['id_card_image'] ?? '';
 
-        // อัปโหลดรูปโปรไฟล์ใหม่ (ถ้ามี)
+        // อัปโหลดรูปโปรไฟล์ใหม่
         if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
-            $ext = pathinfo($_FILES['profile_image']['name'], PATHINFO_EXTENSION);
-            $profile_name = "profile_" . $user_data['employee_code'] . "_" . time() . "." . $ext;
-            if (!is_dir('../uploads/profiles')) mkdir('../uploads/profiles', 0777, true);
-            move_uploaded_file($_FILES['profile_image']['tmp_name'], "../uploads/profiles/" . $profile_name);
+            $ext = strtolower(pathinfo($_FILES['profile_image']['name'], PATHINFO_EXTENSION));
+            $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+            if (in_array($ext, $allowed)) {
+                $profile_name = "profile_" . ($user_data['employee_code'] ?? $user_id) . "_" . time() . "." . $ext;
+                if (!is_dir('../uploads/profiles')) mkdir('../uploads/profiles', 0777, true);
+                move_uploaded_file($_FILES['profile_image']['tmp_name'], "../uploads/profiles/" . $profile_name);
+            }
         }
 
-        // อัปโหลดรูปบัตรประชาชน
+        // อัปโหลดรูปบัตรประชาชน (เฉพาะผู้มีสิทธิ์)
         if ($can_edit_restricted && isset($_FILES['id_card_image']) && $_FILES['id_card_image']['error'] === UPLOAD_ERR_OK) {
-            $ext = pathinfo($_FILES['id_card_image']['name'], PATHINFO_EXTENSION);
-            $id_card_name = "idcard_" . $user_data['employee_code'] . "_" . time() . "." . $ext;
-            if (!is_dir('../uploads/id-cards')) mkdir('../uploads/id-cards', 0777, true);
-            move_uploaded_file($_FILES['id_card_image']['tmp_name'], "../uploads/id-cards/" . $id_card_name);
+            $ext = strtolower(pathinfo($_FILES['id_card_image']['name'], PATHINFO_EXTENSION));
+            $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+            if (in_array($ext, $allowed)) {
+                $id_card_name = "idcard_" . ($user_data['employee_code'] ?? $user_id) . "_" . time() . "." . $ext;
+                if (!is_dir('../uploads/id-cards')) mkdir('../uploads/id-cards', 0777, true);
+                move_uploaded_file($_FILES['id_card_image']['tmp_name'], "../uploads/id-cards/" . $id_card_name);
+            }
         }
 
         $update_sql = "UPDATE users SET 
@@ -140,8 +155,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $params = [
             'first_name'     => $first_name, 
             'last_name'      => $last_name,  
-            'birth_date'     => $birth_date,
-            'start_date'     => $start_date,
+            'birth_date'     => !empty($birth_date) ? $birth_date : null,
+            'start_date'     => !empty($start_date) ? $start_date : null,
             'email'          => $email,
             'phone'          => $phone,
             'profile_image'  => $profile_name,
@@ -151,10 +166,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'district'       => $district,
             'province'       => $province,
             'zipcode'        => $zipcode,
-            'branch_id'      => $branch_id,
-            'employee_type'  => $employee_type,
-            'department'     => $department,
-            'work_shift'     => $work_shift,
+            'branch_id'      => (!empty($branch_id) && $branch_id !== '0') ? $branch_id : null,
+            'employee_type'  => (!empty($employee_type) && $employee_type !== '0') ? $employee_type : null,
+            'department'     => (!empty($department) && $department !== '0') ? $department : null,
+            'work_shift'     => (!empty($work_shift) && $work_shift !== '0') ? $work_shift : null,
             'id'             => $user_id
         ];
 
@@ -280,7 +295,7 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                 <h1 class="text-xl md:text-2xl font-bold text-slate-800 tracking-wide">แก้ไขข้อมูลส่วนตัว</h1>
                 <p class="text-slate-500 text-xs mt-1">อัปเดตข้อมูลรูปภาพ ที่อยู่ และรหัสผ่านของคุณ</p>
             </div>
-            <!-- ปุ่มกลับ ปรับให้เด่นขึ้น มีไอคอนลูกศร และห้ามตัดบรรทัด (shrink-0 whitespace-nowrap) -->
+            <!-- ปุ่มกลับ ปรับให้เด่นขึ้น มีไอคอนลูกศร และไม่ตกบรรทัด -->
             <a href="profile.php" class="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-600 border border-slate-200 hover:border-blue-200 text-xs font-semibold rounded-xl shadow-xs transition-all cursor-pointer">
                 <svg class="w-4 h-4 text-slate-500 hover:text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"></path>
@@ -292,9 +307,15 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
 
         <form id="editProfileForm" enctype="multipart/form-data" class="space-y-8">
             
-            <!-- ส่วนที่ 1: รูปภาพหลักฐานตัวตน (คลิกขยายดูรูปภาพใหญ่ได้ 🔍) -->
+            <!-- ส่วนที่ 1: รูปภาพหลักฐานตัวตน -->
             <div>
-                <h3 class="text-sm font-semibold text-blue-700 mb-4 flex items-center gap-2">📂 ส่วนที่ 1: รูปภาพหลักฐานตัวตน <span class="text-xs text-slate-400 font-normal">(คลิกที่รูปภาพเพื่อขยายดูรูปขนาดใหญ่)</span></h3>
+                <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 mb-4">
+                    <h3 class="text-sm font-semibold text-blue-700 flex items-center gap-1.5">
+                        📂 ส่วนที่ 1: รูปภาพหลักฐานตัวตน
+                    </h3>
+                    <span class="text-xs text-slate-400 font-normal">(คลิกที่รูปภาพเพื่อขยายดูรูปขนาดใหญ่)</span>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="bg-white/70 border border-slate-200/60 p-4 rounded-2xl flex flex-col items-center">
                         <label class="block text-xs font-medium text-slate-600 mb-3 w-full text-left">1. รูปถ่ายตัวเองพนักงาน</label>
@@ -316,11 +337,9 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                         </div>
 
                         <?php if ($can_edit_restricted): ?>
-                            <!-- อนุญาตให้ Admin/HR/IT เลือกไฟล์เปลี่ยนรูปได้ -->
                             <input type="file" id="id_card_image" name="id_card_image" accept="image/*" onchange="previewImage(this, 'id_card_view', 'id_card_wrap')"
                                 class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
                         <?php else: ?>
-                            <!-- พนักงานทั่วไป: ซ่อนปุ่มเลือกไฟล์และขึ้นกล่องล็อก -->
                             <div class="w-full p-2.5 bg-slate-100/80 border border-slate-200/80 rounded-2xl text-center text-xs text-slate-400 font-medium select-none">
                                 🚫 ไม่อนุญาตให้แก้ไขรูปบัตรประชาชน
                             </div>
@@ -376,7 +395,6 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                         <input type="text" name="last_name" value="<?php echo htmlspecialchars($user['last_name'] ?? ''); ?>" required <?php echo $can_edit_restricted ? '' : 'readonly'; ?>
                             class="w-full px-4 py-2.5 rounded-2xl text-sm focus:outline-none font-medium shadow-2xs <?php echo $can_edit_restricted ? 'bg-white border border-slate-200 focus:ring-2 focus:ring-blue-500' : 'bg-slate-100/80 border border-slate-200 text-slate-500 cursor-not-allowed'; ?>">
                     </div>
-                    <!-- ข้อ 7: วันเกิด -->
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-2">7. วัน/เดือน/ปี เกิด</label>
                         <div class="relative flex items-center">
@@ -391,7 +409,6 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                     </div>
                 </div>
                 
-                <!-- ข้อ 8: อีเมล -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-2">8. อีเมล (Email)</label>
@@ -405,7 +422,7 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                     </div>
                 </div>
 
-                <!-- 🔓 ข้อ 9: รายละเอียดพิกัดที่อยู่ติดต่อ (ปลดล็อกให้พนักงานทุกคนแก้ไขได้เอง) -->
+                <!-- 🔓 ข้อ 9: รายละเอียดพิกัดที่อยู่ติดต่อ -->
                 <div class="space-y-4 bg-slate-50/70 p-5 rounded-3xl border border-slate-200/60 shadow-inner">
                     <div class="flex justify-between items-center">
                         <label class="block text-xs font-semibold text-slate-700">9. รายละเอียดพิกัดที่อยู่ติดต่อ</label>
@@ -431,7 +448,6 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-1">
-                        <!-- จังหวัด (Custom Dropdown) -->
                         <div>
                             <label class="block text-[11px] text-slate-500 mb-1 pl-1">จังหวัด</label>
                             <div class="relative w-full text-left text-xs font-medium" id="custom-dropdown-province">
@@ -445,7 +461,6 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                             </div>
                         </div>
 
-                        <!-- อำเภอ / เขต (Custom Dropdown) -->
                         <div>
                             <label class="block text-[11px] text-slate-500 mb-1 pl-1">อำเภอ / เขต</label>
                             <div class="relative w-full text-left text-xs font-medium" id="custom-dropdown-district">
@@ -459,7 +474,6 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                             </div>
                         </div>
 
-                        <!-- ตำบล / แขวง (Custom Dropdown) -->
                         <div>
                             <label class="block text-[11px] text-slate-500 mb-1 pl-1">ตำบล / แขวง</label>
                             <div class="relative w-full text-left text-xs font-medium" id="custom-dropdown-subdistrict">
@@ -473,7 +487,6 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                             </div>
                         </div>
 
-                        <!-- รหัสไปรษณีย์ -->
                         <div>
                             <label class="block text-[11px] text-slate-500 mb-1 pl-1">รหัสไปรษณีย์</label>
                             <input type="text" id="zipcode" name="zipcode" value="<?php echo htmlspecialchars($user['zipcode'] ?? ''); ?>" required class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-xs focus:outline-none shadow-2xs font-medium">
@@ -482,7 +495,7 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                 </div>
             </div>
 
-            <!-- ส่วนที่ 4: ข้อมูลการทำงาน (ปรับแก้ให้แสดงข้อความยาวได้ครบ 100%) -->
+            <!-- ส่วนที่ 4: ข้อมูลการทำงาน -->
             <div>
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-sm font-semibold text-blue-700 flex items-center gap-2">💼 ส่วนที่ 4: ข้อมูลการทำงาน</h3>
@@ -491,10 +504,7 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                     <?php endif; ?>
                 </div>
 
-                <!-- 🎯 ปรับ Grid เป็น 2 คอลัมน์บนแท็บเล็ต / 3 คอลัมน์บนจอใหญ่ เพื่อเพิ่มความกว้างให้แต่ละช่อง -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    
-                    <!-- 10. สาขาที่ปฏิบัติงาน -->
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-2">10. สาขาที่ปฏิบัติงาน</label>
                         <?php 
@@ -508,7 +518,6 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                         ?>
                     </div>
 
-                    <!-- 11. ประเภทพนักงาน -->
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-2">11. ประเภทพนักงาน</label>
                         <?php 
@@ -522,7 +531,6 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                         ?>
                     </div>
 
-                    <!-- 12. แผนก / ฝ่าย (ให้สิทธิ์กว้างขวางเป็นพิเศษหากชื่อยาวมาก) -->
                     <div class="md:col-span-2 lg:col-span-1">
                         <label class="block text-xs font-medium text-slate-600 mb-2">12. แผนก / ฝ่าย</label>
                         <?php 
@@ -536,7 +544,6 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                         ?>
                     </div>
 
-                    <!-- 13. วันที่เริ่มบรรจุงาน -->
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-2">13. วันที่เริ่มบรรจุงาน</label>
                         <div class="relative flex items-center">
@@ -549,7 +556,7 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                                 class="<?php echo $can_edit_restricted ? 'calendar-trigger cursor-pointer bg-white border border-slate-200 focus:ring-2 focus:ring-blue-500' : 'bg-slate-100/80 border border-slate-200 text-slate-500 cursor-not-allowed'; ?> w-full pl-10 pr-4 py-2.5 rounded-2xl text-xs focus:outline-none font-medium shadow-2xs h-[42px]">
                         </div>
                     </div>
-                    <!-- 14. กะการทำงาน -->
+
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-2">14. กะการทำงาน</label>
                         <?php 
@@ -562,7 +569,6 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                             }
                         ?>
                     </div>
-
                 </div>
             </div>
 
@@ -653,7 +659,6 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                 fetch("../assets/data/subdistricts.json").then(res => res.json())
             ]);
 
-            // 1. เติมรายชื่อจังหวัด
             listProvince.innerHTML = '';
             provinces.forEach(p => {
                 const item = document.createElement("div");
@@ -666,7 +671,6 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                 listProvince.appendChild(item);
             });
 
-            // โหลดอำเภอ
             function loadDistricts(provName, chosenDist = "") {
                 const foundProv = provinces.find(p => p.name_th === provName);
                 listDistrict.innerHTML = '';
@@ -695,7 +699,6 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                 }
             }
 
-            // โหลดตำบล
             function loadSubdistricts(provName, distName, chosenSub = "") {
                 const foundProv = provinces.find(p => p.name_th === provName);
                 const provId = foundProv ? foundProv.id : null;
@@ -728,7 +731,6 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
                 }
             }
 
-            // 2. เลือกค่าเดิมจาก DB ให้อัตโนมัติ
             if (selProv) {
                 selectAddressOption('province', selProv, selProv);
                 loadDistricts(selProv, selDist);
@@ -756,39 +758,46 @@ function getDropdownLabel($val, $options, $joined_name, $placeholder) {
             LantoAlert.loading('กำลังบันทึกข้อมูล', 'ระบบกำลังอัปเดตข้อมูลส่วนตัวของคุณ...');
         }
         const formData = new FormData(this);
-        setTimeout(() => {
-            fetch('edit_profile.php', { method: 'POST', body: formData })
-            .then(res => res.json())
-            .then(data => {
-                if (typeof LantoAlert !== 'undefined') LantoAlert.close();
-                setTimeout(() => {
-                    if (data.status === 'success') {
-                        if (typeof LantoAlert !== 'undefined') {
-                            LantoAlert.success('บันทึกสำเร็จ', data.message, function() {
-                                window.location.href = 'profile.php';
-                            });
-                        } else {
-                            alert(data.message);
+        
+        fetch('edit_profile.php', { method: 'POST', body: formData })
+        .then(async res => {
+            const text = await res.text();
+            try {
+                return JSON.parse(text);
+            } catch (err) {
+                console.error("Server raw response:", text);
+                throw new Error("Invalid JSON");
+            }
+        })
+        .then(data => {
+            if (typeof LantoAlert !== 'undefined') LantoAlert.close();
+            setTimeout(() => {
+                if (data.status === 'success') {
+                    if (typeof LantoAlert !== 'undefined') {
+                        LantoAlert.success('บันทึกสำเร็จ', data.message, function() {
                             window.location.href = 'profile.php';
-                        }
+                        });
                     } else {
-                        if (typeof LantoAlert !== 'undefined') {
-                            LantoAlert.error('บันทึกล้มเหลว', data.message);
-                        } else {
-                            alert(data.message);
-                        }
+                        alert(data.message);
+                        window.location.href = 'profile.php';
                     }
-                }, 300);
-            })
-            .catch(err => {
-                if (typeof LantoAlert !== 'undefined') {
-                    LantoAlert.close();
-                    setTimeout(() => { LantoAlert.error('เกิดข้อผิดพลาด', 'ไม่สามารถติดต่อเซิร์ฟเวอร์ได้'); }, 300);
                 } else {
-                    alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+                    if (typeof LantoAlert !== 'undefined') {
+                        LantoAlert.error('บันทึกล้มเหลว', data.message);
+                    } else {
+                        alert(data.message);
+                    }
                 }
-            });
-        }, 800);
+            }, 300);
+        })
+        .catch(err => {
+            if (typeof LantoAlert !== 'undefined') {
+                LantoAlert.close();
+                setTimeout(() => { LantoAlert.error('เกิดข้อผิดพลาด', 'ไม่สามารถติดต่อเซิร์ฟเวอร์ได้'); }, 300);
+            } else {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+            }
+        });
     });
     </script>
 </body>
