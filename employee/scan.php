@@ -265,25 +265,25 @@ if (empty($default_branch) && count($branches) > 0) {
                                 ?>
                             </div>
                             
-                            <!-- แผงแสดงระยะห่างและสถานะ -->
-                            <div class="bg-white p-3 rounded-xl border border-slate-200/60 flex flex-col gap-1.5 text-xs">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-slate-400 font-medium">ระยะห่างของคุณจากสาขา:</span>
-                                    <span id="distance-text" class="font-bold text-slate-800">กำลังคำนวณพิกัด GPS...</span>
+                            <!-- แผงแสดงระยะห่างและสถานะ (ปรับขนาดและคำไม่ให้ตกบรรทัดบนมือถือ) -->
+                            <div class="bg-white p-2.5 sm:p-3 rounded-2xl border border-slate-200/60 flex flex-col gap-1.5 text-xs">
+                                <div class="flex justify-between items-center gap-2">
+                                    <span class="text-slate-400 font-medium text-[11px] sm:text-xs shrink-0">ระยะห่างจากสาขา:</span>
+                                    <span id="distance-text" class="font-bold text-slate-800 text-[11px] sm:text-xs text-right truncate">กำลังคำนวณ...</span>
                                 </div>
-                                <div class="flex justify-between items-center pt-1.5 border-t border-slate-100">
-                                    <span class="text-slate-400 font-medium">ตรวจสอบสถานะพื้นที่:</span>
-                                    <span id="gps-status-badge" class="px-2.5 py-0.5 rounded-md font-bold bg-slate-200 text-slate-500 text-[11px]">Waiting...</span>
+                                <div class="flex justify-between items-center gap-2 pt-1.5 border-t border-slate-100">
+                                    <span class="text-slate-400 font-medium text-[11px] sm:text-xs shrink-0">สถานะพื้นที่:</span>
+                                    <span id="gps-status-badge" class="px-2 py-0.5 rounded-lg font-bold bg-slate-200 text-slate-500 text-[10px] sm:text-[11px] shrink-0 whitespace-nowrap">Waiting...</span>
                                 </div>
                             </div>
 
                             <!-- 🗺️ แผนที่ Leaflet ตรวจสอบตำแหน่งและรัศมีสาขา -->
-                            <div class="space-y-1.5 pt-1">
-                                <div class="flex justify-between items-center px-0.5">
-                                    <span class="text-[11px] font-bold text-slate-700">แผนผังพิกัดและรัศมีลงเวลา (Check-in Area)</span>
-                                    <span class="text-[10px] text-slate-400 font-medium">🏢 สาขา | 📍 ตัวคุณ</span>
+                            <div class="space-y-1.5 pt-0.5">
+                                <div class="flex justify-between items-center px-0.5 text-slate-600 gap-2">
+                                    <span class="text-[10.5px] sm:text-[11px] font-bold truncate">แผนผังพิกัดและรัศมีลงเวลา</span>
+                                    <span class="text-[9.5px] sm:text-[10px] text-slate-400 font-medium shrink-0">🏢 สาขา | 📍 คุณ</span>
                                 </div>
-                                <div class="w-full h-52 rounded-2xl overflow-hidden border border-slate-200 shadow-inner relative bg-slate-100">
+                                <div class="w-full h-48 sm:h-52 rounded-2xl overflow-hidden border border-slate-200 shadow-inner relative bg-slate-100">
                                     <div id="scanMap" class="w-full h-full"></div>
                                     <div id="map-loading" class="absolute inset-0 bg-slate-100/90 flex items-center justify-center text-slate-400 text-xs font-bold z-20">
                                         กำลังโหลดแผนที่...
@@ -534,10 +534,14 @@ if (empty($default_branch) && count($branches) > 0) {
             if (!branchId) {
                 if (distanceText) distanceText.innerText = "กรุณาเลือกสาขาก่อน";
                 if (badge) {
-                    badge.innerText = "Waiting...";
-                    badge.className = "px-2.5 py-0.5 rounded-md font-bold bg-slate-200 text-slate-500 text-[11px]";
+                    if (isInside) {
+                        badge.innerText = `อยู่ในรัศมี (${branchRadius}ม.)`;
+                        badge.className = "px-2 py-0.5 rounded-lg font-bold bg-emerald-100 text-emerald-700 text-[10px] sm:text-[11px] shrink-0 whitespace-nowrap";
+                    } else {
+                        badge.innerText = `อยู่นอกรัศมี (${branchRadius}ม.)`;
+                        badge.className = "px-2 py-0.5 rounded-lg font-bold bg-rose-100 text-rose-700 text-[10px] sm:text-[11px] shrink-0 whitespace-nowrap";
+                    }
                 }
-                return;
             }
 
             const selectedItem = document.querySelector(`#list-branch_select [data-value="${branchId}"]`);
